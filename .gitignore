@@ -1,1 +1,5 @@
-include/glm/doc
+*.obj
+*.exe
+*.ilk
+*.pdb
+
