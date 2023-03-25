@@ -11,7 +11,8 @@
         {
             "label": "run",
             "type": "shell",
-            "command": "./main.exe"
+            "command": "./main.exe",
+            "problemMatcher": []
         },
         {
             "label": "clean",

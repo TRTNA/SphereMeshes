@@ -5,9 +5,14 @@
 #include <glad/glad.h>
 
 #include <string>
-#include <fstream>
-#include <sstream>
-#include <iostream>
+
+
+enum class ShaderType {
+    VERTEX, GEOMETRY, FRAGMENT
+};
+
+static std::string shaderTypeStr(ShaderType type);
+
 
 class Shader
 {
@@ -21,5 +26,7 @@ public:
 
 private:
 
-    void checkCompileErrors(GLuint shader, std::string type);
+    bool loadShaderCode(const GLchar *path, std::string& outCode);
+    bool compileShader(const GLchar* code, ShaderType type, GLuint& id);
+    GLenum getOpenGLShaderType(const ShaderType& type) const;
 };

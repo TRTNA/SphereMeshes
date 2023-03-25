@@ -5,7 +5,7 @@ FILENAME = main
 CC = cl.exe
 
 # Include path
-IDIR = include/ /Iimgui/
+IDIR = /Iinclude/ /Iimgui/
 
 # compiler flags:
 CCFLAGS  = /Od /Zi /EHsc /MT
@@ -13,12 +13,12 @@ CCFLAGS  = /Od /Zi /EHsc /MT
 # linker flags:
 LFLAGS = /LIBPATH:libs glfw3.lib gdi32.lib user32.lib Shell32.lib
 
-SOURCES = include/glad/glad.c src/$(FILENAME).cpp imgui/*.cpp
+SOURCES = include/glad/glad.c src/*.cpp imgui/*.cpp
 TARGET = $(FILENAME).exe
 
 .PHONY : all
 all:
-	$(CC) $(CCFLAGS) /I$(IDIR) $(SOURCES) /Fe:$(TARGET) /link $(LFLAGS)
+	$(CC) $(CCFLAGS) $(IDIR) $(SOURCES) /Fe:$(TARGET) /link $(LFLAGS)
 
 .PHONY : clean
 clean:

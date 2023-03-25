@@ -1,52 +1,57 @@
 #include <utils/shader.h>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+
+using std::cerr;
+using std::cout;
+using std::endl;
+using std::ifstream;
+using std::string;
+using std::stringstream;
 
 Shader::Shader(const GLchar *vertexPath, const GLchar *fragmentPath)
 {
-    std::string vertexCode;
-    std::string fragmentCode;
-    std::ifstream vShaderFile;
-    std::ifstream fShaderFile;
-
-    vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    try
+    string vertexCode;
+    GLuint vertex;
+    bool vertexShaderLoaded = loadShaderCode(vertexPath, vertexCode);
+    bool vertexShaderCompiled = false;
+    if (!vertexShaderLoaded)
     {
-        vShaderFile.open(vertexPath);
-        fShaderFile.open(fragmentPath);
-        std::stringstream vShaderStream, fShaderStream;
-        vShaderStream << vShaderFile.rdbuf();
-        fShaderStream << fShaderFile.rdbuf();
-        vShaderFile.close();
-        fShaderFile.close();
-        vertexCode = vShaderStream.str();
-        fragmentCode = fShaderStream.str();
-    }
-    catch (std::ifstream::failure e)
-    {
-        std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
+        cerr << "Error while reading vertex shader file at " << vertexPath << endl;
+    } else {
+        const GLchar *vShaderCode = vertexCode.c_str();
+        vertexShaderCompiled = compileShader(vShaderCode, ShaderType::VERTEX, vertex);
     }
 
-    const GLchar *vShaderCode = vertexCode.c_str();
-    const GLchar *fShaderCode = fragmentCode.c_str();
+    string fragmentCode;
+    GLuint fragment;
+    bool fragmentShaderLoaded = loadShaderCode(fragmentPath, fragmentCode);
+    GLint fragmentShaderCompiled = false;
+    if (!fragmentShaderLoaded)
+    {
+        cerr << "Error while loading fragment shader file at " << fragmentPath << endl;
+    } else {
+        const GLchar *fShaderCode = fragmentCode.c_str();
+        fragmentShaderCompiled = compileShader(fShaderCode, ShaderType::FRAGMENT, fragment);
+    }
 
-    GLuint vertex, fragment;
-
-    vertex = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex, 1, &vShaderCode, NULL);
-    glCompileShader(vertex);
-    checkCompileErrors(vertex, "VERTEX");
-
-    fragment = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment, 1, &fShaderCode, NULL);
-    glCompileShader(fragment);
-    checkCompileErrors(fragment, "FRAGMENT");
-
-    this->Program = glCreateProgram();
-    glAttachShader(this->Program, vertex);
-    glAttachShader(this->Program, fragment);
-    glLinkProgram(this->Program);
-    checkCompileErrors(this->Program, "PROGRAM");
-
+    if (vertexShaderCompiled && fragmentShaderCompiled)
+    {
+        this->Program = glCreateProgram();
+        glAttachShader(this->Program, vertex);
+        glAttachShader(this->Program, fragment);
+        glLinkProgram(this->Program);
+        GLint success;
+        GLchar infoLog[1024];
+        glGetProgramiv(Program, GL_LINK_STATUS, &success);
+        if (!success)
+        {
+            glGetProgramInfoLog(Program, 1024, NULL, infoLog);
+            std::cerr << "Program linking error\n"
+                      << infoLog << std::endl;
+        }
+    }
     glDeleteShader(vertex);
     glDeleteShader(fragment);
 }
@@ -55,28 +60,73 @@ void Shader::Use() { glUseProgram(this->Program); }
 
 void Shader::Delete() { glDeleteProgram(this->Program); }
 
-void Shader::checkCompileErrors(GLuint shader, std::string type)
+
+bool Shader::loadShaderCode(const GLchar *path, string &outCode)
 {
-    GLint success;
-    GLchar infoLog[1024];
-    if (type != "PROGRAM")
+    ifstream shaderFile;
+
+    shaderFile.exceptions(ifstream::failbit | ifstream::badbit);
+    try
     {
-        glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-        if (!success)
-        {
-            glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-            std::cout << "| ERROR::::SHADER-COMPILATION-ERROR of type: " << type << "|\n"
-                      << infoLog << "\n| -- --------------------------------------------------- -- |" << std::endl;
-        }
+        shaderFile.open(path);
+        stringstream vShaderStream, fShaderStream;
+        stringstream shaderStream;
+        shaderStream << shaderFile.rdbuf();
+        shaderFile.close();
+        outCode = shaderStream.str();
+        return true;
     }
-    else
+    catch (ifstream::failure e)
     {
-        glGetProgramiv(shader, GL_LINK_STATUS, &success);
-        if (!success)
-        {
-            glGetProgramInfoLog(shader, 1024, NULL, infoLog);
-            std::cout << "| ERROR::::PROGRAM-LINKING-ERROR of type: " << type << "|\n"
-                      << infoLog << "\n| -- --------------------------------------------------- -- |" << std::endl;
-        }
+        if (shaderFile.is_open())
+            shaderFile.close();
+        return false;
+    }
+}
+
+bool Shader::compileShader(const GLchar *code, ShaderType type, GLuint &id)
+{
+    id = glCreateShader(getOpenGLShaderType(type));
+    glShaderSource(id, 1, &code, NULL);
+    glCompileShader(id);
+    GLint success;
+    glGetShaderiv(id, GL_COMPILE_STATUS, &success);
+    if (!success)
+    {
+        GLchar infoLog[1024];
+        glGetShaderInfoLog(id, 1024, NULL, infoLog);
+        std::cerr << shaderTypeStr(type) << " shader compilation error\n"
+                  << infoLog << endl;
+    }
+    return success;
+}
+
+GLenum Shader::getOpenGLShaderType(const ShaderType &type) const
+{
+    switch (type)
+    {
+    case ShaderType::VERTEX:
+        return GL_VERTEX_SHADER;
+    case ShaderType::GEOMETRY:
+        return GL_GEOMETRY_SHADER;
+    case ShaderType::FRAGMENT:
+        return GL_FRAGMENT_SHADER;
+    default:
+        return GL_NONE;
+    }
+}
+
+static std::string shaderTypeStr(ShaderType type)
+{
+    switch (type)
+    {
+    case ShaderType::VERTEX:
+        return "Vertex";
+    case ShaderType::GEOMETRY:
+        return "Geometry";
+    case ShaderType::FRAGMENT:
+        return "Fragment";
+    default:
+        return GL_NONE;
     }
 }
