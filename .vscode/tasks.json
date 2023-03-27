@@ -9,6 +9,15 @@
             "command": "./MakefileWin.bat"
         },
         {
+            "label": "buildAndRun",
+            "type": "shell",
+            "command": "./main.exe",
+            "dependsOn": [
+                "build"
+            ],
+            "problemMatcher": []
+        },
+        {
             "label": "run",
             "type": "shell",
             "command": "./main.exe",

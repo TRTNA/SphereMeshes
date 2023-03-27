@@ -7,12 +7,15 @@
 
 
 #include <iostream>
+#include <vector>
 
 #include <utils/shader.h>
+#include <spheremeshes/spheremeshes.h>
 
 
 using std::cout;
 using std::endl;
+using std::vector;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -109,8 +112,6 @@ int main()
 
     // uncomment this call to draw in wireframe polygons.
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-
 
     // render loop
     // -----------
