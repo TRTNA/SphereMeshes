@@ -3,7 +3,7 @@
 
 #include <utils/shader.h>
 
-class glRenderable {
+class IglRenderable {
     public:
         virtual void Draw(const Shader& shader) = 0;
 };
