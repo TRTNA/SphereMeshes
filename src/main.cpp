@@ -30,7 +30,7 @@ void processInput(GLFWwindow *window);
 const unsigned int SCR_WIDTH = 1600;
 const unsigned int SCR_HEIGHT = 1200;
 
-
+typedef GlRendSphereMesh glSphereMesh;
 
 int main()
 {
@@ -84,8 +84,9 @@ int main()
     // View matrix (=camera): position, view direction, camera "up" vector
     glm::mat4 viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 7.0f), glm::vec3(0.0f, 0.0f, -7.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-    SphereMesh sm(vector<Sphere>{Sphere(glm::vec3(-0.5f, 0.0f, -5.0f), 0.3f), Sphere(glm::vec3(0.5f, 0.0f, -5.0f), 0.3f), Sphere(glm::vec3(-0.0f, 0.5f, -5.0f), 0.3f), Sphere(glm::vec3(-0.0f, 1.5f, -5.0f), 0.3f)}, vector<Edge>{Edge(2, 3)}, vector<Triangle>{Triangle(0, 1, 2)});
-    const Model sphereModel("assets/models/sphere.obj");
+    glSphereMesh sm(vector<Sphere>{Sphere(glm::vec3(-0.5f, 0.0f, -5.0f), 0.3f), Sphere(glm::vec3(0.5f, 0.0f, -5.0f), 0.3f), Sphere(glm::vec3(-0.0f, 0.5f, -5.0f), 0.3f), Sphere(glm::vec3(-0.0f, 1.5f, -5.0f), 0.3f)}, vector<Edge>{Edge(2, 3)}, vector<Triangle>{Triangle(0, 1, 2)});
+    Model sphereModel("assets/models/sphere.obj");
+    glSphereMesh::sphereModel = &sphereModel;
 
     shader.Use();
     glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
@@ -115,7 +116,7 @@ int main()
         ImGui::Button("Hello!");
         ImGui::End();
 
-        renderGL(sm, sphereModel, shader);
+        sm.Draw(shader);
 
         
         ImGui::Render();

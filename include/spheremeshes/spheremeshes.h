@@ -5,5 +5,6 @@
 #include <spheremeshes/edge.h>
 #include <spheremeshes/triangle.h>
 #include <spheremeshes/spheremesh.h>
+#include <spheremeshes/glrend_spheremesh.h>
 
 #endif

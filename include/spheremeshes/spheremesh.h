@@ -6,6 +6,7 @@
 #include <ostream>
 
 
+
 #include <spheremeshes/sphere.h>
 #include <spheremeshes/edge.h>
 #include <spheremeshes/triangle.h>
@@ -29,7 +30,5 @@ class SphereMesh {
 };
 
 std::ostream& operator<<(std::ostream& ost, const SphereMesh& sm);
-
-void renderGL(const SphereMesh& sm, const Model& sphereModel, const Shader& shader);
 
 #endif
