@@ -11,7 +11,7 @@ IDIR = /Iinclude/ /Iimgui/
 CCFLAGS  = /Od /Zi /EHsc /MT
 
 # linker flags:
-LFLAGS = /LIBPATH:libs glfw3.lib gdi32.lib user32.lib Shell32.lib
+LFLAGS = /LIBPATH:libs glfw3.lib assimp-vc143-mt.lib zlib.lib minizip.lib kubazip.lib bz2.lib Irrlicht.lib poly2tri.lib polyclipping.lib turbojpeg.lib libpng16.lib gdi32.lib user32.lib Shell32.lib Advapi32.lib
 
 SOURCES = include/glad/glad.c src/utils/*.cpp src/*.cpp imgui/*.cpp src/spheremeshes/*.cpp
 TARGET = $(FILENAME).exe

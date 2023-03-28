@@ -11,6 +11,12 @@
 
 #include <utils/shader.h>
 #include <spheremeshes/spheremeshes.h>
+#include <utils/model.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/matrix_inverse.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 
 using std::cout;
@@ -113,6 +119,21 @@ int main()
     // uncomment this call to draw in wireframe polygons.
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+    
+    // Projection matrix: FOV angle, aspect ratio, near and far planes
+    glm::mat4 projectionMatrix = glm::perspective(45.0f, (float)SCR_WIDTH/(float)SCR_HEIGHT, 0.1f, 10000.0f);
+    // View matrix (=camera): position, view direction, camera "up" vector
+    glm::mat4 viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 7.0f), glm::vec3(0.0f, 0.0f, -7.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+    SphereMesh sm(vector<Sphere>{Sphere(glm::vec3(-0.5f, 0.0f, -5.0f), 0.3f), Sphere(glm::vec3(0.5f, 0.0f, -5.0f), 0.3f)}, vector<Edge>{Edge(0,1)}, vector<Triangle>{});
+    const Model sphereModel("assets/models/sphere.obj");
+
+    shader.Use();
+    glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+
+   
+
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -130,17 +151,13 @@ int main()
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-
-        // draw our first triangle
-        glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-        //glDrawArrays(GL_TRIANGLES, 0, 6);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        // glBindVertexArray(0); // no need to unbind it every time 
-
         // render your GUI
         ImGui::Begin("Demo window");
         ImGui::Button("Hello!");
         ImGui::End();
+
+        renderGL(sm, sphereModel, shader);
+
         
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

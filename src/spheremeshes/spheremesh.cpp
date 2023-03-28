@@ -3,6 +3,11 @@
 #include <iostream>
 #include <sstream>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/matrix_inverse.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 using std::clog;
 using std::endl;
 
@@ -53,5 +58,19 @@ std::string SphereMesh::toString() const {
 std::ostream& operator<<(std::ostream& ost, const SphereMesh& sm) {
     ost << sm.toString();
     return ost;
+}
+
+void renderGL(const SphereMesh& sm, const Model& sphereModel, const Shader& shader) {
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    for(const auto& s : sm.spheres) {
+        // Setting transformation matrix so that sphere will be rendered in s.center and uniformly scaled with factor s.radius
+        modelMatrix = glm::mat4(1.0f);
+        modelMatrix = glm::translate(modelMatrix, s.center);
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(s.radius));
+        glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+
+        // Draw the sphere
+        sphereModel.Draw();
+    }
 }
 

@@ -2,4 +2,6 @@
 *.exe
 *.ilk
 *.pdb
+*.lib
+!assets/models/*.obj
 

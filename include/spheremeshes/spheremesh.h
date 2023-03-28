@@ -10,6 +10,9 @@
 #include <spheremeshes/edge.h>
 #include <spheremeshes/triangle.h>
 
+#include <utils/model.h>
+#include <utils/shader.h>
+
 
 class SphereMesh {
     public:
@@ -26,5 +29,7 @@ class SphereMesh {
 };
 
 std::ostream& operator<<(std::ostream& ost, const SphereMesh& sm);
+
+void renderGL(const SphereMesh& sm, const Model& sphereModel, const Shader& shader);
 
 #endif
