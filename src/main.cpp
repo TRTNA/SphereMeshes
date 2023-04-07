@@ -12,6 +12,8 @@
 #include <utils/shader.h>
 #include <spheremeshes/spheremeshes.h>
 #include <utils/model.h>
+#include <utils/pointcloud.h>
+#include <utils/random.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -75,7 +77,7 @@ int main()
     ImGui_ImplOpenGL3_Init("#version 410");
 
     // build and compile our shader program
-    Shader shader("assets/shaders/default.vert", "assets/shaders/default.frag");
+    Shader shader("assets/shaders/capsule.vert", "assets/shaders/pointsplat.frag");
     shader.Use();
 
     
@@ -92,7 +94,28 @@ int main()
     glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
     glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
-   
+    PointCloud PC();
+    std::pair<float, float> xRange(-1.0f, 1.0f);
+    std::pair<float, float> yRange(-1.0f, 1.0f);
+    std::pair<float, float> zRange(-1.0f, 1.0f);
+    for (size_t i = 0; i < 1000; i++) {
+        PC.addPoint(xRange, yRange, zRange);
+    }
+        glGenVertexArrays(1, &VAO);
+        glGenBuffers(1, &VBO);
+
+        glBindVertexArray(VAO);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        std::vector<glm::vec3> points = PC.getPoints();
+        glBufferData(GL_ARRAY_BUFFER, 1000* sizeof(glm::vec3), points.data() , GL_STATIC_DRAW);
+
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
+
+        glUniformMatrix3fv(glGetUniformLocation(shader, "capsA"), 1, vec3(-0.5f, 0.0f, 5.0f));
+        glUniformMatrix3fv(glGetUniformLocation(shader, "capsB"), 1, vec3(0.5f, 0.0f, 5.0f));
+        glUniformMatrix1f(glGetUniformLocation(shader, "radius"), 0.5f);
+
 
     // render loop
     // -----------
@@ -116,7 +139,8 @@ int main()
         ImGui::Button("Hello!");
         ImGui::End();
 
-        sm.Draw(shader);
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_POINTS, 0, 1000);
 
         
         ImGui::Render();
