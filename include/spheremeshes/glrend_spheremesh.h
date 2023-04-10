@@ -8,20 +8,20 @@
 #include <spheremeshes/edge.h>
 #include <spheremeshes/triangle.h>
 #include <spheremeshes/spheremesh.h>
+#include <utils/pointcloud.h>
 
 
 #include <vector>
 
 class GlRendSphereMesh : public IglRenderable, SphereMesh {
     private:
-        unsigned int VBO, VAO, EBO;
-        unsigned int triangleIndicesNo, edgesIndicesNo;
+        unsigned int VAO, VBO;
+        std::vector<PointCloud> pcs;
     public:
         static Model* sphereModel;
         GlRendSphereMesh() = default;
         GlRendSphereMesh(std::vector<Sphere>& pSpheres, std::vector<Edge>& pEdges, std::vector<Triangle>& pTriangles);
         void Draw(const Shader& shader) override;
-        void updateVAO();
         ~GlRendSphereMesh();
 };
 

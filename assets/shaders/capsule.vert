@@ -1,15 +1,15 @@
 #version 410 core
 layout (location = 0) in vec3 aPos;
 
-vec3 capsA = vec3(-0.5, 0.0, 0);
-vec3 capsB = vec3(0.5, 0.0, 0);
-float radius = 0.5;
+uniform vec3 capsA;
+uniform vec3 capsB;
+uniform float radiusA;
+uniform float radiusB;
 
 uniform mat4 projectionMatrix;
 uniform mat4 viewMatrix;
 uniform mat3 normalMatrix;
 
-flat out uint toDiscard;
 out vec3 normal;
 
 void main()
@@ -20,14 +20,10 @@ void main()
     float k = dot(aPos - capsA, BminusA) / BminusAsqrd;
     float clampedK = clamp(k, 0.0, 1.0); 
     vec3 C = capsA + clampedK*BminusA;
-    float distSqrd = dot(C - aPos, C - aPos);
-    if (distSqrd <= radius*radius) {
-        toDiscard = 0;
-        normal = normalize(aPos - C);
-        gl_Position = viewMatrix * vec4(C + radius*normal, 1.0);
-        normal = normalMatrix * normal;
-    } else {
-        toDiscard = 1;
-    }
+    float interpRadius = radiusA * (1.0 - clampedK) + radiusB * clampedK;
+    normal = normalize(aPos - C);
+    gl_Position = viewMatrix * vec4(C + interpRadius*normal, 1.0);
+    normal = normalMatrix * normal;
+
 
 }

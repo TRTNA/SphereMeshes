@@ -13,7 +13,6 @@
 #include <spheremeshes/spheremeshes.h>
 #include <utils/model.h>
 #include <utils/pointcloud.h>
-#include <utils/random.h>
 #include <utils/camera.h>
 
 #include <glm/glm.hpp>
@@ -115,34 +114,12 @@ int main()
     glm::mat4 viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 7.0f), glm::vec3(0.0f, 0.0f, -7.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat3 normalMatrix;
 
-    glSphereMesh sm(vector<Sphere>{Sphere(glm::vec3(-0.5f, 0.0f, -5.0f), 0.3f), Sphere(glm::vec3(0.5f, 0.0f, -5.0f), 0.3f), Sphere(glm::vec3(-0.0f, 0.5f, -5.0f), 0.3f), Sphere(glm::vec3(-0.0f, 1.5f, -5.0f), 0.3f)}, vector<Edge>{Edge(2, 3)}, vector<Triangle>{Triangle(0, 1, 2)});
+    glSphereMesh sm(vector<Sphere>{Sphere(glm::vec3(-0.5f, 0.0f, 0.0f), 0.3f), Sphere(glm::vec3(0.5f, 0.0f, 0.0f), 0.5f), Sphere(glm::vec3(0.5f, 1.0f, 0.0f), 0.3f)}, vector<Edge>{Edge(0,1), Edge(1, 2)}, vector<Triangle>{});
     Model sphereModel("assets/models/sphere.obj");
     glSphereMesh::sphereModel = &sphereModel;
 
     shader.Use();
     glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-
-    PointCloud PC;
-    std::pair<float, float> xRange(-1.0f, 1.0f);
-    std::pair<float, float> yRange(-0.5f, 0.5f);
-    std::pair<float, float> zRange(-0.5f, 0.5f);
-    for (size_t i = 0; i < 100000; i++) {
-        PC.addPoint(generatePoint(xRange, yRange, zRange));
-    }
-    unsigned int VAO, VBO;
-        glGenVertexArrays(1, &VAO);
-        glGenBuffers(1, &VBO);
-
-        glBindVertexArray(VAO);
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        std::vector<glm::vec3> points = PC.getPoints();
-        glBufferData(GL_ARRAY_BUFFER, 1000* sizeof(glm::vec3), points.data() , GL_STATIC_DRAW);
-
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
-
-
-
 
     // render loop
     // -----------
@@ -177,11 +154,8 @@ int main()
         normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix)));
         glUniformMatrix3fv(glGetUniformLocation(shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_POINTS, 0, 100000);
+        sm.Draw(shader);
 
-
-        
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
