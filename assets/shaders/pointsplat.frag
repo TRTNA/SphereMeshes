@@ -2,11 +2,11 @@
 out vec4 FragColor;
 
 
-in bool toDiscard;
+flat in uint toDiscard;
 in vec3 normal;
 
 void main()
 {
-    if (toDiscard) discard;
-    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+    if (toDiscard == 1) discard;
+    else FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
 }

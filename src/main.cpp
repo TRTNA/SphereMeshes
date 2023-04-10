@@ -113,6 +113,7 @@ int main()
     glm::mat4 projectionMatrix = glm::perspective(45.0f, (float)SCR_WIDTH/(float)SCR_HEIGHT, 0.1f, 10000.0f);
     // View matrix (=camera): position, view direction, camera "up" vector
     glm::mat4 viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 7.0f), glm::vec3(0.0f, 0.0f, -7.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    glm::mat3 normalMatrix;
 
     glSphereMesh sm(vector<Sphere>{Sphere(glm::vec3(-0.5f, 0.0f, -5.0f), 0.3f), Sphere(glm::vec3(0.5f, 0.0f, -5.0f), 0.3f), Sphere(glm::vec3(-0.0f, 0.5f, -5.0f), 0.3f), Sphere(glm::vec3(-0.0f, 1.5f, -5.0f), 0.3f)}, vector<Edge>{Edge(2, 3)}, vector<Triangle>{Triangle(0, 1, 2)});
     Model sphereModel("assets/models/sphere.obj");
@@ -122,10 +123,10 @@ int main()
     glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
     PointCloud PC;
-    std::pair<float, float> xRange(-0.5f, 0.5f);
+    std::pair<float, float> xRange(-1.0f, 1.0f);
     std::pair<float, float> yRange(-0.5f, 0.5f);
-    std::pair<float, float> zRange(-1.0f, 1.0f);
-    for (size_t i = 0; i < 1000; i++) {
+    std::pair<float, float> zRange(-0.5f, 0.5f);
+    for (size_t i = 0; i < 100000; i++) {
         PC.addPoint(generatePoint(xRange, yRange, zRange));
     }
     unsigned int VAO, VBO;
@@ -140,9 +141,7 @@ int main()
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
 
-        glUniform3fv(glGetUniformLocation(shader.Program, "capsA"), 1, glm::value_ptr(glm::vec3(-0.5f, 0.0f, 5.0f)));
-        glUniform3fv(glGetUniformLocation(shader.Program, "capsB"), 1, glm::value_ptr(glm::vec3(0.5f, 0.0f, 5.0f)));
-        glUniform1f(glGetUniformLocation(shader.Program, "radius"), 0.5f);
+
 
 
     // render loop
@@ -174,10 +173,12 @@ int main()
         ImGui::Begin("Controls");
         ImGui::End();
 
-        shader.Use();
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
+        normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix)));
+        glUniformMatrix3fv(glGetUniformLocation(shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
+
         glBindVertexArray(VAO);
-        glDrawArrays(GL_POINTS, 0, 1000);
+        glDrawArrays(GL_POINTS, 0, 100000);
 
 
         
