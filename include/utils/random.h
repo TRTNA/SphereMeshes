@@ -7,8 +7,6 @@
 #include <limits>
 #include <glm/vec3.hpp>
 
-static const float RAND_MAX = std::numeric_limits<float>::max();
-
 glm::vec3 generatePoint(std::pair<float, float> xRange, std::pair<float, float> yRange, std::pair<float, float> zRange) {
     float x = xRange.first + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(xRange.second-xRange.first)));
     float y = yRange.first + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(yRange.second-yRange.first)));

@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include <glm/vec3.hpp>
+
 class PointCloud {
     private:
         std::vector<glm::vec3> points_;

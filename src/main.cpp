@@ -94,13 +94,14 @@ int main()
     glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
     glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
-    PointCloud PC();
-    std::pair<float, float> xRange(-1.0f, 1.0f);
-    std::pair<float, float> yRange(-1.0f, 1.0f);
+    PointCloud PC;
+    std::pair<float, float> xRange(-0.5f, 0.5f);
+    std::pair<float, float> yRange(-0.5f, 0.5f);
     std::pair<float, float> zRange(-1.0f, 1.0f);
     for (size_t i = 0; i < 1000; i++) {
-        PC.addPoint(xRange, yRange, zRange);
+        PC.addPoint(generatePoint(xRange, yRange, zRange));
     }
+    unsigned int VAO, VBO;
         glGenVertexArrays(1, &VAO);
         glGenBuffers(1, &VBO);
 
@@ -112,9 +113,9 @@ int main()
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
 
-        glUniformMatrix3fv(glGetUniformLocation(shader, "capsA"), 1, vec3(-0.5f, 0.0f, 5.0f));
-        glUniformMatrix3fv(glGetUniformLocation(shader, "capsB"), 1, vec3(0.5f, 0.0f, 5.0f));
-        glUniformMatrix1f(glGetUniformLocation(shader, "radius"), 0.5f);
+        glUniform3fv(glGetUniformLocation(shader.Program, "capsA"), 1, glm::value_ptr(glm::vec3(-0.5f, 0.0f, 5.0f)));
+        glUniform3fv(glGetUniformLocation(shader.Program, "capsB"), 1, glm::value_ptr(glm::vec3(0.5f, 0.0f, 5.0f)));
+        glUniform1f(glGetUniformLocation(shader.Program, "radius"), 0.5f);
 
 
     // render loop
