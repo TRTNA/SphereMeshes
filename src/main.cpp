@@ -14,6 +14,7 @@
 #include <utils/model.h>
 #include <utils/pointcloud.h>
 #include <utils/random.h>
+#include <utils/camera.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -27,6 +28,12 @@ using std::vector;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
+// callback functions for keyboard and mouse events
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+// if one of the WASD keys is pressed, we call the corresponding method of the Camera class
+void apply_camera_movements();
+
 
 // settings
 const unsigned int SCR_WIDTH = 1600;
@@ -34,13 +41,28 @@ const unsigned int SCR_HEIGHT = 1200;
 
 typedef GlRendSphereMesh glSphereMesh;
 
+Camera camera(glm::vec3(0.0f, 0.0f, 0.0f), GL_FALSE);
+// we initialize an array of booleans for each keyboard key
+bool keys[1024];
+
+// we need to store the previous mouse position to calculate the offset with the current frame
+GLfloat lastX, lastY;
+
+// when rendering the first frame, we do not have a "previous state" for the mouse, so we need to manage this situation
+bool firstMouse = true;
+
+// parameters for time calculation (for animations)
+GLfloat deltaTime = 0.0f;
+GLfloat lastFrame = 0.0f;
+
+
 int main()
 {
     // glfw: initialize and configure
     // ------------------------------
     glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 #ifdef __APPLE__
@@ -57,6 +79,12 @@ int main()
         return -1;
     }
     glfwMakeContextCurrent(window);
+    // we put in relation the window and the callbacks
+    glfwSetKeyCallback(window, key_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+
+    // we disable the mouse cursor
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     // glad: load all OpenGL function pointers
@@ -91,7 +119,6 @@ int main()
     glSphereMesh::sphereModel = &sphereModel;
 
     shader.Use();
-    glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
     glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
     PointCloud PC;
@@ -122,26 +149,36 @@ int main()
     // -----------
     while (!glfwWindowShouldClose(window))
     {
-        // input
-        // -----
-        processInput(window);
+                // we determine the time passed from the beginning
+        // and we calculate time difference between current frame rendering and the previous one
+        GLfloat currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
 
-        // render
-        // ------
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        // Check is an I/O event is happening
+        glfwPollEvents();
+        // we apply FPS camera movements
+        apply_camera_movements();
+        // View matrix (=camera): position, view direction, camera "up" vector
+        viewMatrix = camera.GetViewMatrix();
+
+
+        // we "clear" the frame and z buffer
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
         // render your GUI
-        ImGui::Begin("Demo window");
-        ImGui::Button("Hello!");
+        ImGui::Begin("Controls");
         ImGui::End();
 
+        shader.Use();
+        glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
         glBindVertexArray(VAO);
         glDrawArrays(GL_POINTS, 0, 1000);
+
 
         
         ImGui::Render();
@@ -182,4 +219,65 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     // make sure the viewport matches the new window dimensions; note that width and 
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
+}
+
+//////////////////////////////////////////
+// callback for keyboard events
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
+{
+    GLuint new_subroutine;
+
+    // if ESC is pressed, we close the application
+    if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, GL_TRUE);
+
+    // we keep trace of the pressed keys
+    // with this method, we can manage 2 keys pressed at the same time:
+    // many I/O managers often consider only 1 key pressed at the time (the first pressed, until it is released)
+    // using a boolean array, we can then check and manage all the keys pressed at the same time
+    if(action == GLFW_PRESS)
+        keys[key] = true;
+    else if(action == GLFW_RELEASE)
+        keys[key] = false;
+}
+
+//////////////////////////////////////////
+// If one of the WASD keys is pressed, the camera is moved accordingly (the code is in utils/camera.h)
+void apply_camera_movements()
+{
+    if(keys[GLFW_KEY_W])
+        camera.ProcessKeyboard(FORWARD, deltaTime);
+    if(keys[GLFW_KEY_S])
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
+    if(keys[GLFW_KEY_A])
+        camera.ProcessKeyboard(LEFT, deltaTime);
+    if(keys[GLFW_KEY_D])
+        camera.ProcessKeyboard(RIGHT, deltaTime);
+}
+
+//////////////////////////////////////////
+// callback for mouse events
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+      // we move the camera view following the mouse cursor
+      // we calculate the offset of the mouse cursor from the position in the last frame
+      // when rendering the first frame, we do not have a "previous state" for the mouse, so we set the previous state equal to the initial values (thus, the offset will be = 0)
+      if(firstMouse)
+      {
+          lastX = xpos;
+          lastY = ypos;
+          firstMouse = false;
+      }
+
+      // offset of mouse cursor position
+      GLfloat xoffset = xpos - lastX;
+      GLfloat yoffset = lastY - ypos;
+
+      // the new position will be the previous one for the next frame
+      lastX = xpos;
+      lastY = ypos;
+
+      // we pass the offset to the Camera class instance in order to update the rendering
+      camera.ProcessMouseMovement(xoffset, yoffset);
+
 }
