@@ -13,7 +13,6 @@ using std::endl;
 
 using std::vector;
 
-Model* GlRendSphereMesh::sphereModel = nullptr;
 
 GlRendSphereMesh::GlRendSphereMesh(std::vector<Sphere> &pSpheres, std::vector<Edge> &pEdges, std::vector<Triangle> &pTriangles) : SphereMesh(pSpheres, pEdges, pTriangles)
 {

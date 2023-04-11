@@ -18,7 +18,6 @@ class GlRendSphereMesh : public IglRenderable, SphereMesh {
         unsigned int VAO, VBO;
         std::vector<PointCloud> pcs;
     public:
-        static Model* sphereModel;
         GlRendSphereMesh() = default;
         GlRendSphereMesh(std::vector<Sphere>& pSpheres, std::vector<Edge>& pEdges, std::vector<Triangle>& pTriangles);
         void Draw(const Shader& shader) override;
