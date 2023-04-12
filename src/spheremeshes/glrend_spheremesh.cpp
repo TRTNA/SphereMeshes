@@ -18,13 +18,7 @@ GlRendSphereMesh::GlRendSphereMesh(std::vector<Sphere> &pSpheres, std::vector<Ed
 {
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-}
-
-void GlRendSphereMesh::Draw(const Shader &shader)
-{   
     unsigned int pointNo = 10000;
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
     for (const auto& e : edges) {
         const Sphere& s1 = spheres.at(e.first);
         const Sphere& s2 = spheres.at(e.second);
@@ -36,7 +30,21 @@ void GlRendSphereMesh::Draw(const Shader &shader)
         for (size_t i = 0; i < pointNo; i++) {
             PC.addPoint(generatePoint(xRange, yRange, zRange));
         }
+        pcs.push_back(PC);
+    }
+}
 
+void GlRendSphereMesh::Draw(const Shader &shader)
+{   
+    unsigned int pointNo = 10000;
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    for (size_t i = 0; i < edges.size(); i++) {
+        const Sphere& s1 = spheres.at(edges.at(i).first);
+        const Sphere& s2 = spheres.at(edges.at(i).second);
+        float maxRadius = std::max(s1.radius, s2.radius);
+        PointCloud PC = pcs.at(i);
+        
         std::vector<glm::vec3> points = PC.getPoints();
         glBufferData(GL_ARRAY_BUFFER, pointNo * sizeof(glm::vec3), points.data(), GL_STATIC_DRAW);
 

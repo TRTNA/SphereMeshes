@@ -13,7 +13,6 @@
 #include <spheremeshes/spheremeshes.h>
 #include <utils/model.h>
 #include <utils/pointcloud.h>
-#include <utils/camera.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -40,7 +39,6 @@ const unsigned int SCR_HEIGHT = 800;
 
 typedef GlRendSphereMesh glSphereMesh;
 
-Camera camera(glm::vec3(0.0f, 0.0f, 0.0f), GL_FALSE);
 // we initialize an array of booleans for each keyboard key
 bool keys[1024];
 
@@ -50,8 +48,9 @@ GLfloat lastFrame = 0.0f;
 
 const float defaultRotationSpeed = 1.0f;
 glm::mat4 modelMatrix = glm::mat4(1.0f);
-
-
+glm::mat4 projectionMatrix = glm::mat4(1.0f);
+glm::vec3 viewPos = glm::vec3(0.0f, 0.0f, 0.0f);
+glm::mat4 viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 int main()
 {
     // glfw: initialize and configure
@@ -102,21 +101,21 @@ int main()
 
     
     // Projection matrix: FOV angle, aspect ratio, near and far planes
-    glm::mat4 projectionMatrix = glm::perspective(45.0f, (float)SCR_WIDTH/(float)SCR_HEIGHT, 0.1f, 10000.0f);
+    projectionMatrix = glm::perspective(45.0f, (float)SCR_WIDTH/(float)SCR_HEIGHT, 0.1f, 10000.0f);
     // View matrix (=camera): position, view direction, camera "up" vector
-    glm::mat4 viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 7.0f), glm::vec3(0.0f, 0.0f, -7.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat3 normalMatrix;
 
-    glSphereMesh sm(vector<Sphere>{Sphere(glm::vec3(-0.5f, 0.0f, 0.0f), 0.3f), Sphere(glm::vec3(0.5f, 0.0f, 0.0f), 0.5f), Sphere(glm::vec3(0.5f, 1.0f, 0.0f), 0.3f)}, vector<Edge>{Edge(0,1), Edge(1, 2)}, vector<Triangle>{});
+    glSphereMesh sm(vector<Sphere>{Sphere(glm::vec3(-0.5f, 0.0f, 0.0f), 0.3f), Sphere(glm::vec3(0.5f, 0.0f, 0.0f), 0.5f), Sphere(glm::vec3(0.5f, 1.0f, 0.0f), 0.3f), Sphere(glm::vec3(-0.5f, 1.0f, 0.0f), 0.1f)}, vector<Edge>{Edge(0,1), Edge(1, 2), Edge(0, 3)}, vector<Triangle>{});
 
     shader.Use();
     glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-
+    glPointSize(2.0f);
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
     {
-                // we determine the time passed from the beginning
+        // we determine the time passed from the beginning
         // and we calculate time difference between current frame rendering and the previous one
         GLfloat currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
@@ -126,9 +125,7 @@ int main()
         glfwPollEvents();
 
         apply_key_commands();
-        // View matrix (=camera): position, view direction, camera "up" vector
-        viewMatrix = camera.GetViewMatrix();
-
+        viewMatrix = glm::lookAt(viewPos, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
         // we "clear" the frame and z buffer
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -209,22 +206,33 @@ void apply_key_commands()
         return;
     }
     if(keys[GLFW_KEY_A]) {
-        modelMatrix = glm::rotate(modelMatrix, defaultRotationSpeed*deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
+        modelMatrix = glm::rotate(modelMatrix, -defaultRotationSpeed*deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
         return;
     }
     if(keys[GLFW_KEY_S]) {
-        modelMatrix = glm::rotate(modelMatrix, defaultRotationSpeed*deltaTime, glm::vec3(1.0f, 0.0f, 0.0f));
+        modelMatrix = glm::rotate(modelMatrix, -defaultRotationSpeed*deltaTime, glm::vec3(1.0f, 0.0f, 0.0f));
         return;
     }
     if(keys[GLFW_KEY_D])
     {        
-        modelMatrix = glm::rotate(modelMatrix, -defaultRotationSpeed*deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
+        modelMatrix = glm::rotate(modelMatrix, defaultRotationSpeed*deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
         return;
     }
     if(keys[GLFW_KEY_W]) {
-        modelMatrix = glm::rotate(modelMatrix, -defaultRotationSpeed*deltaTime, glm::vec3(1.0f, 0.0f, 0.0f));
+        modelMatrix = glm::rotate(modelMatrix, defaultRotationSpeed*deltaTime, glm::vec3(1.0f, 0.0f, 0.0f));
         return;
     }
+
+    if(keys[GLFW_KEY_Z] && keys[GLFW_KEY_I]) {
+        modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 0.0f, 1.0f*deltaTime));
+        return;
+    }
+
+    if(keys[GLFW_KEY_Z] && keys[GLFW_KEY_O]) {
+        modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 0.0f, -1.0f*deltaTime));
+        return;
+    }
+
 
 }
 
