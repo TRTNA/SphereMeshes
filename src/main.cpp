@@ -97,20 +97,18 @@ int main()
 
     // build and compile our shader program
     Shader shader("assets/shaders/capsule.vert", "assets/shaders/pointsplat.frag");
-    shader.Use();
 
     
     // Projection matrix: FOV angle, aspect ratio, near and far planes
-    projectionMatrix = glm::perspective(45.0f, (float)SCR_WIDTH/(float)SCR_HEIGHT, 0.1f, 10000.0f);
+    projectionMatrix = glm::perspective(45.0f, (float)SCR_WIDTH/(float)SCR_HEIGHT, 0.1f, 1000.0f);
     // View matrix (=camera): position, view direction, camera "up" vector
-    viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat3 normalMatrix;
 
     glSphereMesh sm(vector<Sphere>{Sphere(glm::vec3(-0.5f, 0.0f, 0.0f), 0.3f), Sphere(glm::vec3(0.5f, 0.0f, 0.0f), 0.5f), Sphere(glm::vec3(0.5f, 1.0f, 0.0f), 0.3f), Sphere(glm::vec3(-0.5f, 1.0f, 0.0f), 0.1f)}, vector<Edge>{Edge(0,1), Edge(1, 2), Edge(0, 3)}, vector<Triangle>{});
 
     shader.Use();
     glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-    glPointSize(2.0f);
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -224,12 +222,12 @@ void apply_key_commands()
     }
 
     if(keys[GLFW_KEY_Z] && keys[GLFW_KEY_I]) {
-        modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 0.0f, 1.0f*deltaTime));
+        viewPos.z -= 0.5f*deltaTime;
         return;
     }
 
     if(keys[GLFW_KEY_Z] && keys[GLFW_KEY_O]) {
-        modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 0.0f, -1.0f*deltaTime));
+        viewPos.z += 0.5f*deltaTime;
         return;
     }
 

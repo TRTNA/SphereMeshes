@@ -23,7 +23,7 @@ void main()
     vec3 C = capsA + clampedK*BminusA;
     float interpRadius = radiusA * (1.0 - clampedK) + radiusB * clampedK;
     normal = normalize(aPos - C);
-    gl_Position = viewMatrix * modelMatrix * vec4(C + interpRadius*normal, 1.0);
+    gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(C + interpRadius*normal, 1.0);
     normal = normalMatrix * normal;
 
 
