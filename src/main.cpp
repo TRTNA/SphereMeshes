@@ -114,7 +114,7 @@ int main()
 
     vector<Sphere> spheres{Sphere(glm::vec3(-0.5f, 0.0f, 0.0f), 0.3f), Sphere(glm::vec3(0.5f, 0.0f, 0.0f), 0.5f), Sphere(glm::vec3(0.5f, 1.0f, 0.0f), 0.3f), Sphere(glm::vec3(-0.5f, 1.0f, 0.0f), 0.1f)};
     vector<Edge> edges{Edge(0, 1), Edge(1, 2), Edge(0, 3)};
-    glSphereMesh sm(spheres, edges, vector<Triangle>{}, 1000000U);
+    glSphereMesh* sm = new glSphereMesh(spheres, edges, vector<Triangle>{}, 10000U);
 
     shader.Use();
     glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
@@ -147,7 +147,13 @@ int main()
         ImGui::NewFrame();
 
         // render your GUI
-        ImGui::Begin("Controls", false, 0);
+        ImGui::Begin("Controls");
+        int pointsNumber = 10000;
+        bool pointsNumberChanged = ImGui::SliderInt("Points number", &pointsNumber, 100, 1000000);
+        if (pointsNumberChanged) {
+            sm->setPointsNumber(pointsNumber);
+            sm->regeneratePoints();
+        }
         ImGui::End();
 
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
@@ -160,7 +166,7 @@ int main()
             glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &diffuseColouringSubroutineIndex);
         }
 
-        sm.Draw(shader);
+        sm->Draw(shader);
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

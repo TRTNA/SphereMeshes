@@ -18,12 +18,14 @@ static const unsigned int DEFAULT_POINTS_NUMBER = 10000;
 class GlRendSphereMesh : public IglRenderable, SphereMesh {
     private:
         unsigned int VAO, VBO;
-        const unsigned int pointsNumber;
+        unsigned int pointsNumber;
         std::vector<std::shared_ptr<PointCloud>> pcs;
     public:
         GlRendSphereMesh(unsigned int pointsNumber = DEFAULT_POINTS_NUMBER);
         GlRendSphereMesh(std::vector<Sphere>& pSpheres, std::vector<Edge>& pEdges, std::vector<Triangle>& pTriangles, unsigned int pointsNumber = DEFAULT_POINTS_NUMBER);
         void Draw(const Shader& shader) override;
+        void setPointsNumber(unsigned int pPointsNumber);
+        void regeneratePoints();
         ~GlRendSphereMesh();
 };
 
