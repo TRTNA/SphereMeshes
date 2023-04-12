@@ -49,7 +49,7 @@ GLfloat lastFrame = 0.0f;
 const float defaultRotationSpeed = 1.0f;
 glm::mat4 modelMatrix = glm::mat4(1.0f);
 glm::mat4 projectionMatrix = glm::mat4(1.0f);
-glm::vec3 viewPos = glm::vec3(0.0f, 0.0f, 0.0f);
+glm::vec3 viewPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::mat4 viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 int main()
 {
@@ -66,7 +66,7 @@ int main()
 
     // glfw window creation
     // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "SphereMesh_PointCloudViewer", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -102,7 +102,7 @@ int main()
     // Projection matrix: FOV angle, aspect ratio, near and far planes
     projectionMatrix = glm::perspective(45.0f, (float)SCR_WIDTH/(float)SCR_HEIGHT, 0.1f, 1000.0f);
     // View matrix (=camera): position, view direction, camera "up" vector
-    viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    viewMatrix = glm::lookAt(viewPos, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat3 normalMatrix;
 
     glSphereMesh sm(vector<Sphere>{Sphere(glm::vec3(-0.5f, 0.0f, 0.0f), 0.3f), Sphere(glm::vec3(0.5f, 0.0f, 0.0f), 0.5f), Sphere(glm::vec3(0.5f, 1.0f, 0.0f), 0.3f), Sphere(glm::vec3(-0.5f, 1.0f, 0.0f), 0.1f)}, vector<Edge>{Edge(0,1), Edge(1, 2), Edge(0, 3)}, vector<Triangle>{});
@@ -222,7 +222,7 @@ void apply_key_commands()
     }
 
     if(keys[GLFW_KEY_Z] && keys[GLFW_KEY_I]) {
-        viewPos.z -= 0.5f*deltaTime;
+        viewPos.z = glm::max(0.0f, viewPos.z - 0.5f*deltaTime);
         return;
     }
 
