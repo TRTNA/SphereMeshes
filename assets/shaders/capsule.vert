@@ -13,6 +13,7 @@ uniform mat4 modelMatrix;
 
 out vec3 normal;
 
+
 void main()
 {
     
@@ -25,6 +26,4 @@ void main()
     normal = normalize(aPos - C);
     gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(C + interpRadius*normal, 1.0);
     normal = normalMatrix * normal;
-
-
 }

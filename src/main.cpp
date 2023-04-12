@@ -47,10 +47,17 @@ GLfloat deltaTime = 0.0f;
 GLfloat lastFrame = 0.0f;
 
 const float defaultRotationSpeed = 1.0f;
+const glm::vec3 defaultViewPos = glm::vec3(0.0f, 0.0f, 3.0f);
+
 glm::mat4 modelMatrix = glm::mat4(1.0f);
+glm::mat4 viewMatrix = glm::mat4(1.0f);
 glm::mat4 projectionMatrix = glm::mat4(1.0f);
-glm::vec3 viewPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::mat4 viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+
+glm::vec3 viewPos = defaultViewPos;
+
+bool useNormalColouring = false;
+
 int main()
 {
     // glfw: initialize and configure
@@ -97,7 +104,7 @@ int main()
 
     // build and compile our shader program
     Shader shader("assets/shaders/capsule.vert", "assets/shaders/pointsplat.frag");
-
+    glClearColor(0.3f, 0.3f, 0.6f, 1.0f);  
     
     // Projection matrix: FOV angle, aspect ratio, near and far planes
     projectionMatrix = glm::perspective(45.0f, (float)SCR_WIDTH/(float)SCR_HEIGHT, 0.1f, 1000.0f);
@@ -105,10 +112,17 @@ int main()
     viewMatrix = glm::lookAt(viewPos, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat3 normalMatrix;
 
-    glSphereMesh sm(vector<Sphere>{Sphere(glm::vec3(-0.5f, 0.0f, 0.0f), 0.3f), Sphere(glm::vec3(0.5f, 0.0f, 0.0f), 0.5f), Sphere(glm::vec3(0.5f, 1.0f, 0.0f), 0.3f), Sphere(glm::vec3(-0.5f, 1.0f, 0.0f), 0.1f)}, vector<Edge>{Edge(0,1), Edge(1, 2), Edge(0, 3)}, vector<Triangle>{});
+    vector<Sphere> spheres{Sphere(glm::vec3(-0.5f, 0.0f, 0.0f), 0.3f), Sphere(glm::vec3(0.5f, 0.0f, 0.0f), 0.5f), Sphere(glm::vec3(0.5f, 1.0f, 0.0f), 0.3f), Sphere(glm::vec3(-0.5f, 1.0f, 0.0f), 0.1f)};
+    vector<Edge> edges{Edge(0, 1), Edge(1, 2), Edge(0, 3)};
+    glSphereMesh sm(spheres, edges, vector<Triangle>{}, 1000000U);
 
     shader.Use();
     glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+    GLuint normalColouringSubroutineIndex = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "normalColouring");
+    GLuint diffuseColouringSubroutineIndex = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "diffuseColouring");
+    GLint activeSubroutineCount;
+    glGetProgramStageiv(shader.Program, GL_FRAGMENT_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &activeSubroutineCount);
+    
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -133,20 +147,25 @@ int main()
         ImGui::NewFrame();
 
         // render your GUI
-        ImGui::Begin("Controls");
+        ImGui::Begin("Controls", false, 0);
         ImGui::End();
 
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
         normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix)));
         glUniformMatrix3fv(glGetUniformLocation(shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
+        if (useNormalColouring) {
+            glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &normalColouringSubroutineIndex);
+        } else {
+            glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &diffuseColouringSubroutineIndex);
+        }
 
         sm.Draw(shader);
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
- 
+
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
@@ -200,6 +219,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 void apply_key_commands()
 {
     if(keys[GLFW_KEY_R]){
+        viewPos = defaultViewPos;
         modelMatrix = glm::mat4(1.0f);
         return;
     }
@@ -228,6 +248,15 @@ void apply_key_commands()
 
     if(keys[GLFW_KEY_Z] && keys[GLFW_KEY_O]) {
         viewPos.z += 0.5f*deltaTime;
+        return;
+    }
+
+    if(keys[GLFW_KEY_N]) {
+        useNormalColouring = true;
+        return;
+    }
+    if(keys[GLFW_KEY_C]) {
+        useNormalColouring = false;
         return;
     }
 

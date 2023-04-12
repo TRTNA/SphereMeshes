@@ -10,16 +10,19 @@
 #include <spheremeshes/spheremesh.h>
 #include <utils/pointcloud.h>
 
-
+#include <memory>
 #include <vector>
+
+static const unsigned int DEFAULT_POINTS_NUMBER = 10000;
 
 class GlRendSphereMesh : public IglRenderable, SphereMesh {
     private:
         unsigned int VAO, VBO;
-        std::vector<PointCloud> pcs;
+        const unsigned int pointsNumber;
+        std::vector<std::shared_ptr<PointCloud>> pcs;
     public:
-        GlRendSphereMesh() = default;
-        GlRendSphereMesh(std::vector<Sphere>& pSpheres, std::vector<Edge>& pEdges, std::vector<Triangle>& pTriangles);
+        GlRendSphereMesh(unsigned int pointsNumber = DEFAULT_POINTS_NUMBER);
+        GlRendSphereMesh(std::vector<Sphere>& pSpheres, std::vector<Edge>& pEdges, std::vector<Triangle>& pTriangles, unsigned int pointsNumber = DEFAULT_POINTS_NUMBER);
         void Draw(const Shader& shader) override;
         ~GlRendSphereMesh();
 };
