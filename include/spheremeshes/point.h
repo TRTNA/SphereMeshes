@@ -7,5 +7,5 @@ struct Point {
 
 struct ColoredPoint : public Point {
     glm::vec3 color;
-}
+};
 
