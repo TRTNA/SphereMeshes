@@ -20,10 +20,6 @@ const Sphere& getBiggerSphere(const Sphere& s1, const Sphere& s2);
 
 Sphere computeBoundingSphere(const Sphere& s1, const Sphere& s2);
 
-//TODO
-// metodo che restituisce punto casuale nella sfera
-// punto a caso nel cubo che contiene la sfera (3 numeri random x,y,z)
-// se è fuori dalla sfera, lo scarto e reitero finchè non è dentro.
 Point getRandomPointInSphere(const Sphere& sphere);
 
 AABB computeAABB(const Sphere& sphere);
