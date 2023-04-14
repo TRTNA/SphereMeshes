@@ -129,8 +129,9 @@ int main()
 
     Sphere s1(glm::vec3(0.0f), 1.0f);
     Sphere s2(glm::vec3(3.0f, 0.0f, 0.0f), 2.0f);
-    Sphere s3 = computeBoundingSphere(s1, s2);
-    cout << glm::to_string(s3.center) << " " << s3.radius << endl;
+    Sphere s3(glm::vec3(-2.0f), 1.0f);
+    Sphere b = computeBoundingSphere(std::vector<Sphere> {s1, s2, s3});
+    cout << glm::to_string(b.center) << " " << b.radius << endl;
     
     // render loop
     // -----------
