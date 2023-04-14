@@ -13,6 +13,8 @@ struct Sphere {
 
 std::ostream& operator<<(std::ostream& ost, const Sphere& val);
 
+const Sphere& getBiggerSphere(const Sphere& s1, const Sphere& s2);
+
 //TODO
 // metodo che date due sfere restituisce la sfera più piccola che le contenga entrambe
 Sphere computeBoundingSphere(const Sphere& s1, const Sphere& s2);
