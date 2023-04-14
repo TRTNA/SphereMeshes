@@ -1,5 +1,4 @@
-#ifndef _POINTCLOUD_H
-#define _POINTCLOUD_H
+#pragma once
 
 #include <vector>
 
@@ -16,7 +15,7 @@ class PointCloud {
     private:
         std::vector<ColoredPoint> point;
         //invoca pushOutside della spheremesh, se ritorna dimensionality!=-1 allora da un colore altrimenti rirolla il punto
-        void addPoint(const SphereMesh& sphereMesh)
+        void addPoint(const SphereMesh& sphereMesh);
     public:
         //itera per nPoints generate random inside della sfera passata
         // se nPoints > point.size(), aggiungo nPoints-puntiattuali punti
@@ -28,6 +27,3 @@ class PointCloud {
 
 //TODO funzione draw per OpenGL
 //mi farò un'altra classe o .h per fare draw
-
-
-#endif

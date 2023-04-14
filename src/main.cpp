@@ -5,12 +5,15 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-
 #include <iostream>
 #include <vector>
 
+#include <spheremeshes/spheremesh.h>
+#include <spheremeshes/edge.h>
+#include <spheremeshes/triangle.h>
+#include <spheremeshes/glrend_spheremesh.h>
+
 #include <utils/shader.h>
-#include <spheremeshes/spheremeshes.h>
 #include <utils/model.h>
 #include <utils/pointcloud.h>
 
@@ -18,7 +21,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
+#include <glm/gtx/string_cast.hpp>
 
 using std::cout;
 using std::endl;
@@ -123,6 +126,11 @@ int main()
     GLuint diffuseColouringSubroutineIndex = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "diffuseColouring");
     GLint activeSubroutineCount;
     glGetProgramStageiv(shader.Program, GL_FRAGMENT_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &activeSubroutineCount);
+
+    Sphere s1(glm::vec3(0.0f), 1.0f);
+    Sphere s2(glm::vec3(3.0f, 0.0f, 0.0f), 2.0f);
+    Sphere s3 = computeBoundingSphere(s1, s2);
+    cout << glm::to_string(s3.center) << " " << s3.radius << endl;
     
     // render loop
     // -----------
@@ -149,13 +157,13 @@ int main()
 
         // render your GUI
         ImGui::Begin("Controls");
-        int pointsNumber = 10000;
+/*        int pointsNumber = 10000;
         bool pointsNumberChanged = ImGui::SliderInt("Points number", &pointsNumber, 100, 1000000);
         if (pointsNumberChanged) {
             sm->setPointsNumber(pointsNumber);
             sm->regeneratePoints();
         }
-        ImGui::End();
+        ImGui::End();*/
 
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));

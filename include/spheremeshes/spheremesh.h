@@ -1,5 +1,4 @@
-#ifndef _SPHEREMESH_H
-#define _SPHEREMESH_H
+#pragma once
 
 #include <vector>
 #include <string>
@@ -56,5 +55,3 @@ class SphereMesh {
 // metodi push outside sphere, capsule e triangle
 
 std::ostream& operator<<(std::ostream& ost, const SphereMesh& sm);
-
-#endif
