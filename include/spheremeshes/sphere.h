@@ -3,6 +3,9 @@
 #include <glm/vec3.hpp>
 #include <glm/geometric.hpp>
 #include <ostream>
+#include <vector>
+
+using std::vector;
 
 struct Point;
 class AABB;
@@ -19,6 +22,8 @@ std::ostream& operator<<(std::ostream& ost, const Sphere& val);
 const Sphere& getBiggerSphere(const Sphere& s1, const Sphere& s2);
 
 Sphere computeBoundingSphere(const Sphere& s1, const Sphere& s2);
+
+Sphere computeBoundingSphere(std::vector<Sphere> spheres);
 
 Point getRandomPointInSphere(const Sphere& sphere);
 

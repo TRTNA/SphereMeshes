@@ -8,6 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "spheremesh.h"
 
 using std::clog;
 using std::endl;
@@ -38,7 +39,12 @@ void SphereMesh::addTriangle(const Triangle& triangle) {
     triangles.emplace_back(triangle.vertices);
 }
 
-std::string SphereMesh::toString() const {
+void SphereMesh::updateBoundingSphere()
+{
+    boundingSphere = computeBoundingSphere(spheres);
+}
+std::string SphereMesh::toString() const
+{
     stringstream ss;
     ss << "Spheres:\n";
     for(size_t i = 0; i < spheres.size(); i++) {

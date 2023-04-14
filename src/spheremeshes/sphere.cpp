@@ -50,6 +50,16 @@ Point getRandomPointInSphere(const Sphere& sphere) {
     }
 }
 
+Sphere computeBoundingSphere(std::vector<Sphere> spheres) {
+    if (spheres.size() == 0) return Sphere();
+    if (spheres.size() == 1) return spheres.at(0);
+    Sphere& boundingSphere = spheres.at(0);
+    for (size_t i = 1; i < spheres.size() - 1; i++) {
+        boundingSphere = computeBoundingSphere(boundingSphere, spheres.at(i));
+    }
+    return boundingSphere;
+}
+
 AABB computeAABB(const Sphere& sphere) {
     return AABB(
         floatRange(sphere.center.x - sphere.radius, sphere.center.x + sphere.radius),
