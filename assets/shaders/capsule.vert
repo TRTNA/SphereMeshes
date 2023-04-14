@@ -20,6 +20,9 @@ void main()
     vec3 BminusA = capsB - capsA;
     float BminusAsqrd = dot(BminusA, BminusA);
     float k = dot(aPos - capsA, BminusA) / BminusAsqrd;
+    //factor() dipende solo dalla capsula, differenza tra i raggi diviso la distanza tra gli estremi
+    float factor = (radiusA - radiusB) / (length(BminusA));
+    k -= factor * length(aPos - (capsA + k*BminusA));
     float clampedK = clamp(k, 0.0, 1.0); 
     vec3 C = capsA + clampedK*BminusA;
     float interpRadius = radiusA * (1.0 - clampedK) + radiusB * clampedK;

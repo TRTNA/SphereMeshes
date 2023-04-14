@@ -117,6 +117,7 @@ int main()
     glSphereMesh* sm = new glSphereMesh(spheres, edges, vector<Triangle>{}, 10000U);
 
     shader.Use();
+    glPointSize(5.0f);
     glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
     GLuint normalColouringSubroutineIndex = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "normalColouring");
     GLuint diffuseColouringSubroutineIndex = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "diffuseColouring");

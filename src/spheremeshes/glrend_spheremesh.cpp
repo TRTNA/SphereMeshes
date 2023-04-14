@@ -36,7 +36,8 @@ GlRendSphereMesh::GlRendSphereMesh(std::vector<Sphere> &pSpheres, std::vector<Ed
 
 GlRendSphereMesh::GlRendSphereMesh(unsigned int pPointsNumber) : SphereMesh(), pointsNumber(pPointsNumber) {}
 
-
+//TODO il punto deve essere spinto fuori in CPU non in vertex shader
+//
 void GlRendSphereMesh::Draw(const Shader &shader)
 {   
     glBindVertexArray(VAO);

@@ -26,6 +26,7 @@ class GlRendSphereMesh : public IglRenderable, SphereMesh {
         void Draw(const Shader& shader) override;
         void setPointsNumber(unsigned int pPointsNumber);
         void regeneratePoints();
+        
         ~GlRendSphereMesh();
 };
 
