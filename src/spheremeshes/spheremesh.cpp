@@ -8,6 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "spheremesh.h"
 
 using std::clog;
 using std::endl;
@@ -60,6 +61,38 @@ std::string SphereMesh::toString() const
         ss << i << " " << triangles.at(i) << "\n";
     }
     return ss.str();
+}
+Point SphereMesh::pushOutsideOneCapsule(uint capsuleIndex, const glm::vec3 &pos, int &dimensionality)
+{
+    const Edge& edge = edges.at(capsuleIndex);
+    const Sphere& A = spheres.at(edge.first);
+    const Sphere& B = spheres.at(edge.first);
+
+    const glm::vec3 BminusA = B.center - A.center;
+    const float BminusAsqrd = glm::dot(BminusA, BminusA);
+    float k = glm::dot(pos - A.center, BminusA) / BminusAsqrd;
+    const float factor = (A.radius - B.radius) / length(BminusA);
+    k -= factor * length(pos - (A.center + k*BminusA));
+    const float clampedK = glm::clamp(k, 0.0f, 1.0f);
+
+    const glm::vec3 C = A.center + clampedK*BminusA;
+    const glm::vec3 CtoPos = pos - C;
+    const float CtoPossqrd = glm::dot(CtoPos, CtoPos);
+    const float interpRadius = A.radius * (1.0f - clampedK) + B.radius * clampedK;
+
+    //pos is outside the capsule, dimensionality is -1 (not pushed out)
+    if (CtoPossqrd > interpRadius*interpRadius) {
+        dimensionality = -1;
+        return Point(pos, glm::vec3(0.0f));
+    }
+
+    //if we are here, pos is inside the capsule
+    //dimensionality depends on K value
+    //if clampedK == k then pos is inside the cylinder, so dimensionality = 1
+    //else pos is inside one of the spheres, so dimensionality = 0
+    dimensionality = k == clampedK ? 1 : 0;
+    const glm::vec3 normal = glm::normalize(CtoPos);
+    return Point(glm::vec3(C + interpRadius*normal), normal);
 }
 
 std::ostream& operator<<(std::ostream& ost, const SphereMesh& sm) {

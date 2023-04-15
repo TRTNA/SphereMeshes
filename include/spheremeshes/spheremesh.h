@@ -30,17 +30,16 @@ class SphereMesh {
     void addSphere(const Sphere& phere);
     void addEdge(const Edge& edge);
     void addTriangle(const Triangle& triangle);
-    //una per una le fondo col metodo di sphere che trova sfera più piccola alla fine bounding sphere
     void updateBoundingSphere();
     std::string toString() const;
     //serve sapere la dimensionalità di cosa l'ha spinto fuori
     // dimensionality = 0 = sfera, = 1 =segmento, =2=triangolo, =-1=ero già fuori
     // itero push fuori da tutto e mi fermo quando?
     // getRandomPointOnSurface --> genera un punto sulla superficie della sfera colorato a seconda di chi lo ha spinto fuori
-    // genera un punto, prova a spingerlo fuori, se nessuno lo spinge lo fuori riprova, altrimenti assegna colore e ritorna.
+    // genera un punto, prova a spingerlo fuori, se nessuno lo spinge fuori riprova, altrimenti assegna colore e ritorna.
     Point pushOutside(const glm::vec3& point, int& dimensionality); 
     private:
-    Point pushOutsideOneCapsule(uint capsuleIndex, const glm::vec3& point, int& dimensionality);
+    Point pushOutsideOneCapsule(uint capsuleIndex, const glm::vec3& pos, int& dimensionality);
     Point pushOutsideOneTriangle(uint triangleIndex, const glm::vec3& point, int& dimensionality);
     Point pushOutsideOneSingleton(uint singletonIndex, const glm::vec3& point, int& dimensionality);
 
