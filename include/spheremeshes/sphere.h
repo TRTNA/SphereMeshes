@@ -23,7 +23,6 @@ const Sphere& getBiggerSphere(const Sphere& s1, const Sphere& s2);
 
 Sphere computeBoundingSphere(const Sphere& s1, const Sphere& s2);
 
-//TODO DA TESTARE FORSE NON FUNZA
 Sphere computeBoundingSphere(std::vector<Sphere> spheres);
 
 Point getRandomPointInSphere(const Sphere& sphere);
