@@ -62,6 +62,34 @@ std::string SphereMesh::toString() const
     }
     return ss.str();
 }
+Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality)
+{
+    //should iterate over all primitives and perform the right push out
+    //for now it iterates only on capsules
+    bool outsideEverything = false;
+    Point lastPoint = Point(pos, glm::vec3(0.0f));
+    int lastDimensionality = -1;
+    while (! outsideEverything) {
+        //storing last position, because it may vary when it is pushed by multiple primitives
+        glm::vec3 lastPos = lastPoint.pos;
+        int tempDimensionality = -1;
+        for (size_t idx = 0; idx < edges.size(); idx++) {
+            Point tempPoint = pushOutsideOneCapsule(idx, lastPos, tempDimensionality);
+            if (tempDimensionality != -1) {
+                //has been pushed outside
+                //break loop on edges and restart it
+                lastDimensionality = tempDimensionality;
+                lastPoint = tempPoint;
+                break;
+            }
+        }
+        //if nobody changed tempDimensionality point is outside every capsule
+        outsideEverything = tempDimensionality == -1;
+    }
+    dimensionality = lastDimensionality;
+    return lastPoint;
+
+}
 Point SphereMesh::pushOutsideOneCapsule(uint capsuleIndex, const glm::vec3 &pos, int &dimensionality)
 {
     const Edge& edge = edges.at(capsuleIndex);
