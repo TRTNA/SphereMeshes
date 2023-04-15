@@ -11,7 +11,7 @@
 #include <spheremeshes/spheremesh.h>
 #include <spheremeshes/edge.h>
 #include <spheremeshes/triangle.h>
-#include <spheremeshes/glrend_spheremesh.h>
+#include <utils/glrend_spheremesh.h>
 
 #include <utils/shader.h>
 #include <utils/model.h>
@@ -164,7 +164,8 @@ int main()
             sm->setPointsNumber(pointsNumber);
             sm->regeneratePoints();
         }
-        ImGui::End();*/
+        */
+        ImGui::End();
 
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));

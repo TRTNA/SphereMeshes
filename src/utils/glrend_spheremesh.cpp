@@ -1,4 +1,4 @@
-#include <spheremeshes/glrend_spheremesh.h>
+#include <utils/glrend_spheremesh.h>
 
 using std::vector;
 

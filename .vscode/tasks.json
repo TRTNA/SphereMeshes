@@ -4,29 +4,55 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build",
+            "label": "main_build",
             "type": "shell",
-            "command": "./MakefileWin.bat"
+            "command": "./MakefileWinMain.bat"
         },
         {
-            "label": "buildAndRun",
+            "label": "main_buildAndRun",
             "type": "shell",
             "command": "./main.exe",
             "dependsOn": [
-                "build"
+                "main_build"
             ],
             "problemMatcher": []
         },
         {
-            "label": "run",
+            "label": "main_run",
             "type": "shell",
             "command": "./main.exe",
             "problemMatcher": []
         },
         {
-            "label": "clean",
+            "label": "main_clean",
             "type": "shell",
-            "command": "./MakefileWin.bat clean",
+            "command": "./MakefileWinMain.bat clean",
+            "problemMatcher": []
+        },
+        {
+            "label": "test_build",
+            "type": "shell",
+            "command": "./MakefileWinTest.bat"
+        },
+        {
+            "label": "test_buildAndRun",
+            "type": "shell",
+            "command": "./test.exe",
+            "dependsOn": [
+                "test_build"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "test_run",
+            "type": "shell",
+            "command": "./test.exe",
+            "problemMatcher": []
+        },
+        {
+            "label": "test_clean",
+            "type": "shell",
+            "command": "./MakefileWinTest.bat clean",
             "problemMatcher": []
         }
     ]
