@@ -62,7 +62,7 @@ std::string SphereMesh::toString() const
     }
     return ss.str();
 }
-Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality)
+Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality) const
 {
     //should iterate over all primitives and perform the right push out
     //for now it iterates only on capsules
@@ -90,7 +90,7 @@ Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality)
     return lastPoint;
 
 }
-Point SphereMesh::pushOutsideOneCapsule(uint capsuleIndex, const glm::vec3 &pos, int &dimensionality)
+Point SphereMesh::pushOutsideOneCapsule(uint capsuleIndex, const glm::vec3 &pos, int &dimensionality) const
 {
     const Edge& edge = edges.at(capsuleIndex);
     const Sphere& A = spheres.at(edge.first);

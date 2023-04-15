@@ -37,11 +37,11 @@ class SphereMesh {
     // itero push fuori da tutto e mi fermo quando?
     // getRandomPointOnSurface --> genera un punto sulla superficie della sfera colorato a seconda di chi lo ha spinto fuori
     // genera un punto, prova a spingerlo fuori, se nessuno lo spinge fuori riprova, altrimenti assegna colore e ritorna.
-    Point pushOutside(const glm::vec3& pos, int& dimensionality); 
+    Point pushOutside(const glm::vec3& pos, int& dimensionality) const;
     private:
-    Point pushOutsideOneCapsule(uint capsuleIndex, const glm::vec3& pos, int& dimensionality);
-    Point pushOutsideOneTriangle(uint triangleIndex, const glm::vec3& pos, int& dimensionality);
-    Point pushOutsideOneSingleton(uint singletonIndex, const glm::vec3& pos, int& dimensionality);
+    Point pushOutsideOneCapsule(uint capsuleIndex, const glm::vec3& pos, int& dimensionality) const;
+    Point pushOutsideOneTriangle(uint triangleIndex, const glm::vec3& pos, int& dimensionality) const;
+    Point pushOutsideOneSingleton(uint singletonIndex, const glm::vec3& pos, int& dimensionality) const;
 
 };
 
