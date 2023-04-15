@@ -36,7 +36,7 @@ Sphere computeBoundingSphere(const Sphere& s1, const Sphere& s2)
     return Sphere(C, R);
 }
 
-Point getRandomPointInSphere(const Sphere& sphere) {
+glm::vec3 getRandomPositionInSphere(const Sphere& sphere) {
     Point point;
     const AABB& sphereAABB = computeAABB(sphere);
     //infinite loop but it's okay, high probability of having a point inside the sphere in some iterations
@@ -45,7 +45,7 @@ Point getRandomPointInSphere(const Sphere& sphere) {
         glm::vec3 centerToPos = pointPos - sphere.center;
         //generated position is inside the sphere, so return the Point with position pointPos
         if (glm::dot(centerToPos, centerToPos) < sphere.radius*sphere.radius) {
-            return Point(pointPos, glm::vec3(0.0f));
+            return pointPos;
         }
     }
 }

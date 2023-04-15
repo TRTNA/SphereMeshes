@@ -25,6 +25,6 @@ Sphere computeBoundingSphere(const Sphere& s1, const Sphere& s2);
 
 Sphere computeBoundingSphere(std::vector<Sphere> spheres);
 
-Point getRandomPointInSphere(const Sphere& sphere);
+glm::vec3 getRandomPositionInSphere(const Sphere& sphere);
 
 AABB computeAABB(const Sphere& sphere);
