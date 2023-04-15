@@ -13,7 +13,7 @@ class SphereMesh; // <-- forward declaration per cose secondarie
 
 class PointCloud {
     private:
-        std::vector<ColoredPoint> point;
+        std::vector<ColoredPoint> points;
         //invoca pushOutside della spheremesh, se ritorna dimensionality!=-1 allora da un colore altrimenti rirolla il punto
         void addPoint(const SphereMesh& sphereMesh);
     public:
