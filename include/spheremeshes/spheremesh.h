@@ -23,6 +23,9 @@ class SphereMesh {
     std::vector<uint> singleton;
     std::vector<Edge> edges;
     std::vector<Triangle> triangles;
+    //TODO moltiplica tutti i punti e raggi per k (voledno metodo scale su sphere da invocare su ognuna)
+    //e aggiorna boundingsphere subito dopo, scala anche la boundingSphere
+    void scale(float k);
     Sphere boundingSphere;
     SphereMesh() = default;
     SphereMesh(std::vector<Sphere>& pSpheres, std::vector<Edge>& pEdges, std::vector<Triangle>& pTriangles);
@@ -46,11 +49,6 @@ class SphereMesh {
 };
 
 
-//TODO
-// Metodo che costruisce point cloud popolandola con una sphere mesh
-// prende bounding sphere della sphere mesh, la popola con punti casuali nella bounding sphere
-// ogni punto lo butta fuori da tutti i componenti della sphere mesh (SU CPU) finchè quel punto non è sulla superficie di uno è fuori da tutti gli altri
-// processo iterativo che continua a spingerlo finchè non è sulla superficie 
-// metodi push outside sphere, capsule e triangle
+
 
 std::ostream& operator<<(std::ostream& ost, const SphereMesh& sm);

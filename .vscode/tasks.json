@@ -6,7 +6,8 @@
         {
             "label": "main_build",
             "type": "shell",
-            "command": "./MakefileWinMain.bat"
+            "command": "./MakefileWinMain.bat",
+            "problemMatcher": []
         },
         {
             "label": "main_buildAndRun",

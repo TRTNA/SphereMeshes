@@ -7,11 +7,12 @@
 
 #include <iostream>
 #include <vector>
+#include <memory>
 
 #include <spheremeshes/spheremesh.h>
 #include <spheremeshes/edge.h>
 #include <spheremeshes/triangle.h>
-#include <utils/glrend_spheremesh.h>
+#include <utils/renderablepointcloud.h>
 
 #include <utils/shader.h>
 #include <utils/model.h>
@@ -40,7 +41,6 @@ void apply_key_commands();
 const unsigned int SCR_WIDTH = 1200;
 const unsigned int SCR_HEIGHT = 800;
 
-typedef GlRendSphereMesh glSphereMesh;
 
 // we initialize an array of booleans for each keyboard key
 bool keys[1024];
@@ -106,7 +106,7 @@ int main()
     ImGui_ImplOpenGL3_Init("#version 410");
 
     // build and compile our shader program
-    Shader shader("assets/shaders/capsule.vert", "assets/shaders/pointsplat.frag");
+    Shader shader("assets/shaders/default.vert", "assets/shaders/default.frag");
     glClearColor(0.3f, 0.3f, 0.6f, 1.0f);  
     
     // Projection matrix: FOV angle, aspect ratio, near and far planes
@@ -117,22 +117,22 @@ int main()
 
     vector<Sphere> spheres{Sphere(glm::vec3(-0.5f, 0.0f, 0.0f), 0.3f), Sphere(glm::vec3(0.5f, 0.0f, 0.0f), 0.5f), Sphere(glm::vec3(0.5f, 1.0f, 0.0f), 0.3f), Sphere(glm::vec3(-0.5f, 1.0f, 0.0f), 0.1f)};
     vector<Edge> edges{Edge(0, 1), Edge(1, 2), Edge(0, 3)};
-    glSphereMesh* sm = new glSphereMesh(spheres, edges, vector<Triangle>{}, 10000U);
+    SphereMesh sm = SphereMesh(spheres, edges, vector<Triangle>{});
+    PointCloud pc = PointCloud();
+    pc.repopulate(10000U, sm);
+    std::shared_ptr<PointCloud> pc_ptr = std::make_shared<PointCloud>(pc);
+    RenderablePointCloud rpc = RenderablePointCloud(pc_ptr);
+
 
     shader.Use();
     glPointSize(5.0f);
     glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-    GLuint normalColouringSubroutineIndex = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "normalColouring");
+    /* GLuint normalColouringSubroutineIndex = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "normalColouring");
     GLuint diffuseColouringSubroutineIndex = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "diffuseColouring");
     GLint activeSubroutineCount;
     glGetProgramStageiv(shader.Program, GL_FRAGMENT_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &activeSubroutineCount);
 
-    Sphere s1(glm::vec3(0.0f), 1.0f);
-    Sphere s2(glm::vec3(3.0f, 0.0f, 0.0f), 2.0f);
-    Sphere s3(glm::vec3(-2.0f), 1.0f);
-    Sphere b = computeBoundingSphere(std::vector<Sphere> {s1, s2, s3});
-    cout << glm::to_string(b.center) << " " << b.radius << endl;
-    
+     */
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -165,19 +165,22 @@ int main()
             sm->regeneratePoints();
         }
         */
+
+
         ImGui::End();
 
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
         normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix)));
-        glUniformMatrix3fv(glGetUniformLocation(shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
-        if (useNormalColouring) {
+        //glUniformMatrix3fv(glGetUniformLocation(shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
+/*         if (useNormalColouring) {
             glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &normalColouringSubroutineIndex);
         } else {
             glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &diffuseColouringSubroutineIndex);
-        }
+        } */
+        rpc.Draw(shader);
 
-        sm->Draw(shader);
+
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
