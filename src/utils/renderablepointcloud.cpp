@@ -27,7 +27,8 @@ void RenderablePointCloud::updateBuffers()
 {
     glBindVertexArray(this->VAO);
     glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
-    glBufferData(GL_ARRAY_BUFFER, pointCloud->getPointsNumber() * sizeof(ColoredPoint), pointCloud->pointerToData(), GL_STATIC_DRAW);
+    pointsNumber = pointCloud->getPointsNumber();
+    glBufferData(GL_ARRAY_BUFFER, pointsNumber * sizeof(ColoredPoint), pointCloud->pointerToData(), GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredPoint), (GLvoid *)0);
