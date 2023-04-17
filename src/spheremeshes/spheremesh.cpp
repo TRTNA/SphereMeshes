@@ -19,6 +19,8 @@ using std::array;
 using std::ostream;
 using std::stringstream;
 
+static const float EPSILON = 0.001f;
+
 SphereMesh::SphereMesh(vector<Sphere>& pSpheres, vector<Edge>& pEdges, vector<Triangle>& pTriangles)
      : spheres(std::move(pSpheres)), edges(std::move(pEdges)), triangles(std::move(pTriangles)) 
 {
@@ -64,7 +66,6 @@ std::string SphereMesh::toString() const
     }
     return ss.str();
 }
-//TODO per ora fa un solo push
 Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality) const
 {
     //printf("\n\n[METHOD] pushOutside \n");
@@ -124,7 +125,7 @@ Point SphereMesh::pushOutsideOneCapsule(uint capsuleIndex, const glm::vec3 &pos,
 
     //pos is outside the capsule, dimensionality is -1 (not pushed out)
     //controllo con epsilon, se è sulla superficie non lo spingo
-    if (CtoPossqrd > interpRadius*interpRadius - 0.001f) {
+    if (CtoPossqrd > interpRadius*interpRadius - EPSILON) {
         dimensionality = -1;
         return Point(pos, glm::vec3(0.0f));
     }

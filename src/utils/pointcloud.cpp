@@ -18,7 +18,6 @@ void PointCloud::addPoint(const SphereMesh & sphereMesh)
     while (true) {
         pos = getRandomPositionInSphere(sphereMesh.boundingSphere);
         //printf("Got random position in sphere: %s\n", glm::to_string(pos).c_str());
-        //TODO FIX BUG: pushOutside modificato per pushare una sola volta, non corretto però
         point = sphereMesh.pushOutside(pos, dimensionality);
         //printf("Points pushed outside by %d\n", dimensionality);
         //point is inside the sphere mesh and has been pushed on its surface
