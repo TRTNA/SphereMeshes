@@ -119,7 +119,9 @@ int main()
     vector<Edge> edges{Edge(0, 1), Edge(1, 2), Edge(0, 3)};
     SphereMesh sm = SphereMesh(spheres, edges, vector<Triangle>{});
     PointCloud pc = PointCloud();
-    pc.repopulate(10000U, sm);
+    int pointsNumber = 10000;
+
+    pc.repopulate(pointsNumber, sm);
     std::shared_ptr<PointCloud> pc_ptr = std::make_shared<PointCloud>(pc);
     RenderablePointCloud rpc = RenderablePointCloud(pc_ptr);
 
@@ -135,6 +137,7 @@ int main()
      */
     // render loop
     // -----------
+
     while (!glfwWindowShouldClose(window))
     {
         // we determine the time passed from the beginning
@@ -158,13 +161,11 @@ int main()
 
         // render your GUI
         ImGui::Begin("Controls");
-/*        int pointsNumber = 10000;
         bool pointsNumberChanged = ImGui::SliderInt("Points number", &pointsNumber, 100, 1000000);
         if (pointsNumberChanged) {
-            sm->setPointsNumber(pointsNumber);
-            sm->regeneratePoints();
+            pc_ptr->repopulate(pointsNumber, sm);
+            rpc.updateBuffers();
         }
-        */
 
 
         ImGui::End();
@@ -172,7 +173,7 @@ int main()
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
         normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix)));
-        //glUniformMatrix3fv(glGetUniformLocation(shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
+        glUniformMatrix3fv(glGetUniformLocation(shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
 /*         if (useNormalColouring) {
             glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &normalColouringSubroutineIndex);
         } else {
