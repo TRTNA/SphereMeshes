@@ -1,5 +1,4 @@
-#ifndef _SPHEREMESH_H
-#define _SPHEREMESH_H
+#pragma once
 
 #include <vector>
 #include <string>
@@ -24,6 +23,9 @@ class SphereMesh {
     std::vector<uint> singleton;
     std::vector<Edge> edges;
     std::vector<Triangle> triangles;
+    //TODO moltiplica tutti i punti e raggi per k (voledno metodo scale su sphere da invocare su ognuna)
+    //e aggiorna boundingsphere subito dopo, scala anche la boundingSphere
+    void scale(float k);
     Sphere boundingSphere;
     SphereMesh() = default;
     SphereMesh(std::vector<Sphere>& pSpheres, std::vector<Edge>& pEdges, std::vector<Triangle>& pTriangles);
@@ -31,30 +33,22 @@ class SphereMesh {
     void addSphere(const Sphere& phere);
     void addEdge(const Edge& edge);
     void addTriangle(const Triangle& triangle);
-    //una per una le fondo col metodo di sphere che trova sfera più piccola alla fine bounding sphere
     void updateBoundingSphere();
     std::string toString() const;
     //serve sapere la dimensionalità di cosa l'ha spinto fuori
     // dimensionality = 0 = sfera, = 1 =segmento, =2=triangolo, =-1=ero già fuori
     // itero push fuori da tutto e mi fermo quando?
     // getRandomPointOnSurface --> genera un punto sulla superficie della sfera colorato a seconda di chi lo ha spinto fuori
-    // genera un punto, prova a spingerlo fuori, se nessuno lo spinge lo fuori riprova, altrimenti assegna colore e ritorna.
-    Point pushOutside(const glm::vec3& point, int& dimensionality); 
+    // genera un punto, prova a spingerlo fuori, se nessuno lo spinge fuori riprova, altrimenti assegna colore e ritorna.
+    Point pushOutside(const glm::vec3& pos, int& dimensionality) const;
     private:
-    Point pushOutsideOneCapsule(uint capsuleIndex, const glm::vec3& point, int& dimensionality);
-    Point pushOutsideOneTriangle(uint triangleIndex, const glm::vec3& point, int& dimensionality);
-    Point pushOutsideOneSingleton(uint singletonIndex, const glm::vec3& point, int& dimensionality);
+    Point pushOutsideOneCapsule(uint capsuleIndex, const glm::vec3& pos, int& dimensionality) const;
+    Point pushOutsideOneTriangle(uint triangleIndex, const glm::vec3& pos, int& dimensionality) const;
+    Point pushOutsideOneSingleton(uint singletonIndex, const glm::vec3& pos, int& dimensionality) const;
 
 };
 
 
-//TODO
-// Metodo che costruisce point cloud popolandola con una sphere mesh
-// prende bounding sphere della sphere mesh, la popola con punti casuali nella bounding sphere
-// ogni punto lo butta fuori da tutti i componenti della sphere mesh (SU CPU) finchè quel punto non è sulla superficie di uno è fuori da tutti gli altri
-// processo iterativo che continua a spingerlo finchè non è sulla superficie 
-// metodi push outside sphere, capsule e triangle
+
 
 std::ostream& operator<<(std::ostream& ost, const SphereMesh& sm);
-
-#endif

@@ -6,9 +6,9 @@ IF EXIST "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxi
 )
 
 if [%1%]==[] (
-  nmake /f MakefileWin all
+  nmake /f MakefileWinTest all
 ) else (
-  nmake /f MakefileWin clean
+  nmake /f MakefileWinTest clean
 )
 
 

@@ -5,12 +5,16 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-
 #include <iostream>
 #include <vector>
+#include <memory>
+
+#include <spheremeshes/spheremesh.h>
+#include <spheremeshes/edge.h>
+#include <spheremeshes/triangle.h>
+#include <utils/renderablepointcloud.h>
 
 #include <utils/shader.h>
-#include <spheremeshes/spheremeshes.h>
 #include <utils/model.h>
 #include <utils/pointcloud.h>
 
@@ -18,7 +22,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
+#include <glm/gtx/string_cast.hpp>
 
 using std::cout;
 using std::endl;
@@ -37,7 +41,6 @@ void apply_key_commands();
 const unsigned int SCR_WIDTH = 1200;
 const unsigned int SCR_HEIGHT = 800;
 
-typedef GlRendSphereMesh glSphereMesh;
 
 // we initialize an array of booleans for each keyboard key
 bool keys[1024];
@@ -103,7 +106,7 @@ int main()
     ImGui_ImplOpenGL3_Init("#version 410");
 
     // build and compile our shader program
-    Shader shader("assets/shaders/capsule.vert", "assets/shaders/pointsplat.frag");
+    Shader shader("assets/shaders/default.vert", "assets/shaders/default.frag");
     glClearColor(0.3f, 0.3f, 0.6f, 1.0f);  
     
     // Projection matrix: FOV angle, aspect ratio, near and far planes
@@ -114,18 +117,27 @@ int main()
 
     vector<Sphere> spheres{Sphere(glm::vec3(-0.5f, 0.0f, 0.0f), 0.3f), Sphere(glm::vec3(0.5f, 0.0f, 0.0f), 0.5f), Sphere(glm::vec3(0.5f, 1.0f, 0.0f), 0.3f), Sphere(glm::vec3(-0.5f, 1.0f, 0.0f), 0.1f)};
     vector<Edge> edges{Edge(0, 1), Edge(1, 2), Edge(0, 3)};
-    glSphereMesh* sm = new glSphereMesh(spheres, edges, vector<Triangle>{}, 10000U);
+    SphereMesh sm = SphereMesh(spheres, edges, vector<Triangle>{});
+    PointCloud pc = PointCloud();
+    int pointsNumber = 10000;
+
+    pc.repopulate(pointsNumber, sm);
+    std::shared_ptr<PointCloud> pc_ptr = std::make_shared<PointCloud>(pc);
+    RenderablePointCloud rpc = RenderablePointCloud(pc_ptr);
+
 
     shader.Use();
     glPointSize(5.0f);
     glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-    GLuint normalColouringSubroutineIndex = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "normalColouring");
+    /* GLuint normalColouringSubroutineIndex = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "normalColouring");
     GLuint diffuseColouringSubroutineIndex = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "diffuseColouring");
     GLint activeSubroutineCount;
     glGetProgramStageiv(shader.Program, GL_FRAGMENT_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &activeSubroutineCount);
-    
+
+     */
     // render loop
     // -----------
+
     while (!glfwWindowShouldClose(window))
     {
         // we determine the time passed from the beginning
@@ -149,25 +161,27 @@ int main()
 
         // render your GUI
         ImGui::Begin("Controls");
-        int pointsNumber = 10000;
         bool pointsNumberChanged = ImGui::SliderInt("Points number", &pointsNumber, 100, 1000000);
         if (pointsNumberChanged) {
-            sm->setPointsNumber(pointsNumber);
-            sm->regeneratePoints();
+            pc_ptr->repopulate(pointsNumber, sm);
+            rpc.updateBuffers();
         }
+
+
         ImGui::End();
 
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
         normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix)));
         glUniformMatrix3fv(glGetUniformLocation(shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
-        if (useNormalColouring) {
+/*         if (useNormalColouring) {
             glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &normalColouringSubroutineIndex);
         } else {
             glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &diffuseColouringSubroutineIndex);
-        }
+        } */
+        rpc.Draw(shader);
 
-        sm->Draw(shader);
+
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

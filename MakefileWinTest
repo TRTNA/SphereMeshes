@@ -1,0 +1,27 @@
+# name of the file
+FILENAME = test
+
+# Visual Studio compiler
+CC = cl.exe
+
+# Include path
+IDIR = /Iinclude/
+
+# compiler flags:
+CCFLAGS  = /Od /Zi /EHsc /MT
+
+# linker flags:
+LFLAGS = /LIBPATH:libs gdi32.lib user32.lib Shell32.lib Advapi32.lib
+
+ADDITIONAL_SRC = src/utils/aabb.cpp src/utils/random.cpp
+SOURCES = include/glad/glad.c src/spheremeshes/*.cpp src/$(FILENAME).cpp $(ADDITIONAL_SRC)
+TARGET = $(FILENAME).exe
+
+.PHONY : all
+all:
+	$(CC) $(CCFLAGS) $(IDIR) $(SOURCES) /Fe:$(TARGET) /link $(LFLAGS)
+
+.PHONY : clean
+clean:
+	del $(TARGET)
+	del *.obj *.lib *.exp *.ilk *.pdb
