@@ -3,5 +3,7 @@
 *.ilk
 *.pdb
 *.lib
+*.ini
+*.exp
 !assets/models/*.obj
 
