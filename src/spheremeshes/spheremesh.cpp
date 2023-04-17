@@ -90,7 +90,7 @@ Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality) const
                 break;
             }
         }
-                        outsideEverything = true;
+        outsideEverything = tempDimensionality == -1;
 
     }
     dimensionality = lastDimensionality;
@@ -124,7 +124,7 @@ Point SphereMesh::pushOutsideOneCapsule(uint capsuleIndex, const glm::vec3 &pos,
 
     //pos is outside the capsule, dimensionality is -1 (not pushed out)
     //controllo con epsilon, se è sulla superficie non lo spingo
-    if (CtoPossqrd > interpRadius*interpRadius) {
+    if (CtoPossqrd > interpRadius*interpRadius - 0.001f) {
         dimensionality = -1;
         return Point(pos, glm::vec3(0.0f));
     }
