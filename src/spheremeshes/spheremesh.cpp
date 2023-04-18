@@ -204,8 +204,25 @@ Point SphereMesh::pushOutsideOneSingleton(uint singletonIndex, const glm::vec3 &
     return Point(glm::vec3(C + sphere.radius * normal), normal);
 }
 
+SphereMesh readFromFile(const std::string& path);
+
+
 std::ostream &operator<<(std::ostream &ost, const SphereMesh &sm)
 {
-    ost << sm.toString();
+    for (const auto& s : sm.spheres) {
+        ost << s << "\n";
+    }
+    ost << "\n";
+    for (const auto& s : sm.singletons) {
+        ost << s << "\n";
+    }
+    ost << "\n";
+    for (const auto& e : sm.edges) {
+        ost << e << "\n";
+    }
+    ost << "\n";
+    for (const auto& t : sm.triangles) {
+        ost << t << "\n";
+    }
     return ost;
 }

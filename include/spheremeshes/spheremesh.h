@@ -50,6 +50,8 @@ class SphereMesh {
 };
 
 
+SphereMesh readFromFile(const std::string& path);
+
 
 
 std::ostream& operator<<(std::ostream& ost, const SphereMesh& sm);
