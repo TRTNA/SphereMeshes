@@ -108,7 +108,7 @@ Point SphereMesh::pushOutsideOneCapsule(uint capsuleIndex, const glm::vec3 &pos,
     const float BminusAsqrd = glm::dot(BminusA, BminusA);
     float k = glm::dot(pos - A.center, BminusA) / BminusAsqrd;
 
-    //TODO va normalizzato BMinusA
+    //TODO va normalizzato BMinusA?
     const float factor = (A.radius - B.radius) / length(BminusA);
 
     k -= factor * length(pos - (A.center + k*BminusA));

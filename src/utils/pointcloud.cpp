@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 //TODO temporary, remove this
-static const glm::vec3 COLORS[3] = {glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)};
+static const glm::vec3 COLORS[3] = {glm::vec3(8.0f, 0.1f, 0.1f), glm::vec3(0.1f, 0.8f, 0.1f), glm::vec3(0.1f, 0.1f, 0.8f)};
 
 void PointCloud::addPoint(const SphereMesh & sphereMesh)
 {
