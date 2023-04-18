@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <sstream>
 #include <array>
+#include <fstream>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -18,6 +19,7 @@ using std::array;
 using std::ostream;
 using std::stringstream;
 using std::vector;
+using std::ifstream;
 
 static const float EPSILON = 0.001f;
 
@@ -204,25 +206,72 @@ Point SphereMesh::pushOutsideOneSingleton(uint singletonIndex, const glm::vec3 &
     return Point(glm::vec3(C + sphere.radius * normal), normal);
 }
 
-SphereMesh readFromFile(const std::string& path);
+bool readFromFile(const std::string& path, SphereMesh& out) {
+    ifstream file;
+    file.open(path, std::ios::in);
+    if (! file.is_open()) {
+        return false;
+    }
+
+    uint spheresNo = 0;
+    file >> spheresNo;
+    for (size_t i = 0; i < spheresNo; i++) {
+        Sphere sphere;
+        file >> sphere;
+        out.addSphere(sphere);
+    }
+
+    uint singletonsNo = 0;
+    file >> singletonsNo;
+    for (size_t i = 0; i < singletonsNo; i++) {
+        uint sphereIdx;
+        file >> sphereIdx;
+        out.addSingleton(sphereIdx);
+    }
+
+    uint edgesNo = 0;
+    file >> edgesNo;
+    for (size_t i = 0; i < edgesNo; i++) {
+        Edge edge;
+        file >> edge;
+        out.addEdge(edge);
+    }
+
+    uint trianglesNo = 0;
+    file >> trianglesNo;
+    for (size_t i = 0; i < trianglesNo; i++) {
+        Triangle triangle;
+        file >> triangle;
+        out.addTriangle(triangle);
+    }
+    out.updateBoundingSphere();
+    file.close();
+    return true;
+
+}
 
 
 std::ostream &operator<<(std::ostream &ost, const SphereMesh &sm)
 {
+    ost << sm.spheres.size() << "\n";
     for (const auto& s : sm.spheres) {
         ost << s << "\n";
     }
     ost << "\n";
+    ost << sm.singletons.size() << "\n";
     for (const auto& s : sm.singletons) {
         ost << s << "\n";
     }
     ost << "\n";
+    ost << sm.edges.size() << "\n";
     for (const auto& e : sm.edges) {
         ost << e << "\n";
     }
     ost << "\n";
+    ost << sm.triangles.size() << "\n";
     for (const auto& t : sm.triangles) {
         ost << t << "\n";
     }
     return ost;
 }
+

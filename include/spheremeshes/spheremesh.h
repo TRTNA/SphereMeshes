@@ -50,8 +50,9 @@ class SphereMesh {
 };
 
 
-SphereMesh readFromFile(const std::string& path);
+bool readFromFile(const std::string& path, SphereMesh& out);
 
 
 
 std::ostream& operator<<(std::ostream& ost, const SphereMesh& sm);
+std::istream& operator>>(std::istream& ost, SphereMesh& sm);

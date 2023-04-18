@@ -8,8 +8,8 @@
 struct Triangle {
     std::array<U32, 3> vertices;
     Triangle() = default;
-    Triangle(U32 v0, U32 v1, U32 v2);
-    Triangle(const std::array<U32, 3>& pVertices);
+    Triangle(uint v0, uint v1, uint v2);
+    Triangle(const std::array<uint, 3>& pVertices);
 };
 
 std::ostream& operator<<(std::ostream& ost, const Triangle& val);

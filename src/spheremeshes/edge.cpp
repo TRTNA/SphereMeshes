@@ -2,13 +2,13 @@
 #include <string>
 
 std::ostream& operator<<(std::ostream& ost, const Edge& val) {
-    ost << std::to_string(val.first) << " ";
-    ost << std::to_string(val.second);
+    ost << val.first << " ";
+    ost << val.second;
     return ost;
 
 }
 
-std::istream& operator<<(std::istream& ist, Edge& val) {
+std::istream& operator>>(std::istream& ist, Edge& val) {
     ist >> val.first >> val.second;
     return ist;
 }
