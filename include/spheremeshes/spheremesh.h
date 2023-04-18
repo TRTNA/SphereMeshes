@@ -20,7 +20,7 @@ typedef unsigned int uint;
 class SphereMesh {
     public:
     std::vector<Sphere> spheres;
-    std::vector<uint> singleton;
+    std::vector<uint> singletons;
     std::vector<Edge> edges;
     std::vector<Triangle> triangles;
     //TODO moltiplica tutti i punti e raggi per k (voledno metodo scale su sphere da invocare su ognuna)
