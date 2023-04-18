@@ -4,8 +4,6 @@
 #include <string>
 #include <ostream>
 
-
-
 #include <spheremeshes/sphere.h>
 #include <spheremeshes/edge.h>
 #include <spheremeshes/triangle.h>
@@ -50,7 +48,7 @@ class SphereMesh {
 };
 
 
-bool readFromFile(const std::string& path, SphereMesh& out);
+bool readFromFile(const std::string& path, SphereMesh& out, std::string& errorMsg);
 
 
 

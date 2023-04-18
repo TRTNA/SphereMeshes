@@ -20,6 +20,7 @@ using std::ifstream;
 using std::ostream;
 using std::stringstream;
 using std::vector;
+using std::string;
 
 static const float EPSILON = 0.001f;
 
@@ -206,13 +207,14 @@ Point SphereMesh::pushOutsideOneSingleton(uint singletonIndex, const glm::vec3 &
     return Point(glm::vec3(C + sphere.radius * normal), normal);
 }
 
-bool readFromFile(const std::string &path, SphereMesh &out)
+bool readFromFile(const std::string &path, SphereMesh &out, std::string& errorMsg)
 {
     ifstream file;
     file.exceptions(std::ios::failbit | std::ios::badbit);
     file.open(path, std::ios::in);
     if (!file.is_open())
     {
+        errorMsg = "Cannot open file " + path;
         return false;
     }
 
@@ -253,7 +255,8 @@ bool readFromFile(const std::string &path, SphereMesh &out)
             file >> triangle;
             out.addTriangle(triangle);
         }
-    } catch (const std::ios::failure & ex) {
+    } catch (const std::ios::failure& ex) {
+        errorMsg = path + " badly formattated\n";
         file.close();
         return false;
     }

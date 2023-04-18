@@ -8,6 +8,7 @@
 #include <iostream>
 #include <vector>
 #include <memory>
+#include <string>
 
 #include <spheremeshes/spheremesh.h>
 #include <spheremeshes/edge.h>
@@ -27,6 +28,7 @@
 using std::cout;
 using std::endl;
 using std::vector;
+using std::string;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -117,9 +119,10 @@ int main()
 
 
     SphereMesh sm;
-    bool read = readFromFile("assets/spheremeshes/spheremesh.sm", sm);
+    string readErrorMsg;
+    bool read = readFromFile("assets/spheremeshes/spheremesh.sm", sm, readErrorMsg);
     if (! read) {
-        std::cerr << "Error while reading spheremesh file..." << std::endl;
+        std::cerr << readErrorMsg << std::endl;
         return 1;
     }
 
