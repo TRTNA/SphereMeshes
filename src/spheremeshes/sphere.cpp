@@ -14,6 +14,12 @@ std::ostream& operator<<(std::ostream& ost, const Sphere& val) {
     return ost;
 }
 
+std::istream& operator>>(std::istream& ost, Sphere& val) {
+    ost >> val.center.x >> val.center.y >> val.center.z >> val.radius;
+    return ost;
+}
+
+
 const Sphere& getBiggerSphere(const Sphere& s1, const Sphere& s2) {
     return s1.radius > s2.radius ?  s1 : s2;
 }
