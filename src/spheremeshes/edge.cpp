@@ -8,3 +8,9 @@ std::ostream& operator<<(std::ostream& ost, const Edge& val) {
     return ost;
 
 }
+
+std::istream& operator<<(std::istream& ist, Edge& val) {
+    ist >> val.first >> val.second;
+    return ist;
+}
+
