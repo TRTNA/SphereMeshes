@@ -113,9 +113,9 @@ int main()
     
     // Projection matrix: FOV angle, aspect ratio, near and far planes
     float fovY = 45.0f;
-    projectionMatrix = glm::perspective(fovY, (float)SCR_WIDTH/(float)SCR_HEIGHT, 0.1f, 1000.0f);
-    // View matrix (=camera): position, view direction, camera "up" vector
-    viewMatrix = glm::lookAt(viewPos, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    float aspect =(float)SCR_WIDTH/(float)SCR_HEIGHT;
+    projectionMatrix = glm::perspective(fovY, aspect, 0.1f, 1000.0f);
+
     glm::mat3 normalMatrix;
 
 
@@ -134,6 +134,14 @@ int main()
     pc.repopulate(pointsNumber, sm);
     std::shared_ptr<PointCloud> pc_ptr = std::make_shared<PointCloud>(pc);
     RenderablePointCloud rpc = RenderablePointCloud(pc_ptr);
+
+    float oppositeFovY = 90.0f - 45.0f;
+    float dist = sm.boundingSphere.radius * glm::tan(oppositeFovY);
+    viewPos = sm.boundingSphere.center;
+    viewPos.z += aspect*dist;
+
+        // View matrix (=camera): position, view direction, camera "up" vector
+    viewMatrix = glm::lookAt(viewPos, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
 
     shader.Use();
