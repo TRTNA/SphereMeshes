@@ -7,6 +7,7 @@
 
 struct Triangle {
     std::array<U32, 3> vertices;
+    Triangle() = default;
     Triangle(U32 v0, U32 v1, U32 v2);
     Triangle(const std::array<U32, 3>& pVertices);
 };
