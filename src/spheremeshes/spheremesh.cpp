@@ -89,9 +89,6 @@ std::string SphereMesh::toString() const
 }
 Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality) const
 {
-    // printf("\n\n[METHOD] pushOutside \n");
-    // should iterate over all primitives and perform the right push out
-    // for now it iterates only on capsules
     bool outsideEverything = false;
     Point lastPoint = Point(pos, glm::vec3(0.0f));
     int lastDimensionality = -1;
@@ -99,34 +96,34 @@ Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality) const
     uint edgeStart = singletonStart + singletons.size();
     uint triangleStart = edgeStart + edges.size();
     uint maxUniqueIdx = triangleStart + triangles.size();
+  
 
     while (!outsideEverything)
     {
         // storing last position, because it may vary when it is pushed by multiple primitives
         glm::vec3 lastPos = lastPoint.pos;
-        // printf("[POINT LOOP] Params: - outsideEverything: %s\n - lastPoint: %s\n - lastDimensionality: %d\n", outsideEverything ? "true" : "false", glm::to_string(lastPos).c_str(), lastDimensionality);
         int tempDimensionality = -1;
-        for (size_t idx = 0; idx < maxUniqueIdx; idx++)
+        for (size_t uniqueIdx = 0; uniqueIdx < maxUniqueIdx; uniqueIdx++)
         {
-            if (idx >= singletonStart && idx < edgeStart)
+            if (uniqueIdx >= singletonStart && uniqueIdx < edgeStart)
             {
-                Point tempPoint = pushOutsideOneSingleton(idx, lastPos, tempDimensionality);
+                Point tempPoint = pushOutsideOneSingleton(uniqueIdx, lastPos, tempDimensionality);
                 if (tempDimensionality != -1)
                 {
                     // has been pushed outside
-                    // break loop on edges and restart it
+                    // break loop and restart it
                     lastDimensionality = tempDimensionality;
                     lastPoint = tempPoint;
                     break;
                 }
             }
-            else if (idx >= edgeStart && idx < triangleStart)
+            else if (uniqueIdx >= edgeStart && uniqueIdx < triangleStart)
             {
-                Point tempPoint = pushOutsideOneCapsule(idx - edgeStart, lastPos, tempDimensionality);
+                Point tempPoint = pushOutsideOneCapsule(uniqueIdx - edgeStart, lastPos, tempDimensionality);
                 if (tempDimensionality != -1)
                 {
                     // has been pushed outside
-                    // break loop on edges and restart it
+                    // break loop and restart it
                     lastDimensionality = tempDimensionality;
                     lastPoint = tempPoint;
                     break;
@@ -134,13 +131,13 @@ Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality) const
             }
             
             /* Commented until pushOutsideOneTriangle is implemented
-            else if (idx >= triangleStart)
+            else if (uniqueIdx >= triangleStart)
             {
-                Point tempPoint = pushOutsideOneTriangle(idx - triangleStart, lastPos, tempDimensionality);
+                Point tempPoint = pushOutsideOneTriangle(uniqueIdx - triangleStart, lastPos, tempDimensionality);
                 if (tempDimensionality != -1)
                 {
                     // has been pushed outside
-                    // break loop on edges and restart it
+                    // break loop on and restart it
                     lastDimensionality = tempDimensionality;
                     lastPoint = tempPoint;
                     break;
