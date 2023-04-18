@@ -1,5 +1,3 @@
-//Variation of https://github.com/JoeyDeVries/LearnOpenGL/blob/master/includes/learnopengl/shader.h
-
 #pragma once
 
 #include <glad/glad.h>
