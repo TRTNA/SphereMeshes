@@ -112,7 +112,8 @@ int main()
     glClearColor(0.3f, 0.3f, 0.6f, 1.0f);  
     
     // Projection matrix: FOV angle, aspect ratio, near and far planes
-    projectionMatrix = glm::perspective(45.0f, (float)SCR_WIDTH/(float)SCR_HEIGHT, 0.1f, 1000.0f);
+    float fovY = 45.0f;
+    projectionMatrix = glm::perspective(fovY, (float)SCR_WIDTH/(float)SCR_HEIGHT, 0.1f, 1000.0f);
     // View matrix (=camera): position, view direction, camera "up" vector
     viewMatrix = glm::lookAt(viewPos, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat3 normalMatrix;
