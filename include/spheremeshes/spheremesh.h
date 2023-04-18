@@ -28,7 +28,7 @@ class SphereMesh {
     void scale(float k);
     Sphere boundingSphere;
     SphereMesh() = default;
-    SphereMesh(std::vector<Sphere>& pSpheres, std::vector<Edge>& pEdges, std::vector<Triangle>& pTriangles, std::vector<uint> pSingletons);
+    SphereMesh(std::vector<Sphere>& pSpheres, std::vector<Edge>& pEdges, std::vector<Triangle>& pTriangles, std::vector<uint>& pSingletons);
     ~SphereMesh() = default;
     void addSphere(const Sphere& sphere);
     void addEdge(const Edge& edge);
