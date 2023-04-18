@@ -10,10 +10,7 @@ Sphere::Sphere(glm::vec3 pCenter, float pRadius) : center(pCenter), radius(pRadi
 Sphere::Sphere() : center(glm::vec3(0.0f)), radius(0.0f) {}
 
 std::ostream& operator<<(std::ostream& ost, const Sphere& val) {
-    ost << "Sphere(";
-    ost << glm::to_string(val.center);
-    ost << "; ";
-    ost << val.radius << ")";
+    ost << val.center.x << " " << val.center.y << " " << val.center.z << " " << val.radius;
     return ost;
 }
 
