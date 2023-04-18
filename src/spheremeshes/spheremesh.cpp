@@ -95,9 +95,10 @@ Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality) const
     bool outsideEverything = false;
     Point lastPoint = Point(pos, glm::vec3(0.0f));
     int lastDimensionality = -1;
-    uint uniqueIdx = 0;
-    uint maxUniqueIdx = edges.size() + singletons.size();
-    uint singletonsStart = edges.size();
+    uint singletonStart = 0;
+    uint edgeStart = singletonStart + singletons.size();
+    uint triangleStart = edgeStart + edges.size();
+    uint maxUniqueIdx = triangleStart + triangles.size();
 
     while (!outsideEverything)
     {
@@ -107,34 +108,44 @@ Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality) const
         int tempDimensionality = -1;
         for (size_t idx = 0; idx < maxUniqueIdx; idx++)
         {
-            if (idx < singletonsStart)
+            if (idx >= singletonStart && idx < edgeStart)
             {
-                Point tempPoint = pushOutsideOneCapsule(idx, lastPos, tempDimensionality);
-                // printf("[EDGE LOOP] point pushed by %d edge, new value %s and dimensionality %d\n", idx, glm::to_string(tempPoint.pos).c_str(), tempDimensionality);
+                Point tempPoint = pushOutsideOneSingleton(idx, lastPos, tempDimensionality);
                 if (tempDimensionality != -1)
                 {
                     // has been pushed outside
                     // break loop on edges and restart it
-                    // printf("[PUSHED] point has been pushed outside\n");
                     lastDimensionality = tempDimensionality;
                     lastPoint = tempPoint;
                     break;
                 }
             }
-            else
+            else if (idx >= edgeStart && idx < triangleStart)
             {
-                Point tempPoint = pushOutsideOneSingleton(idx - edges.size(), lastPos, tempDimensionality);
-                // printf("[EDGE LOOP] point pushed by %d edge, new value %s and dimensionality %d\n", idx, glm::to_string(tempPoint.pos).c_str(), tempDimensionality);
+                Point tempPoint = pushOutsideOneCapsule(idx - edgeStart, lastPos, tempDimensionality);
                 if (tempDimensionality != -1)
                 {
                     // has been pushed outside
                     // break loop on edges and restart it
-                    // printf("[PUSHED] point has been pushed outside\n");
                     lastDimensionality = tempDimensionality;
                     lastPoint = tempPoint;
                     break;
                 }
             }
+            
+            /* Commented until pushOutsideOneTriangle is implemented
+            else if (idx >= triangleStart)
+            {
+                Point tempPoint = pushOutsideOneTriangle(idx - triangleStart, lastPos, tempDimensionality);
+                if (tempDimensionality != -1)
+                {
+                    // has been pushed outside
+                    // break loop on edges and restart it
+                    lastDimensionality = tempDimensionality;
+                    lastPoint = tempPoint;
+                    break;
+                }
+            }*/
         }
 
         outsideEverything = tempDimensionality == -1;
