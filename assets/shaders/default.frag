@@ -11,12 +11,12 @@ subroutine vec4 ColoringType();
 
 subroutine(ColoringType)
 vec4 diffuseColoring() {
-    return interpColor;
+    return vec4(interpColor, 1.0);
 }
 
 subroutine(ColoringType)
 vec4 normalColoring() {
-    vec3 scaledNormal = (vNormal + 1.0) / 2.0;
+    vec3 scaledNormal = vNormal * 0.5 + 0.5;
     return vec4(scaledNormal, 1.0);
 }
 
