@@ -7,6 +7,6 @@
 
 typedef std::pair<U32, U32> Edge;
 std::ostream& operator<<(std::ostream& ost, const Edge& val);
-std::istream& operator<<(std::istream& ost, Edge& val);
+std::istream& operator>>(std::istream& ost, Edge& val);
 
 #endif
