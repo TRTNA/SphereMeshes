@@ -101,6 +101,18 @@ Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality) const
                 break;
             }
         }
+        for (size_t idx = 0; idx < singletons.size(); idx++) {
+            Point tempPoint = pushOutsideOneSingleton(idx, lastPos, tempDimensionality);
+            //printf("[EDGE LOOP] point pushed by %d edge, new value %s and dimensionality %d\n", idx, glm::to_string(tempPoint.pos).c_str(), tempDimensionality);
+            if (tempDimensionality != -1) {
+                //has been pushed outside
+                //break loop on edges and restart it
+                //printf("[PUSHED] point has been pushed outside\n");
+                lastDimensionality = tempDimensionality;
+                lastPoint = tempPoint;
+                break;
+            }
+        }
         outsideEverything = tempDimensionality == -1;
 
     }
@@ -149,6 +161,27 @@ Point SphereMesh::pushOutsideOneCapsule(uint capsuleIndex, const glm::vec3 &pos,
 
     return Point(glm::vec3(C + interpRadius*normal), normal);
 }
+
+Point SphereMesh::pushOutsideOneSingleton(uint singletonIndex, const glm::vec3& pos, int& dimensionality) const {
+    const uint sphereIdx = singletons.at(singletonIndex);
+    const Sphere& sphere = spheres.at(sphereIdx);
+
+    const glm::vec3& C = sphere.center;
+    const glm::vec3 CtoPos = pos - C;
+    const float CtoPossqrd = glm::dot(CtoPos, CtoPos);
+
+    //pos is outside sphere
+    if (CtoPossqrd > sphere.radius*sphere.radius - EPSILON) {
+        dimensionality = -1;
+        return Point(pos, glm::vec3(0.0f));
+    }
+
+    //if we are here, pos is inside the sphere
+    dimensionality = 0;
+    const glm::vec3 normal = glm::normalize(CtoPos);
+    return Point(glm::vec3(C + sphere.radius*normal), normal);
+}
+
 
 std::ostream& operator<<(std::ostream& ost, const SphereMesh& sm) {
     ost << sm.toString();
