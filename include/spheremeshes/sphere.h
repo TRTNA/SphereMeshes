@@ -18,7 +18,7 @@ struct Sphere {
 };
 
 std::ostream& operator<<(std::ostream& ost, const Sphere& val);
-std::istream& operator>>(std::istream& ost, Sphere& val);
+std::istream& operator>>(std::istream& ist, Sphere& val);
 
 
 const Sphere& getBiggerSphere(const Sphere& s1, const Sphere& s2);

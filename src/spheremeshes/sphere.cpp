@@ -14,9 +14,9 @@ std::ostream& operator<<(std::ostream& ost, const Sphere& val) {
     return ost;
 }
 
-std::istream& operator>>(std::istream& ost, Sphere& val) {
-    ost >> val.center.x >> val.center.y >> val.center.z >> val.radius;
-    return ost;
+std::istream& operator>>(std::istream& ist, Sphere& val) {
+    ist >> val.center.x >> val.center.y >> val.center.z >> val.radius;
+    return ist;
 }
 
 
