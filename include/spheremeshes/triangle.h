@@ -12,5 +12,6 @@ struct Triangle {
 };
 
 std::ostream& operator<<(std::ostream& ost, const Triangle& val);
+std::istream& operator>>(std::istream& ist, Triangle& val);
 
 #endif

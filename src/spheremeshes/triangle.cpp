@@ -14,3 +14,9 @@ std::ostream& operator<<(std::ostream& ost, const Triangle& val) {
     ost << std::to_string(val.vertices.at(2)) << ")";
     return ost;
 }
+
+std::istream& operator>>(std::istream& ist, Triangle& val) {
+    ist >> val.vertices.at(0) >> val.vertices.at(1) >> val.vertices.at(2);
+    return ist;
+}
+
