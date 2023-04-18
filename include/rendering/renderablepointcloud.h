@@ -1,6 +1,6 @@
 #pragma once
 
-#include <utils/iglrenderable.h>
+#include <rendering/iglrenderable.h>
 #include <utils/pointcloud.h>
 #include <memory>
 

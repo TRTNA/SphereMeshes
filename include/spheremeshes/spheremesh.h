@@ -8,8 +8,6 @@
 #include <spheremeshes/edge.h>
 #include <spheremeshes/triangle.h>
 
-#include <utils/model.h>
-#include <utils/shader.h>
 
 #include <spheremeshes/point.h>
 

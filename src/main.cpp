@@ -13,10 +13,10 @@
 #include <spheremeshes/spheremesh.h>
 #include <spheremeshes/edge.h>
 #include <spheremeshes/triangle.h>
-#include <utils/renderablepointcloud.h>
+#include <rendering/renderablepointcloud.h>
 
-#include <utils/shader.h>
-#include <utils/model.h>
+#include <rendering/shader.h>
+#include <rendering/model.h>
 #include <utils/pointcloud.h>
 
 #include <glm/glm.hpp>

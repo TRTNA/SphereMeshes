@@ -1,7 +1,7 @@
 #ifndef _GLRENDERABLE_H
 #define _GLRENDERABLE_H
 
-#include <utils/shader.h>
+#include <rendering/shader.h>
 
 class IglRenderable {
     public:

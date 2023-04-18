@@ -1,4 +1,4 @@
-#include <utils/mesh.h>
+#include <rendering/mesh.h>
 using std::vector;
 
     Mesh::Mesh(vector<Vertex>& vertices, vector<GLuint>& indices) noexcept

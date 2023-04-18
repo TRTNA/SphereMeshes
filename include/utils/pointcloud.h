@@ -5,7 +5,7 @@
 #include <glm/vec3.hpp>
 
 #include <spheremeshes/point.h>
-#include <utils/shader.h>
+#include <rendering/shader.h>
 
 // vogliamo che PointCloud non sappia cos'è una sfera, ma solo cos'è un punto
 // forward declaration nell'.h poi nel .cpp serve include però

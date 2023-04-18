@@ -1,4 +1,4 @@
-#include <utils/model.h>
+#include <rendering/model.h>
 #include <iostream>
 using std::cout;
 using std::endl;

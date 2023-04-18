@@ -1,4 +1,4 @@
-#include <utils/renderablepointcloud.h>
+#include <rendering/renderablepointcloud.h>
 
 void RenderablePointCloud::Draw(const Shader &shader)
 {

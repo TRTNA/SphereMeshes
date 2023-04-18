@@ -6,7 +6,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
-#include <utils/mesh.h>
+#include <rendering/mesh.h>
 
 #include <vector>
 #include <string>
