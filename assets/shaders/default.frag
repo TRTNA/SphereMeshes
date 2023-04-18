@@ -6,8 +6,23 @@ in vec3 vNormal;
 in vec3 vLightDir;
 in vec4 vPos;
 
+
+subroutine vec4 ColoringType();
+
+subroutine(ColoringType)
+vec4 diffuseColoring() {
+    return interpColor;
+}
+
+subroutine(ColoringType)
+vec4 normalColoring() {
+    vec3 scaledNormal = (vNormal + 1.0) / 2.0;
+    return vec4(scaledNormal, 1.0);
+}
+
+subroutine uniform ColoringType coloringSubroutine;
+
 void main()
 {
-    //FragColor = vec4(dot(vLightDir,vNormal) * interpColor, 1.0);
-    FragColor = vec4(interpColor, 1.0);
+    FragColor = coloringSubroutine();
 }
