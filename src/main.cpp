@@ -117,7 +117,7 @@ int main()
 
     vector<Sphere> spheres{Sphere(glm::vec3(-0.5f, 0.0f, 0.0f), 0.3f), Sphere(glm::vec3(0.5f, 0.0f, 0.0f), 0.5f), Sphere(glm::vec3(0.5f, 1.0f, 0.0f), 0.3f), Sphere(glm::vec3(-0.5f, 1.0f, 0.0f), 0.1f)};
     vector<Edge> edges{Edge(0, 1), Edge(1, 2), Edge(0, 3)};
-    SphereMesh sm = SphereMesh(spheres, edges, vector<Triangle>{});
+    SphereMesh sm = SphereMesh(spheres, edges, vector<Triangle>{}, vector<uint>{});
     PointCloud pc = PointCloud();
     int pointsNumber = 10000;
 

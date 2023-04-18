@@ -21,13 +21,14 @@ using std::stringstream;
 
 static const float EPSILON = 0.001f;
 
-SphereMesh::SphereMesh(vector<Sphere>& pSpheres, vector<Edge>& pEdges, vector<Triangle>& pTriangles)
-     : spheres(std::move(pSpheres)), edges(std::move(pEdges)), triangles(std::move(pTriangles)) 
+SphereMesh::SphereMesh(vector<Sphere>& pSpheres, vector<Edge>& pEdges, vector<Triangle>& pTriangles, vector<uint>& pSingletons)
+     : spheres(std::move(pSpheres)), edges(std::move(pEdges)), triangles(std::move(pTriangles)) , singletons(std::move(pSingletons))
 {
     clog << "Created a sphere mesh:\n";
     clog << "- Spheres:\t" << spheres.size() << "\n";
     clog << "- Edges:\t" << edges.size() <<"\n";
     clog << "- Triangles:\t" << triangles.size() <<"\n";
+    clog << "- Singletons:\t" << singletons.size() << "\n";
     updateBoundingSphere();
 }
 
@@ -41,6 +42,10 @@ void SphereMesh::addEdge(const Edge& edge) {
 
 void SphereMesh::addTriangle(const Triangle& triangle) {
     triangles.emplace_back(triangle.vertices);
+}
+
+void SphereMesh::addSingleton(uint sphereIdx) {
+    singletons.push_back(sphereIdx);
 }
 
 void SphereMesh::updateBoundingSphere()
@@ -63,6 +68,11 @@ std::string SphereMesh::toString() const
     ss << "Triangles:\n";
     for(size_t i = 0; i < triangles.size(); i++) {
         ss << i << " " << triangles.at(i) << "\n";
+    }
+    ss << "\n";
+    ss << "Singletons:\n";
+    for(size_t i = 0; i < singletons.size(); i++) {
+        ss << i << " " << singletons.at(i) << "\n";
     }
     return ss.str();
 }
