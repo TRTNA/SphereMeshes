@@ -115,7 +115,7 @@ int main()
     viewMatrix = glm::lookAt(viewPos, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat3 normalMatrix;
 
-    vector<Sphere> spheres{Sphere(glm::vec3(-0.5f, 0.0f, 0.0f), 0.3f), Sphere(glm::vec3(0.5f, 0.0f, 0.0f), 0.5f), Sphere(glm::vec3(0.5f, 1.0f, 0.0f), 0.3f), Sphere(glm::vec3(-0.5f, 1.0f, 0.0f), 0.1f), Sphere(glm::vec3(1.5f, 1.0f, 0.0f), 0.3f)};
+    vector<Sphere> spheres{Sphere(glm::vec3(-0.5f, 0.0f, 0.0f), 0.3f), Sphere(glm::vec3(0.5f, 0.0f, 0.0f), 0.5f), Sphere(glm::vec3(0.5f, 1.0f, 0.0f), 0.3f), Sphere(glm::vec3(-0.5f, 1.0f, 0.0f), 0.1f), Sphere(glm::vec3(-1.0f, 1.0f, 0.0f), 0.5f)};
     vector<Edge> edges{Edge(0, 1), Edge(1, 2), Edge(0, 3)};
     SphereMesh sm = SphereMesh(spheres, edges, vector<Triangle>{}, vector<uint>{4});
     PointCloud pc = PointCloud();
