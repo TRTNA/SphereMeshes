@@ -28,11 +28,12 @@ class SphereMesh {
     void scale(float k);
     Sphere boundingSphere;
     SphereMesh() = default;
-    SphereMesh(std::vector<Sphere>& pSpheres, std::vector<Edge>& pEdges, std::vector<Triangle>& pTriangles);
+    SphereMesh(std::vector<Sphere>& pSpheres, std::vector<Edge>& pEdges, std::vector<Triangle>& pTriangles, std::vector<uint> pSingletons);
     ~SphereMesh() = default;
-    void addSphere(const Sphere& phere);
+    void addSphere(const Sphere& sphere);
     void addEdge(const Edge& edge);
     void addTriangle(const Triangle& triangle);
+    void addSingleton(uint sphereIdx);
     void updateBoundingSphere();
     std::string toString() const;
     //serve sapere la dimensionalità di cosa l'ha spinto fuori
