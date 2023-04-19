@@ -42,11 +42,13 @@ class SphereMesh {
     Point pushOutsideOneCapsule(uint capsuloidIndex, const glm::vec3& pos, int& dimensionality) const;
     Point pushOutsideOneTriangle(uint triangleIndex, const glm::vec3& pos, int& dimensionality) const;
     Point pushOutsideOneSingleton(uint singletonIndex, const glm::vec3& pos, int& dimensionality) const;
-
+    void updateCapsuloidFactor(uint capsuloidIndex);
+    void updateAllCapsuloidsFactors();
 };
 
 
 bool readFromFile(const std::string& path, SphereMesh& out, std::string& errorMsg);
+float computeCapsuloidFactor(float r0, float r1, float dist);
 
 
 

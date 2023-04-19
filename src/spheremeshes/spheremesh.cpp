@@ -215,6 +215,21 @@ Point SphereMesh::pushOutsideOneSingleton(uint singletonIndex, const glm::vec3 &
     return Point(glm::vec3(C + sphere.radius * normal), normal);
 }
 
+void SphereMesh::updateCapsuloidFactor(uint capsuloidIndex) {
+    Capsuloid& c = capsuloids.at(capsuloidIndex);
+    const Sphere& s0 = spheres.at(c.s0);
+    const Sphere& s1 = spheres.at(c.s1);
+    c.factor = computeCapsuloidFactor(c.s0, c.s1, glm::length(s0.center - s1.center));
+}
+
+void SphereMesh::updateAllCapsuloidsFactors() {
+    for (Capsuloid& c : capsuloids) {
+        const Sphere& s0 = spheres.at(c.s0);
+        const Sphere& s1 = spheres.at(c.s1);
+        c.factor = computeCapsuloidFactor(c.s0, c.s1, glm::length(s0.center - s1.center));
+    }
+}
+
 bool readFromFile(const std::string &path, SphereMesh &out, std::string& errorMsg)
 {
     ifstream file;
@@ -301,3 +316,8 @@ std::ostream &operator<<(std::ostream &ost, const SphereMesh &sm)
     }
     return ost;
 }
+
+float computeCapsuloidFactor(float r0, float r1, float dist) {
+    return (r0 - r1) / dist;
+}
+
