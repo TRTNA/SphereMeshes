@@ -11,8 +11,9 @@ struct Point {
 
 struct DimensionalityPoint {
     DimensionalityPoint();
-    DimensionalityPoint(glm::vec3 pos, int dimensionality);
+    DimensionalityPoint(glm::vec3 pos, glm::vec3 normal, int dimensionality);
     glm::vec3 pos;
+    glm::vec3 normal;
     int dimensionality;
 };
 
