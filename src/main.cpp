@@ -190,7 +190,7 @@ int main()
 
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
-        normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix)));
+        normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix*modelMatrix)));
         glUniformMatrix3fv(glGetUniformLocation(shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
          if (useNormalColouring) {
             glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &normalColouringSubroutineIndex);

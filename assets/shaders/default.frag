@@ -4,7 +4,7 @@ out vec4 FragColor;
 in vec3 interpColor;
 in vec3 vNormal;
 in vec3 vLightDir;
-in vec4 vPos;
+in vec3 vPos;
 
 
 subroutine vec4 ColoringType();
@@ -24,5 +24,6 @@ subroutine uniform ColoringType coloringSubroutine;
 
 void main()
 {
+    if (dot(vPos, vNormal) < 0.0) discard;
     FragColor = coloringSubroutine();
 }
