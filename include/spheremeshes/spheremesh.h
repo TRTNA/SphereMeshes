@@ -44,6 +44,8 @@ class SphereMesh {
     Point pushOutsideOneSingleton(uint singletonIndex, const glm::vec3& pos, int& dimensionality) const;
     void updateCapsuloidFactor(uint capsuloidIndex);
     void updateAllCapsuloidsFactors();
+    void updateSphereTriangleProjMat(uint sphereTriangleIndex);
+    void updateAllSphereTrianglesProjMat();
 };
 
 

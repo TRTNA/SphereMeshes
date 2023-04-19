@@ -232,6 +232,23 @@ void SphereMesh::updateAllCapsuloidsFactors() {
     }
 }
 
+void SphereMesh::updateSphereTriangleProjMat(uint sphereTriangleIndex) {
+    SphereTriangle& st = sphereTriangles.at(sphereTriangleIndex);
+    const Sphere& s0 = spheres.at(st.vertices[0]);
+    const Sphere& s1 = spheres.at(st.vertices[0]);
+    const Sphere& s2 = spheres.at(st.vertices[0]);
+
+    st.setProjectorMatrix(computeSphereTriangleProjMat(s0.center, s1.center, s2.center));
+}
+void SphereMesh::updateAllSphereTrianglesProjMat() {
+    for (SphereTriangle& st : sphereTriangles) {
+        const Sphere& s0 = spheres.at(st.vertices[0]);
+        const Sphere& s1 = spheres.at(st.vertices[0]);
+        const Sphere& s2 = spheres.at(st.vertices[0]);
+        st.setProjectorMatrix(computeSphereTriangleProjMat(s0.center, s1.center, s2.center));
+    }
+}
+
 bool readFromFile(const std::string &path, SphereMesh &out, std::string& errorMsg)
 {
     ifstream file;
