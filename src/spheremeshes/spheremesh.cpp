@@ -32,6 +32,7 @@ SphereMesh::SphereMesh(vector<Sphere> &pSpheres, vector<Capsuloid> &pCapsuloids,
     clog << "- Capsuloids:\t" << capsuloids.size() << "\n";
     clog << "- Triangles:\t" << triangles.size() << "\n";
     clog << "- Singletons:\t" << singletons.size() << "\n";
+    updateAllCapsuloidsFactors();
     updateBoundingSphere();
 }
 
