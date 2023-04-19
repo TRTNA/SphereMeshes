@@ -8,7 +8,7 @@ struct Capsuloid {
     Capsuloid() = default;
     Capsuloid(uint s0, uint s1);
     Capsuloid(uint s0, uint s1, float factor);
-    void updateFactor(float factor);
+    void setFactor(float factor);
 };
 
 std::ostream& operator<<(std::ostream& ost, const Capsuloid& val);

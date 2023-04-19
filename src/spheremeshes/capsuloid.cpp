@@ -5,7 +5,7 @@ Capsuloid::Capsuloid(uint s0, uint s1) : s0(s0), s1(s1) {}
 Capsuloid::Capsuloid(uint s0, uint s1, float factor) : s0(s0), s1(s1), factor(factor) {}
 
 
-void Capsuloid::updateFactor(float factor) {
+void Capsuloid::setFactor(float factor) {
     this->factor = factor;
 }
 
