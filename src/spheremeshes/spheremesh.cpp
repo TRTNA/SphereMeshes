@@ -221,14 +221,14 @@ void SphereMesh::updateCapsuloidFactor(uint capsuloidIndex) {
     Capsuloid& c = capsuloids.at(capsuloidIndex);
     const Sphere& s0 = spheres.at(c.s0);
     const Sphere& s1 = spheres.at(c.s1);
-    c.factor = computeCapsuloidFactor(c.s0, c.s1, glm::length(s0.center - s1.center));
+    c.factor = computeCapsuloidFactor(s0.radius, s1.radius, glm::length(s0.center - s1.center));
 }
 
 void SphereMesh::updateAllCapsuloidsFactors() {
     for (Capsuloid& c : capsuloids) {
         const Sphere& s0 = spheres.at(c.s0);
         const Sphere& s1 = spheres.at(c.s1);
-        c.factor = computeCapsuloidFactor(c.s0, c.s1, glm::length(s0.center - s1.center));
+        c.factor = computeCapsuloidFactor(s0.radius, s1.radius, glm::length(s0.center - s1.center));
     }
 }
 
