@@ -9,6 +9,13 @@ struct Point {
     glm::vec3 normal;
 };
 
+struct DimensionalityPoint {
+    DimensionalityPoint();
+    DimensionalityPoint(glm::vec3 pos, int dimensionality);
+    glm::vec3 pos;
+    int dimensionality;
+};
+
 struct ColoredPoint : public Point {
     ColoredPoint();
     ColoredPoint(glm::vec3 pos, glm::vec3 normal, glm::vec3 color);

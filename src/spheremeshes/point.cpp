@@ -4,6 +4,11 @@
 
  Point::Point(glm::vec3 pos, glm::vec3 normal) : pos(pos), normal(normal) {}
 
+
+DimensionalityPoint::DimensionalityPoint() : DimensionalityPoint(pos, dimensionality) {}
+DimensionalityPoint::DimensionalityPoint(glm::vec3 pos, int dimensionality) : pos(pos), dimensionality(dimensionality) {}
+
+
  ColoredPoint::ColoredPoint() : Point(), color(glm::vec3(0.0f))
  {
  }
