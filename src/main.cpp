@@ -11,7 +11,7 @@
 #include <string>
 
 #include <spheremeshes/spheremesh.h>
-#include <spheremeshes/edge.h>
+#include <spheremeshes/capsuloid.h>
 #include <spheremeshes/triangle.h>
 #include <rendering/renderablepointcloud.h>
 

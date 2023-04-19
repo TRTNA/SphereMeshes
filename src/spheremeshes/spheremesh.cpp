@@ -24,12 +24,12 @@ using std::string;
 
 static const float EPSILON = 0.001f;
 
-SphereMesh::SphereMesh(vector<Sphere> &pSpheres, vector<Edge> &pEdges, vector<Triangle> &pTriangles, vector<uint> &pSingletons)
-    : spheres(std::move(pSpheres)), edges(std::move(pEdges)), triangles(std::move(pTriangles)), singletons(std::move(pSingletons))
+SphereMesh::SphereMesh(vector<Sphere> &pSpheres, vector<Capsuloid> &pCapsuloids, vector<Triangle> &pTriangles, vector<uint> &pSingletons)
+    : spheres(std::move(pSpheres)), capsuloids(std::move(pCapsuloids)), triangles(std::move(pTriangles)), singletons(std::move(pSingletons))
 {
     clog << "Created a sphere mesh:\n";
     clog << "- Spheres:\t" << spheres.size() << "\n";
-    clog << "- Edges:\t" << edges.size() << "\n";
+    clog << "- Capsuloids:\t" << capsuloids.size() << "\n";
     clog << "- Triangles:\t" << triangles.size() << "\n";
     clog << "- Singletons:\t" << singletons.size() << "\n";
     updateBoundingSphere();
@@ -40,9 +40,9 @@ void SphereMesh::addSphere(const Sphere &sphere)
     spheres.emplace_back(sphere.center, sphere.radius);
 }
 
-void SphereMesh::addEdge(const Edge &edge)
+void SphereMesh::addCapsuloid(const Capsuloid &caps)
 {
-    edges.emplace_back(edge.first, edge.second);
+    capsuloids.emplace_back(caps.s0, caps.s1);
 }
 
 void SphereMesh::addTriangle(const Triangle &triangle)
@@ -69,9 +69,9 @@ std::string SphereMesh::toString() const
     }
     ss << "\n";
     ss << "Edges:\n";
-    for (size_t i = 0; i < edges.size(); i++)
+    for (size_t i = 0; i < capsuloids.size(); i++)
     {
-        ss << i << " " << edges.at(i) << "\n";
+        ss << i << " " << capsuloids.at(i) << "\n";
     }
     ss << "\n";
     ss << "Triangles:\n";
@@ -94,7 +94,7 @@ Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality) const
     int lastDimensionality = -1;
     uint singletonStart = 0;
     uint edgeStart = singletonStart + singletons.size();
-    uint triangleStart = edgeStart + edges.size();
+    uint triangleStart = edgeStart + capsuloids.size();
     uint maxUniqueIdx = triangleStart + triangles.size();
   
 
@@ -152,9 +152,9 @@ Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality) const
 }
 Point SphereMesh::pushOutsideOneCapsule(uint capsuleIndex, const glm::vec3 &pos, int &dimensionality) const
 {
-    const Edge &edge = edges.at(capsuleIndex);
-    const Sphere &A = spheres.at(edge.first);
-    const Sphere &B = spheres.at(edge.second);
+    const Capsuloid &caps = capsuloids.at(capsuleIndex);
+    const Sphere &A = spheres.at(caps.s0);
+    const Sphere &B = spheres.at(caps.s1);
 
     const glm::vec3 BminusA = B.center - A.center;
     const float BminusAsqrd = glm::dot(BminusA, BminusA);
@@ -246,13 +246,13 @@ bool readFromFile(const std::string &path, SphereMesh &out, std::string& errorMs
             out.addSingleton(sphereIdx);
         }
 
-        uint edgesNo = 0;
-        file >> edgesNo;
-        for (size_t i = 0; i < edgesNo; i++)
+        uint capsNo = 0;
+        file >> capsNo;
+        for (size_t i = 0; i < capsNo; i++)
         {
-            Edge edge;
-            file >> edge;
-            out.addEdge(edge);
+            Capsuloid caps;
+            file >> caps;
+            out.addCapsuloid(caps);
         }
 
         uint trianglesNo = 0;
@@ -288,8 +288,8 @@ std::ostream &operator<<(std::ostream &ost, const SphereMesh &sm)
         ost << s << "\n";
     }
     ost << "\n";
-    ost << sm.edges.size() << "\n";
-    for (const auto &e : sm.edges)
+    ost << sm.capsuloids.size() << "\n";
+    for (const auto &e : sm.capsuloids)
     {
         ost << e << "\n";
     }
