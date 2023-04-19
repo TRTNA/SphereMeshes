@@ -6,7 +6,7 @@
 
 
 DimensionalityPoint::DimensionalityPoint() : DimensionalityPoint(glm::vec3(0.0f), glm::vec3(0.0f), -1) {}
-DimensionalityPoint::DimensionalityPoint(glm::vec3 pos, glm::vec3 normal, int dimensionality) : pos(pos), normal(normal), dimensionality(dimensionality) {}
+DimensionalityPoint::DimensionalityPoint(glm::vec3 pos, glm::vec3 normal, int pDimensionality) : pos(pos), normal(normal), dimensionality(pDimensionality) {}
 
 
  ColoredPoint::ColoredPoint() : Point(), color(glm::vec3(0.0f))

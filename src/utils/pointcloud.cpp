@@ -19,8 +19,7 @@ void PointCloud::addPoint(const SphereMesh & sphereMesh)
         //printf("Points pushed outside by %d\n", dimensionality);
         //point is inside the sphere mesh and has been pushed on its surface
         if (dimensionality != -1) {
-            //printf("Points is inside sphere mesh, adding point and returning...\n");
-            points.emplace_back(point, dimensionality);
+            points.emplace_back(point.pos, point.normal, dimensionality);
             return;
         }
     }
