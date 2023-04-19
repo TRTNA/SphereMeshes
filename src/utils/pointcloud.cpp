@@ -6,9 +6,6 @@
 
 #include <stdio.h>
 
-//TODO temporary, remove this
-static const glm::vec3 COLORS[3] = {glm::vec3(8.0f, 0.1f, 0.1f), glm::vec3(0.1f, 0.8f, 0.1f), glm::vec3(0.1f, 0.1f, 0.8f)};
-
 void PointCloud::addPoint(const SphereMesh & sphereMesh)
 {
     //printf("[METHOD] addPoint...\n");
@@ -23,7 +20,7 @@ void PointCloud::addPoint(const SphereMesh & sphereMesh)
         //point is inside the sphere mesh and has been pushed on its surface
         if (dimensionality != -1) {
             //printf("Points is inside sphere mesh, adding point and returning...\n");
-            points.emplace_back(point, COLORS[dimensionality]);
+            points.emplace_back(point, dimensionality);
             return;
         }
     }
