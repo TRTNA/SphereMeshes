@@ -24,13 +24,13 @@ using std::string;
 
 static const float EPSILON = 0.001f;
 
-SphereMesh::SphereMesh(vector<Sphere> &pSpheres, vector<Capsuloid> &pCapsuloids, vector<Triangle> &pTriangles, vector<uint> &pSingletons)
-    : spheres(std::move(pSpheres)), capsuloids(std::move(pCapsuloids)), triangles(std::move(pTriangles)), singletons(std::move(pSingletons))
+SphereMesh::SphereMesh(vector<Sphere> &pSpheres, vector<Capsuloid> &pCapsuloids, vector<SphereTriangle> &pSphereTriangles, vector<uint> &pSingletons)
+    : spheres(std::move(pSpheres)), capsuloids(std::move(pCapsuloids)), sphereTriangles(std::move(pSphereTriangles)), singletons(std::move(pSingletons))
 {
     clog << "Created a sphere mesh:\n";
     clog << "- Spheres:\t" << spheres.size() << "\n";
     clog << "- Capsuloids:\t" << capsuloids.size() << "\n";
-    clog << "- Triangles:\t" << triangles.size() << "\n";
+    clog << "- Triangles:\t" << sphereTriangles.size() << "\n";
     clog << "- Singletons:\t" << singletons.size() << "\n";
     updateAllCapsuloidsFactors();
     updateBoundingSphere();
@@ -47,9 +47,9 @@ void SphereMesh::addCapsuloid(const Capsuloid &caps)
     capsuloids.emplace_back(caps.s0, caps.s1, dist);
 }
 
-void SphereMesh::addTriangle(const Triangle &triangle)
+void SphereMesh::addSphereTriangle(const SphereTriangle &triangle)
 {
-    triangles.emplace_back(triangle.vertices);
+    sphereTriangles.emplace_back(triangle.vertices);
 }
 
 void SphereMesh::addSingleton(uint sphereIdx)
@@ -76,10 +76,10 @@ std::string SphereMesh::toString() const
         ss << i << " " << capsuloids.at(i) << "\n";
     }
     ss << "\n";
-    ss << "Triangles:\n";
-    for (size_t i = 0; i < triangles.size(); i++)
+    ss << "SphereTriangles:\n";
+    for (size_t i = 0; i < sphereTriangles.size(); i++)
     {
-        ss << i << " " << triangles.at(i) << "\n";
+        ss << i << " " << sphereTriangles.at(i) << "\n";
     }
     ss << "\n";
     ss << "Singletons:\n";
@@ -97,7 +97,7 @@ Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality) const
     uint singletonStart = 0;
     uint edgeStart = singletonStart + singletons.size();
     uint triangleStart = edgeStart + capsuloids.size();
-    uint maxUniqueIdx = triangleStart + triangles.size();
+    uint maxUniqueIdx = triangleStart + sphereTriangles.size();
   
 
     while (!outsideEverything)
@@ -132,10 +132,10 @@ Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality) const
                 }
             }
             
-            /* Commented until pushOutsideOneTriangle is implemented
+            /* Commented until pushOutsideOneSphereTriangle is implemented
             else if (uniqueIdx >= triangleStart)
             {
-                Point tempPoint = pushOutsideOneTriangle(uniqueIdx - triangleStart, lastPos, tempDimensionality);
+                Point tempPoint = pushOutsideOneSphereTriangle(uniqueIdx - triangleStart, lastPos, tempDimensionality);
                 if (tempDimensionality != -1)
                 {
                     // has been pushed outside
@@ -272,13 +272,13 @@ bool readFromFile(const std::string &path, SphereMesh &out, std::string& errorMs
             out.addCapsuloid(caps);
         }
 
-        uint trianglesNo = 0;
-        file >> trianglesNo;
-        for (size_t i = 0; i < trianglesNo; i++)
+        uint sphereTrianglesNo = 0;
+        file >> sphereTrianglesNo;
+        for (size_t i = 0; i < sphereTrianglesNo; i++)
         {
-            Triangle triangle;
-            file >> triangle;
-            out.addTriangle(triangle);
+            SphereTriangle sphereTriangle;
+            file >> sphereTriangle;
+            out.addSphereTriangle(sphereTriangle);
         }
     } catch (const std::ios::failure& ex) {
         errorMsg = path + " badly formattated\n";
@@ -311,8 +311,8 @@ std::ostream &operator<<(std::ostream &ost, const SphereMesh &sm)
         ost << e << "\n";
     }
     ost << "\n";
-    ost << sm.triangles.size() << "\n";
-    for (const auto &t : sm.triangles)
+    ost << sm.sphereTriangles.size() << "\n";
+    for (const auto &t : sm.sphereTriangles)
     {
         ost << t << "\n";
     }
@@ -322,4 +322,12 @@ std::ostream &operator<<(std::ostream &ost, const SphereMesh &sm)
 float computeCapsuloidFactor(float r0, float r1, float dist) {
     return (r0 - r1) / dist;
 }
+
+glm::mat3 computeSphereTriangleProjMat(const glm::vec3& v0, const glm::vec3 v1, const glm::vec3& v2) {
+    const glm::vec3 A = v1 - v0;
+    const glm::vec3 B = v2 - v0;
+    const glm::vec3 N = glm::normalize(glm::cross(A, B));
+    return glm::inverse(glm::mat3(A, B, N));
+}
+
 
