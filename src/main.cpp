@@ -12,7 +12,7 @@
 
 #include <spheremeshes/spheremesh.h>
 #include <spheremeshes/capsuloid.h>
-#include <spheremeshes/triangle.h>
+#include <spheremeshes/spheretriangle.h>
 #include <rendering/renderablepointcloud.h>
 
 #include <rendering/shader.h>

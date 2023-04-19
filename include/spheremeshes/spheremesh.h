@@ -6,7 +6,7 @@
 
 #include <spheremeshes/sphere.h>
 #include <spheremeshes/capsuloid.h>
-#include <spheremeshes/triangle.h>
+#include <spheremeshes/spheretriangle.h>
 
 
 #include <spheremeshes/point.h>
@@ -18,17 +18,17 @@ class SphereMesh {
     std::vector<Sphere> spheres;
     std::vector<uint> singletons;
     std::vector<Capsuloid> capsuloids;
-    std::vector<Triangle> triangles;
+    std::vector<SphereTriangle> sphereTriangles;
     //TODO moltiplica tutti i punti e raggi per k (voledno metodo scale su sphere da invocare su ognuna)
     //e aggiorna boundingsphere subito dopo, scala anche la boundingSphere
     void scale(float k);
     Sphere boundingSphere;
     SphereMesh() = default;
-    SphereMesh(std::vector<Sphere>& pSpheres, std::vector<Capsuloid>& pEdges, std::vector<Triangle>& pTriangles, std::vector<uint>& pSingletons);
+    SphereMesh(std::vector<Sphere>& pSpheres, std::vector<Capsuloid>& pEdges, std::vector<SphereTriangle>& pTriangles, std::vector<uint>& pSingletons);
     ~SphereMesh() = default;
     void addSphere(const Sphere& sphere);
     void addCapsuloid(const Capsuloid& capsuloid);
-    void addTriangle(const Triangle& triangle);
+    void addSphereTriangle(const SphereTriangle& sphereTriangle);
     void addSingleton(uint sphereIdx);
     void updateBoundingSphere();
     std::string toString() const;
@@ -40,7 +40,7 @@ class SphereMesh {
     Point pushOutside(const glm::vec3& pos, int& dimensionality) const;
     private:
     Point pushOutsideOneCapsule(uint capsuloidIndex, const glm::vec3& pos, int& dimensionality) const;
-    Point pushOutsideOneTriangle(uint triangleIndex, const glm::vec3& pos, int& dimensionality) const;
+    Point pushOutsideOneSphereTriangle(uint sphereTriangleIndex, const glm::vec3& pos, int& dimensionality) const;
     Point pushOutsideOneSingleton(uint singletonIndex, const glm::vec3& pos, int& dimensionality) const;
     void updateCapsuloidFactor(uint capsuloidIndex);
     void updateAllCapsuloidsFactors();
