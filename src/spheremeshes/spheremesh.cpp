@@ -33,6 +33,7 @@ SphereMesh::SphereMesh(vector<Sphere> &pSpheres, vector<Capsuloid> &pCapsuloids,
     clog << "- Triangles:\t" << sphereTriangles.size() << "\n";
     clog << "- Singletons:\t" << singletons.size() << "\n";
     updateAllCapsuloidsFactors();
+    updateAllSphereTrianglesProjMat();
     updateBoundingSphere();
 }
 
@@ -47,9 +48,12 @@ void SphereMesh::addCapsuloid(const Capsuloid &caps)
     capsuloids.emplace_back(caps.s0, caps.s1, dist);
 }
 
-void SphereMesh::addSphereTriangle(const SphereTriangle &triangle)
+void SphereMesh::addSphereTriangle(const SphereTriangle &st)
 {
-    sphereTriangles.emplace_back(triangle.vertices);
+    const Sphere& s0 = spheres.at(st.vertices[0]);
+    const Sphere& s1 = spheres.at(st.vertices[0]);
+    const Sphere& s2 = spheres.at(st.vertices[0]);
+    sphereTriangles.emplace_back(st.vertices, computeSphereTriangleProjMat(s0.center, s1.center, s2.center));
 }
 
 void SphereMesh::addSingleton(uint sphereIdx)
