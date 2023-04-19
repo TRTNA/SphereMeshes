@@ -42,7 +42,8 @@ void SphereMesh::addSphere(const Sphere &sphere)
 
 void SphereMesh::addCapsuloid(const Capsuloid &caps)
 {
-    capsuloids.emplace_back(caps.s0, caps.s1);
+    const float dist = glm::length(spheres.at(caps.s0).center - spheres.at(caps.s1).center);
+    capsuloids.emplace_back(caps.s0, caps.s1, dist);
 }
 
 void SphereMesh::addTriangle(const Triangle &triangle)
