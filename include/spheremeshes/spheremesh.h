@@ -39,9 +39,9 @@ class SphereMesh {
     // genera un punto, prova a spingerlo fuori, se nessuno lo spinge fuori riprova, altrimenti assegna colore e ritorna.
     Point pushOutside(const glm::vec3& pos, int& dimensionality) const;
     private:
-    Point pushOutsideOneCapsule(uint capsuloidIndex, const glm::vec3& pos, int& dimensionality) const;
-    Point pushOutsideOneSphereTriangle(uint sphereTriangleIndex, const glm::vec3& pos, int& dimensionality) const;
-    Point pushOutsideOneSingleton(uint singletonIndex, const glm::vec3& pos, int& dimensionality) const;
+    Point pushOutsideOneCapsule(const Capsuloid& caps, const glm::vec3& pos, int& dimensionality) const;
+    Point pushOutsideOneSphereTriangle(const SphereTriangle& tri, const glm::vec3& pos, int& dimensionality) const;
+    Point pushOutsideOneSingleton(const Sphere& sphere, const glm::vec3& pos, int& dimensionality) const;
     void updateCapsuloidFactor(uint capsuloidIndex);
     void updateAllCapsuloidsFactors();
     void updateSphereTriangleProjMat(uint sphereTriangleIndex);

@@ -113,7 +113,7 @@ Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality) const
         {
             if (uniqueIdx >= singletonStart && uniqueIdx < edgeStart)
             {
-                Point tempPoint = pushOutsideOneSingleton(uniqueIdx, lastPos, tempDimensionality);
+                Point tempPoint = pushOutsideOneSingleton(spheres.at(singletons.at(uniqueIdx)), lastPos, tempDimensionality);
                 if (tempDimensionality != -1)
                 {
                     // has been pushed outside
@@ -125,7 +125,7 @@ Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality) const
             }
             else if (uniqueIdx >= edgeStart && uniqueIdx < triangleStart)
             {
-                Point tempPoint = pushOutsideOneCapsule(uniqueIdx - edgeStart, lastPos, tempDimensionality);
+                Point tempPoint = pushOutsideOneCapsule(capsuloids.at(uniqueIdx - edgeStart), lastPos, tempDimensionality);
                 if (tempDimensionality != -1)
                 {
                     // has been pushed outside
@@ -156,9 +156,9 @@ Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality) const
     dimensionality = lastDimensionality;
     return lastPoint;
 }
-Point SphereMesh::pushOutsideOneCapsule(uint capsuleIndex, const glm::vec3 &pos, int &dimensionality) const
+
+Point SphereMesh::pushOutsideOneCapsule(const Capsuloid& caps, const glm::vec3& pos, int& dimensionality) const
 {
-    const Capsuloid &caps = capsuloids.at(capsuleIndex);
     const Sphere &A = spheres.at(caps.s0);
     const Sphere &B = spheres.at(caps.s1);
 
@@ -199,11 +199,8 @@ Point SphereMesh::pushOutsideOneCapsule(uint capsuleIndex, const glm::vec3 &pos,
     return Point(glm::vec3(C + interpRadius * normal), normal);
 }
 
-Point SphereMesh::pushOutsideOneSingleton(uint singletonIndex, const glm::vec3 &pos, int &dimensionality) const
+Point SphereMesh::pushOutsideOneSingleton(const Sphere& sphere, const glm::vec3& pos, int& dimensionality) const
 {
-    const uint sphereIdx = singletons.at(singletonIndex);
-    const Sphere &sphere = spheres.at(sphereIdx);
-
     const glm::vec3 &C = sphere.center;
     const glm::vec3 CtoPos = pos - C;
     const float CtoPossqrd = glm::dot(CtoPos, CtoPos);
