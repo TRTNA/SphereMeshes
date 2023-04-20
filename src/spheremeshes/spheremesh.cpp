@@ -18,9 +18,9 @@ using std::endl;
 using std::array;
 using std::ifstream;
 using std::ostream;
+using std::string;
 using std::stringstream;
 using std::vector;
-using std::string;
 
 static const float EPSILON = 0.00001f;
 
@@ -49,9 +49,9 @@ void SphereMesh::addCapsuloid(const Capsuloid &caps)
 
 void SphereMesh::addSphereTriangle(const SphereTriangle &st)
 {
-    const Sphere& s0 = spheres.at(st.vertices[0]);
-    const Sphere& s1 = spheres.at(st.vertices[1]);
-    const Sphere& s2 = spheres.at(st.vertices[2]);
+    const Sphere &s0 = spheres.at(st.vertices[0]);
+    const Sphere &s1 = spheres.at(st.vertices[1]);
+    const Sphere &s2 = spheres.at(st.vertices[2]);
     sphereTriangles.emplace_back(st.vertices, computeSphereTriangleProjMat(s0.center, s1.center, s2.center));
 }
 
@@ -135,8 +135,8 @@ Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality) const
                     break;
                 }
             }
-            
-            /* Commented until pushOutsideOneSphereTriangle is implemented
+
+            // Commented until pushOutsideOneSphereTriangle is implemented
             else if (uniqueIdx >= triangleStart)
             {
                 Point tempPoint = pushOutsideOneSphereTriangle(uniqueIdx - triangleStart, lastPos, tempDimensionality);
@@ -148,7 +148,7 @@ Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality) const
                     lastPoint = tempPoint;
                     break;
                 }
-            }*/
+            }
         }
         tries++;
         outsideEverything = tempDimensionality == -1;
@@ -168,8 +168,7 @@ Point SphereMesh::pushOutsideOneCapsule(const Capsuloid& caps, const glm::vec3& 
     glm::vec3 fakeC = A.center + k * BminusA;
     float d = length(fakeC - pos);
 
-    k += (caps.factor*d);
-    
+    k += (caps.factor * d);
 
     const float clampedK = glm::clamp(k, 0.0f, 1.0f);
 
@@ -218,39 +217,104 @@ Point SphereMesh::pushOutsideOneSingleton(const Sphere& sphere, const glm::vec3&
     return Point(glm::vec3(C + sphere.radius * normal), normal);
 }
 
-void SphereMesh::updateCapsuloidFactor(uint capsuloidIndex) {
-    Capsuloid& c = capsuloids.at(capsuloidIndex);
-    const Sphere& s0 = spheres.at(c.s0);
-    const Sphere& s1 = spheres.at(c.s1);
+Point SphereMesh::pushOutsideOneSphereTriangle(uint triangleIndex, const glm::vec3 &pos, int &dimensionality) const
+{
+    const SphereTriangle &tri = sphereTriangles.at(triangleIndex);
+    const Sphere &s0 = spheres.at(tri.vertices[0]);
+    const Sphere &s1 = spheres.at(tri.vertices[1]);
+    const Sphere &s2 = spheres.at(tri.vertices[2]);
+
+    const glm::vec3 q = pos - s0.center;
+
+    glm::vec3 res = tri.projectorMatrix * q;
+    float d = res.z;
+    float k0 = res.x;
+    float k1 = res.y;
+
+    float a = k0;
+    float b = k1;
+    float c = (1.0f - k0 - k1);
+
+    if (a <= 0.0f && b <= 0.0f && c >= 1.0f) {
+        //PUSH OUTSIDE SPHERE S0
+    }
+
+    if (a >= 1.0f && b <= 0.0f && c <= 0.0f) {
+        //PUSH OUTSIDE SPHERE S1
+    }
+
+    if(a <= 0.0f && b >= 1.0f && c <= 0.0f) {
+        //PUSH OUTSIDE SPHERE S2
+    }
+
+    if(b <= 0.0f && c >= 0.0f && c <= 1.0f && a >= 0.0f && a <= 1.0f) {
+        //PUSH OUTSIDE CAPSULE V0V1
+    }
+    if(c <= 0.0f && b >= 0.0f && b <= 1.0f && a >= 0.0f && a <= 1.0f) {
+        //PUSH OUTSIDE CAPSULE V1V2
+    }
+    if(a <= 0.0f && c >= 0.0f && c <= 1.0f && b >= 0.0f && b <= 1.0f) {
+        //PUSH OUTSIDE CAPSULE V0V2
+    }
+
+    if (a > 0.0f && a < 1.0f && b > 0.0f && b < 1.0f && c > 0.0f && c < 1.0f)
+    {
+        //PUSH OUTSIDE TRIANGLE
+        float interpRadius = c * s0.radius + a * s1.radius + b * s2.radius;
+        if (d > interpRadius - EPSILON)
+        {
+            dimensionality = -1;
+            return Point(pos, glm::vec3(0.0f));
+        }
+
+        glm::vec3 fakeC = c * s0.center + a * s1.center * b * s2.center;
+        const glm::vec3 normal = glm::normalize(pos - fakeC);
+        dimensionality = 2;
+        return Point(fakeC + interpRadius * normal, normal);
+    }
+    dimensionality = -1;
+    return Point(pos, glm::vec3(0.0f));
+}
+
+void SphereMesh::updateCapsuloidFactor(uint capsuloidIndex)
+{
+    Capsuloid &c = capsuloids.at(capsuloidIndex);
+    const Sphere &s0 = spheres.at(c.s0);
+    const Sphere &s1 = spheres.at(c.s1);
     c.factor = computeCapsuloidFactor(s0, s1);
 }
 
-void SphereMesh::updateAllCapsuloidsFactors() {
-    for (Capsuloid& c : capsuloids) {
-        const Sphere& s0 = spheres.at(c.s0);
-        const Sphere& s1 = spheres.at(c.s1);
+void SphereMesh::updateAllCapsuloidsFactors()
+{
+    for (Capsuloid &c : capsuloids)
+    {
+        const Sphere &s0 = spheres.at(c.s0);
+        const Sphere &s1 = spheres.at(c.s1);
         c.factor = computeCapsuloidFactor(s0, s1);
     }
 }
 
-void SphereMesh::updateSphereTriangleProjMat(uint sphereTriangleIndex) {
-    SphereTriangle& st = sphereTriangles.at(sphereTriangleIndex);
-    const Sphere& s0 = spheres.at(st.vertices[0]);
-    const Sphere& s1 = spheres.at(st.vertices[1]);
-    const Sphere& s2 = spheres.at(st.vertices[2]);
+void SphereMesh::updateSphereTriangleProjMat(uint sphereTriangleIndex)
+{
+    SphereTriangle &st = sphereTriangles.at(sphereTriangleIndex);
+    const Sphere &s0 = spheres.at(st.vertices[0]);
+    const Sphere &s1 = spheres.at(st.vertices[1]);
+    const Sphere &s2 = spheres.at(st.vertices[2]);
 
     st.setProjectorMatrix(computeSphereTriangleProjMat(s0.center, s1.center, s2.center));
 }
-void SphereMesh::updateAllSphereTrianglesProjMat() {
-    for (SphereTriangle& st : sphereTriangles) {
-        const Sphere& s0 = spheres.at(st.vertices[0]);
-        const Sphere& s1 = spheres.at(st.vertices[1]);
-        const Sphere& s2 = spheres.at(st.vertices[2]);
+void SphereMesh::updateAllSphereTrianglesProjMat()
+{
+    for (SphereTriangle &st : sphereTriangles)
+    {
+        const Sphere &s0 = spheres.at(st.vertices[0]);
+        const Sphere &s1 = spheres.at(st.vertices[1]);
+        const Sphere &s2 = spheres.at(st.vertices[2]);
         st.setProjectorMatrix(computeSphereTriangleProjMat(s0.center, s1.center, s2.center));
     }
 }
 
-bool readFromFile(const std::string &path, SphereMesh &out, std::string& errorMsg)
+bool readFromFile(const std::string &path, SphereMesh &out, std::string &errorMsg)
 {
     ifstream file;
     file.exceptions(std::ios::failbit | std::ios::badbit);
@@ -298,7 +362,9 @@ bool readFromFile(const std::string &path, SphereMesh &out, std::string& errorMs
             file >> sphereTriangle;
             out.addSphereTriangle(sphereTriangle);
         }
-    } catch (const std::ios::failure& ex) {
+    }
+    catch (const std::ios::failure &ex)
+    {
         errorMsg = path + " badly formattated\n";
         file.close();
         return false;
@@ -337,27 +403,27 @@ std::ostream &operator<<(std::ostream &ost, const SphereMesh &sm)
     return ost;
 }
 
-float computeCapsuloidFactor(const Sphere& s0, const Sphere& s1) {
+float computeCapsuloidFactor(const Sphere &s0, const Sphere &s1)
+{
     const glm::vec3 l = s1.center - s0.center;
     return (s1.radius - s0.radius) / (glm::dot(l, l));
 }
 
-glm::mat3 computeSphereTriangleProjMat(const glm::vec3& v0, const glm::vec3 v1, const glm::vec3& v2) {
+glm::mat3 computeSphereTriangleProjMat(const glm::vec3 &v0, const glm::vec3 v1, const glm::vec3 &v2)
+{
     const glm::vec3 A = v1 - v0;
     const glm::vec3 B = v2 - v0;
     const glm::vec3 N = glm::normalize(glm::cross(A, B));
     return glm::inverse(glm::mat3(A, B, N));
 }
 
-
-void SphereMesh::scale(float k) {
-    for (auto& s : spheres) {
+void SphereMesh::scale(float k)
+{
+    for (auto &s : spheres)
+    {
         s.scale(k);
     }
     boundingSphere.scale(k);
     updateAllCapsuloidsFactors();
     updateAllSphereTrianglesProjMat();
 }
-
-
-
