@@ -13,6 +13,7 @@ class AABB;
 struct Sphere {
     Sphere();
     Sphere(glm::vec3 pCenter, float pRadius);
+    void scale(float k);
     glm::vec3 center;
     float radius;
 };

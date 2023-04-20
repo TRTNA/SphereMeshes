@@ -9,6 +9,11 @@ Sphere::Sphere(glm::vec3 pCenter, float pRadius) : center(pCenter), radius(pRadi
 
 Sphere::Sphere() : center(glm::vec3(0.0f)), radius(0.0f) {}
 
+void Sphere::scale(float k) {
+    center *= k;
+    radius *= k;
+}
+
 std::ostream& operator<<(std::ostream& ost, const Sphere& val) {
     ost << val.center.x << " " << val.center.y << " " << val.center.z << " " << val.radius;
     return ost;

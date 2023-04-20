@@ -50,7 +50,7 @@ class SphereMesh {
 
 
 bool readFromFile(const std::string& path, SphereMesh& out, std::string& errorMsg);
-float computeCapsuloidFactor(float r0, float r1, float dist);
+float computeCapsuloidFactor(const Sphere& s0, const Sphere& s1);
 glm::mat3 computeSphereTriangleProjMat(const glm::vec3& v0, const glm::vec3 v1, const glm::vec3& v2);
 
 

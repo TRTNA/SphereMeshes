@@ -22,7 +22,7 @@ using std::stringstream;
 using std::vector;
 using std::string;
 
-static const float EPSILON = 0.001f;
+static const float EPSILON = 0.00001f;
 
 SphereMesh::SphereMesh(vector<Sphere> &pSpheres, vector<Capsuloid> &pCapsuloids, vector<SphereTriangle> &pSphereTriangles, vector<uint> &pSingletons)
     : spheres(std::move(pSpheres)), capsuloids(std::move(pCapsuloids)), sphereTriangles(std::move(pSphereTriangles)), singletons(std::move(pSingletons))
@@ -44,15 +44,14 @@ void SphereMesh::addSphere(const Sphere &sphere)
 
 void SphereMesh::addCapsuloid(const Capsuloid &caps)
 {
-    const float dist = glm::length(spheres.at(caps.s0).center - spheres.at(caps.s1).center);
-    capsuloids.emplace_back(caps.s0, caps.s1, dist);
+    capsuloids.emplace_back(caps.s0, caps.s1, computeCapsuloidFactor(spheres.at(caps.s0), spheres.at(caps.s1)));
 }
 
 void SphereMesh::addSphereTriangle(const SphereTriangle &st)
 {
     const Sphere& s0 = spheres.at(st.vertices[0]);
-    const Sphere& s1 = spheres.at(st.vertices[0]);
-    const Sphere& s2 = spheres.at(st.vertices[0]);
+    const Sphere& s1 = spheres.at(st.vertices[1]);
+    const Sphere& s2 = spheres.at(st.vertices[2]);
     sphereTriangles.emplace_back(st.vertices, computeSphereTriangleProjMat(s0.center, s1.center, s2.center));
 }
 
@@ -102,9 +101,10 @@ Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality) const
     uint edgeStart = singletonStart + singletons.size();
     uint triangleStart = edgeStart + capsuloids.size();
     uint maxUniqueIdx = triangleStart + sphereTriangles.size();
-  
+    uint tries = 0;
+    const uint maxTries = 10;
 
-    while (!outsideEverything)
+    while (!outsideEverything && tries < maxTries)
     {
         // storing last position, because it may vary when it is pushed by multiple primitives
         glm::vec3 lastPos = lastPoint.pos;
@@ -150,7 +150,7 @@ Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality) const
                 }
             }*/
         }
-
+        tries++;
         outsideEverything = tempDimensionality == -1;
     }
     dimensionality = lastDimensionality;
@@ -165,11 +165,11 @@ Point SphereMesh::pushOutsideOneCapsule(uint capsuleIndex, const glm::vec3 &pos,
     const glm::vec3 BminusA = B.center - A.center;
     const float BminusAsqrd = glm::dot(BminusA, BminusA);
     float k = glm::dot(pos - A.center, BminusA) / BminusAsqrd;
+    glm::vec3 fakeC = A.center + k * BminusA;
+    float d = length(fakeC - pos);
 
-    // TODO va normalizzato BMinusA?
-    const float factor = (A.radius - B.radius) / length(BminusA);
-
-    k -= factor * length(pos - (A.center + k * BminusA));
+    k += (caps.factor*d);
+    
 
     const float clampedK = glm::clamp(k, 0.0f, 1.0f);
 
@@ -225,30 +225,30 @@ void SphereMesh::updateCapsuloidFactor(uint capsuloidIndex) {
     Capsuloid& c = capsuloids.at(capsuloidIndex);
     const Sphere& s0 = spheres.at(c.s0);
     const Sphere& s1 = spheres.at(c.s1);
-    c.factor = computeCapsuloidFactor(s0.radius, s1.radius, glm::length(s0.center - s1.center));
+    c.factor = computeCapsuloidFactor(s0, s1);
 }
 
 void SphereMesh::updateAllCapsuloidsFactors() {
     for (Capsuloid& c : capsuloids) {
         const Sphere& s0 = spheres.at(c.s0);
         const Sphere& s1 = spheres.at(c.s1);
-        c.factor = computeCapsuloidFactor(s0.radius, s1.radius, glm::length(s0.center - s1.center));
+        c.factor = computeCapsuloidFactor(s0, s1);
     }
 }
 
 void SphereMesh::updateSphereTriangleProjMat(uint sphereTriangleIndex) {
     SphereTriangle& st = sphereTriangles.at(sphereTriangleIndex);
     const Sphere& s0 = spheres.at(st.vertices[0]);
-    const Sphere& s1 = spheres.at(st.vertices[0]);
-    const Sphere& s2 = spheres.at(st.vertices[0]);
+    const Sphere& s1 = spheres.at(st.vertices[1]);
+    const Sphere& s2 = spheres.at(st.vertices[2]);
 
     st.setProjectorMatrix(computeSphereTriangleProjMat(s0.center, s1.center, s2.center));
 }
 void SphereMesh::updateAllSphereTrianglesProjMat() {
     for (SphereTriangle& st : sphereTriangles) {
         const Sphere& s0 = spheres.at(st.vertices[0]);
-        const Sphere& s1 = spheres.at(st.vertices[0]);
-        const Sphere& s2 = spheres.at(st.vertices[0]);
+        const Sphere& s1 = spheres.at(st.vertices[1]);
+        const Sphere& s2 = spheres.at(st.vertices[2]);
         st.setProjectorMatrix(computeSphereTriangleProjMat(s0.center, s1.center, s2.center));
     }
 }
@@ -340,8 +340,9 @@ std::ostream &operator<<(std::ostream &ost, const SphereMesh &sm)
     return ost;
 }
 
-float computeCapsuloidFactor(float r0, float r1, float dist) {
-    return (r0 - r1) / dist;
+float computeCapsuloidFactor(const Sphere& s0, const Sphere& s1) {
+    const glm::vec3 l = s1.center - s0.center;
+    return (s1.radius - s0.radius) / (glm::dot(l, l));
 }
 
 glm::mat3 computeSphereTriangleProjMat(const glm::vec3& v0, const glm::vec3 v1, const glm::vec3& v2) {
@@ -350,5 +351,16 @@ glm::mat3 computeSphereTriangleProjMat(const glm::vec3& v0, const glm::vec3 v1, 
     const glm::vec3 N = glm::normalize(glm::cross(A, B));
     return glm::inverse(glm::mat3(A, B, N));
 }
+
+
+void SphereMesh::scale(float k) {
+    for (auto& s : spheres) {
+        s.scale(k);
+    }
+    boundingSphere.scale(k);
+    updateAllCapsuloidsFactors();
+    updateAllSphereTrianglesProjMat();
+}
+
 
 
