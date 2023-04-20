@@ -14,6 +14,7 @@ struct SphereTriangle {
     SphereTriangle(uint v0, uint v1, uint v2, glm::mat3 projMat);
     SphereTriangle(const std::array<uint, 3>& pVertices);
     SphereTriangle(const std::array<uint, 3>& pVertices, glm::mat3 projMat);
+    //TODO triangolo si memorizza due matrici una per il piano sotto e una per quello sopra (la normale col vento)
     void setProjectorMatrix(glm::mat3 mat);
 };
 

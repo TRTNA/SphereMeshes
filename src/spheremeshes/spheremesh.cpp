@@ -251,8 +251,8 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
         // PUSH OUTSIDE SPHERE S2
         return pushOutsideOneSingleton(s2, pos, dimensionality);
     }
-    */
 
+*/
     if (b <= 0.0f)
     {
         // PUSH OUTSIDE CAPSULE V0V1
@@ -282,7 +282,7 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
             return Point(pos, glm::vec3(0.0f));
         }
 
-        glm::vec3 fakeC = c * s0.center + a * s1.center * b * s2.center;
+        glm::vec3 fakeC = c * s0.center + a * s1.center + b * s2.center;
         const glm::vec3 normal = glm::normalize(pos - fakeC);
         dimensionality = 2;
         return Point(fakeC + interpRadius * normal, normal);
