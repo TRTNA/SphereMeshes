@@ -16,7 +16,11 @@
             "dependsOn": [
                 "main_build"
             ],
-            "problemMatcher": []
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         },
         {
             "label": "main_run",
