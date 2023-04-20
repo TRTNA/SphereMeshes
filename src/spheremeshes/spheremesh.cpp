@@ -139,7 +139,7 @@ Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality) const
             // Commented until pushOutsideOneSphereTriangle is implemented
             else if (uniqueIdx >= triangleStart)
             {
-                Point tempPoint = pushOutsideOneSphereTriangle(uniqueIdx - triangleStart, lastPos, tempDimensionality);
+                Point tempPoint = pushOutsideOneSphereTriangle(sphereTriangles.at(uniqueIdx - triangleStart), lastPos, tempDimensionality);
                 if (tempDimensionality != -1)
                 {
                     // has been pushed outside
@@ -157,7 +157,7 @@ Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality) const
     return lastPoint;
 }
 
-Point SphereMesh::pushOutsideOneCapsule(const Capsuloid& caps, const glm::vec3& pos, int& dimensionality) const
+Point SphereMesh::pushOutsideOneCapsule(const Capsuloid &caps, const glm::vec3 &pos, int &dimensionality) const
 {
     const Sphere &A = spheres.at(caps.s0);
     const Sphere &B = spheres.at(caps.s1);
@@ -198,7 +198,7 @@ Point SphereMesh::pushOutsideOneCapsule(const Capsuloid& caps, const glm::vec3& 
     return Point(glm::vec3(C + interpRadius * normal), normal);
 }
 
-Point SphereMesh::pushOutsideOneSingleton(const Sphere& sphere, const glm::vec3& pos, int& dimensionality) const
+Point SphereMesh::pushOutsideOneSingleton(const Sphere &sphere, const glm::vec3 &pos, int &dimensionality) const
 {
     const glm::vec3 &C = sphere.center;
     const glm::vec3 CtoPos = pos - C;
@@ -217,9 +217,8 @@ Point SphereMesh::pushOutsideOneSingleton(const Sphere& sphere, const glm::vec3&
     return Point(glm::vec3(C + sphere.radius * normal), normal);
 }
 
-Point SphereMesh::pushOutsideOneSphereTriangle(uint triangleIndex, const glm::vec3 &pos, int &dimensionality) const
+Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const glm::vec3 &pos, int &dimensionality) const
 {
-    const SphereTriangle &tri = sphereTriangles.at(triangleIndex);
     const Sphere &s0 = spheres.at(tri.vertices[0]);
     const Sphere &s1 = spheres.at(tri.vertices[1]);
     const Sphere &s2 = spheres.at(tri.vertices[2]);
@@ -234,32 +233,48 @@ Point SphereMesh::pushOutsideOneSphereTriangle(uint triangleIndex, const glm::ve
     float a = k0;
     float b = k1;
     float c = (1.0f - k0 - k1);
-
-    if (a <= 0.0f && b <= 0.0f && c >= 1.0f) {
-        //PUSH OUTSIDE SPHERE S0
+/*
+    if (a <= 0.0f && b <= 0.0f)
+    {
+        // PUSH OUTSIDE SPHERE S0
+        return pushOutsideOneSingleton(s0, pos, dimensionality);
     }
 
-    if (a >= 1.0f && b <= 0.0f && c <= 0.0f) {
-        //PUSH OUTSIDE SPHERE S1
+    if (b <= 0.0f && c <= 0.0f)
+    {
+        // PUSH OUTSIDE SPHERE S1
+        return pushOutsideOneSingleton(s1, pos, dimensionality);
     }
 
-    if(a <= 0.0f && b >= 1.0f && c <= 0.0f) {
-        //PUSH OUTSIDE SPHERE S2
+    if (a <= 0.0f && c <= 0.0f)
+    {
+        // PUSH OUTSIDE SPHERE S2
+        return pushOutsideOneSingleton(s2, pos, dimensionality);
     }
+    */
 
-    if(b <= 0.0f && c >= 0.0f && c <= 1.0f && a >= 0.0f && a <= 1.0f) {
-        //PUSH OUTSIDE CAPSULE V0V1
+    if (b <= 0.0f)
+    {
+        // PUSH OUTSIDE CAPSULE V0V1
+        Capsuloid &tempCapsule = Capsuloid(tri.vertices[0], tri.vertices[1], computeCapsuloidFactor(s0, s1));
+        return pushOutsideOneCapsule(tempCapsule, pos, dimensionality);
     }
-    if(c <= 0.0f && b >= 0.0f && b <= 1.0f && a >= 0.0f && a <= 1.0f) {
-        //PUSH OUTSIDE CAPSULE V1V2
+    if (c <= 0.0f)
+    {
+        // PUSH OUTSIDE CAPSULE V1V2
+        Capsuloid &tempCapsule = Capsuloid(tri.vertices[1], tri.vertices[2], computeCapsuloidFactor(s1, s2));
+        return pushOutsideOneCapsule(tempCapsule, pos, dimensionality);
     }
-    if(a <= 0.0f && c >= 0.0f && c <= 1.0f && b >= 0.0f && b <= 1.0f) {
-        //PUSH OUTSIDE CAPSULE V0V2
+    if (a <= 0.0f)
+    {
+        // PUSH OUTSIDE CAPSULE V0V2
+        Capsuloid &tempCapsule = Capsuloid(tri.vertices[0], tri.vertices[2], computeCapsuloidFactor(s0, s2));
+        return pushOutsideOneCapsule(tempCapsule, pos, dimensionality);
     }
 
     if (a > 0.0f && a < 1.0f && b > 0.0f && b < 1.0f && c > 0.0f && c < 1.0f)
     {
-        //PUSH OUTSIDE TRIANGLE
+        // PUSH OUTSIDE TRIANGLE
         float interpRadius = c * s0.radius + a * s1.radius + b * s2.radius;
         if (d > interpRadius - EPSILON)
         {
