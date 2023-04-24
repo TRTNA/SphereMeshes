@@ -6,6 +6,8 @@
 #include <array>
 #include <ostream>
 
+//TODO: triangle should store two matrices, one for the bottom plane and one for the upper one
+
 struct SphereTriangle {
     std::array<U32, 3> vertices;
     glm::mat3 projectorMatrix;
@@ -14,7 +16,6 @@ struct SphereTriangle {
     SphereTriangle(uint v0, uint v1, uint v2, glm::mat3 projMat);
     SphereTriangle(const std::array<uint, 3>& pVertices);
     SphereTriangle(const std::array<uint, 3>& pVertices, glm::mat3 projMat);
-    //TODO triangolo si memorizza due matrici una per il piano sotto e una per quello sopra (la normale col vento)
     void setProjectorMatrix(glm::mat3 mat);
 };
 

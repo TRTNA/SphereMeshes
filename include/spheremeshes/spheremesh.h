@@ -19,8 +19,6 @@ class SphereMesh {
     std::vector<uint> singletons;
     std::vector<Capsuloid> capsuloids;
     std::vector<SphereTriangle> sphereTriangles;
-    //TODO moltiplica tutti i punti e raggi per k (voledno metodo scale su sphere da invocare su ognuna)
-    //e aggiorna boundingsphere subito dopo, scala anche la boundingSphere
     void scale(float k);
     Sphere boundingSphere;
     SphereMesh() = default;
