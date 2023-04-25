@@ -55,6 +55,10 @@ const float defaultRotationSpeed = 1.0f;
 const glm::vec3 defaultViewPos = glm::vec3(0.0f, 0.0f, 3.0f);
 
 float lightPos[3] = {0.0f, 3.0f, 3.0f};
+float ambientColor[3] = {0.1, 0.0, 0.0};
+float  diffuseColor[3] = {0.5, 0.0, 0.0};
+float  specColor[3] = {1.0, 1.0, 1.0};
+float shininess = 16.0;
 
 glm::mat4 modelMatrix = glm::mat4(1.0f);
 glm::mat4 viewMatrix = glm::mat4(1.0f);
@@ -202,6 +206,18 @@ int main()
         ImGui::Text("Light:");
         if (ImGui::SliderFloat3("Light position", lightPos, -10.0f, 10.0f)) {
             glUniform3fv(glGetUniformLocation(shader.Program, "vLightPos"), 1, glm::value_ptr(glm::vec3(viewMatrix * glm::vec4(lightPos[0], lightPos[1], lightPos[2], 1.0))));
+        }
+        if (ImGui::SliderFloat3("Diffuse color", diffuseColor, 0.0f, 1.0f)) {
+            glUniform3fv(glGetUniformLocation(shader.Program, "diffuseColor"), 1, diffuseColor);
+        }
+        if (ImGui::SliderFloat3("Specular color", specColor, 0.0f, 1.0f)) {
+            glUniform3fv(glGetUniformLocation(shader.Program, "specColor"), 1, specColor);
+        }
+        if (ImGui::SliderFloat3("Ambient color", ambientColor, 0.0f, 1.0f)) {
+            glUniform3fv(glGetUniformLocation(shader.Program, "ambientColor"), 1, ambientColor);
+        }
+        if (ImGui::SliderFloat("Shininess", &shininess, 0.0f, 100.0f)) {
+            glUniform1f(glGetUniformLocation(shader.Program, "shininess"), shininess);
         }
         ImGui::Text("Optimization:");
         if (ImGui::Checkbox("Backface culling ", &backFaceCulling)) {

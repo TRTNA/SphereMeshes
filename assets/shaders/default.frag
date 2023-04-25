@@ -11,10 +11,10 @@ flat in int fragDimensionality;
 uniform vec3 vLightPos;
 uniform bool backFaceCulling;
 
-const vec3 ambientColor = vec3(0.1, 0.0, 0.0);
-const vec3 diffuseColor = vec3(0.5, 0.0, 0.0);
-const vec3 specColor = vec3(1.0, 1.0, 1.0);
-const float shininess = 16.0;
+uniform vec3 ambientColor = vec3(0.1, 0.0, 0.0);
+uniform vec3 diffuseColor = vec3(0.5, 0.0, 0.0);
+uniform vec3 specColor = vec3(1.0, 1.0, 1.0);
+uniform float shininess = 16.0;
 
 
 subroutine vec4 ColoringType();
