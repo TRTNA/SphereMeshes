@@ -9,6 +9,8 @@ in vec3 vPos;
 flat in int fragDimensionality;
 
 uniform vec3 vLightPos;
+uniform bool backFaceCulling;
+
 const vec3 ambientColor = vec3(0.1, 0.0, 0.0);
 const vec3 diffuseColor = vec3(0.5, 0.0, 0.0);
 const vec3 specColor = vec3(1.0, 1.0, 1.0);
@@ -50,6 +52,6 @@ subroutine uniform ColoringType coloringSubroutine;
 
 void main()
 {
-    if (dot(-vPos, vNormal) < 0.0) discard;
+    if (backFaceCulling && dot(-vPos, vNormal) < 0.0) discard;
     FragColor = coloringSubroutine();
 }

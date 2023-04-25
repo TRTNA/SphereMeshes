@@ -62,9 +62,10 @@ glm::mat4 projectionMatrix = glm::mat4(1.0f);
 
 glm::vec3 viewPos = defaultViewPos;
 
-bool useNormalColouring = false;
 GLuint subroutinesIdxs[3];
-GLuint activeSubroutineIdx = 0;
+int activeSubroutineIdx = 0;
+bool backFaceCulling = true;
+
 
 int main()
 {
@@ -185,16 +186,25 @@ int main()
 
         // render your GUI
         ImGui::Begin("Controls");
+        ImGui::Text("Points:");
         bool pointsNumberChanged = ImGui::SliderInt("Points number", &pointsNumber, 100, 1000000);
         if (pointsNumberChanged) {
             pc_ptr->repopulate(pointsNumber, sm);
             rpc.updateBuffers();
         }
+        ImGui::Text("Shading:");
+        ImGui::RadioButton("Phong", &activeSubroutineIdx, 0); ImGui::SameLine();
+        ImGui::RadioButton("Dimensionality", &activeSubroutineIdx, 1); ImGui::SameLine();
+        ImGui::RadioButton("Normal", &activeSubroutineIdx, 2);
+        ImGui::Text("Optimization:");
+        if (ImGui::Checkbox("Backface culling ", &backFaceCulling)) {
+            glUniform3fv(glGetUniformLocation(shader.Program, "vLightPos"), 1, glm::value_ptr(glm::vec3(viewMatrix * glm::vec4(lightPos, 1.0))));
+        }
 
 
         ImGui::End();
 
-        glUniform3fv(glGetUniformLocation(shader.Program, "vLightPos"), 1, glm::value_ptr(glm::vec3(viewMatrix * glm::vec4(lightPos, 1.0))));
+        glUniform1i(glGetUniformLocation(shader.Program, "backFaceCulling"), backFaceCulling);
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
         normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix*modelMatrix)));
@@ -293,19 +303,7 @@ void apply_key_commands()
         viewPos.z += 0.5f*deltaTime;
         return;
     }
-
-    if(keys[GLFW_KEY_N]) {
-        activeSubroutineIdx = (activeSubroutineIdx + 1) % 3;
-        useNormalColouring = true;
-        return;
-    }
-    if(keys[GLFW_KEY_C]) {
-        activeSubroutineIdx = 0;
-        return;
-    }
     
-
-
 }
 
 
