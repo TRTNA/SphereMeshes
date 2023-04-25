@@ -53,6 +53,7 @@ GLfloat lastFrame = 0.0f;
 
 const float defaultRotationSpeed = 1.0f;
 const glm::vec3 defaultViewPos = glm::vec3(0.0f, 0.0f, 3.0f);
+const glm::vec3 lightPos = glm::vec3(0.0f, 3.0f, 3.0f);
 
 glm::mat4 modelMatrix = glm::mat4(1.0f);
 glm::mat4 viewMatrix = glm::mat4(1.0f);
@@ -190,6 +191,7 @@ int main()
 
         ImGui::End();
 
+        glUniform3fv(glGetUniformLocation(shader.Program, "vLightPos"), 1, glm::value_ptr(glm::vec3(viewMatrix * glm::vec4(lightPos, 1.0))));
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
         normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix*modelMatrix)));
@@ -300,6 +302,7 @@ void apply_key_commands()
         useNormalColouring = false;
         return;
     }
+    
 
 
 }

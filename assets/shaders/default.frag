@@ -4,15 +4,36 @@ out vec4 FragColor;
 
 in vec3 interpColor;
 in vec3 vNormal;
-in vec3 vLightDir;
 in vec3 vPos;
 
 flat in int fragDimensionality;
+
+uniform vec3 vLightPos;
+const vec3 ambientColor = vec3(0.1, 0.0, 0.0);
+const vec3 diffuseColor = vec3(0.5, 0.0, 0.0);
+const vec3 specColor = vec3(1.0, 1.0, 1.0);
+const float shininess = 16.0;
 
 
 subroutine vec4 ColoringType();
 
 vec3 colors[3] =  vec3[3](vec3(1.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f), vec3(0.0f, 0.0f, 1.0f));
+
+subroutine(ColoringType)
+vec4 shadingColoring() {
+    vec3 vLightDir = normalize(vLightPos - vPos);
+    float lambertian = max(dot(vLightDir, vNormal), 0.0);
+    float specular = 0.0;
+    if (lambertian > 0.0) {
+        vec3 vViewDir = normalize(-vPos);
+        vec3 H = normalize(vLightDir + vViewDir);
+        float specAngle = max(dot(H, vNormal), 0.0);
+        specular = pow(specAngle, shininess);
+    }
+    vec3 color = ambientColor + diffuseColor * lambertian * 10.0 + specColor * specular; 
+    return vec4(color, 1.0);
+
+}
 
 subroutine(ColoringType)
 vec4 diffuseColoring() {
@@ -29,6 +50,6 @@ subroutine uniform ColoringType coloringSubroutine;
 
 void main()
 {
-    if (dot(vPos, vNormal) < 0.0) discard;
-    FragColor = coloringSubroutine();
+    if (dot(-vPos, vNormal) < 0.0) discard;
+    FragColor = shadingColoring();
 }
