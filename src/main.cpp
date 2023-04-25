@@ -53,7 +53,8 @@ GLfloat lastFrame = 0.0f;
 
 const float defaultRotationSpeed = 1.0f;
 const glm::vec3 defaultViewPos = glm::vec3(0.0f, 0.0f, 3.0f);
-const glm::vec3 lightPos = glm::vec3(0.0f, 3.0f, 3.0f);
+
+float lightPos[3] = {0.0f, 3.0f, 3.0f};
 
 glm::mat4 modelMatrix = glm::mat4(1.0f);
 glm::mat4 viewMatrix = glm::mat4(1.0f);
@@ -153,6 +154,8 @@ int main()
     shader.Use();
     glPointSize(5.0f);
     glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+    glUniform3fv(glGetUniformLocation(shader.Program, "vLightPos"), 1, glm::value_ptr(glm::vec3(viewMatrix * glm::vec4(lightPos[0], lightPos[1], lightPos[2], 1.0))));
+    glUniform1i(glGetUniformLocation(shader.Program, "backFaceCulling"), backFaceCulling);
     subroutinesIdxs[0] = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "shadingColoring");
     subroutinesIdxs[1] = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "diffuseColoring");
     subroutinesIdxs[2] = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "normalColoring");
@@ -196,15 +199,18 @@ int main()
         ImGui::RadioButton("Phong", &activeSubroutineIdx, 0); ImGui::SameLine();
         ImGui::RadioButton("Dimensionality", &activeSubroutineIdx, 1); ImGui::SameLine();
         ImGui::RadioButton("Normal", &activeSubroutineIdx, 2);
+        ImGui::Text("Light:");
+        if (ImGui::SliderFloat3("Light position", lightPos, -10.0f, 10.0f)) {
+            glUniform3fv(glGetUniformLocation(shader.Program, "vLightPos"), 1, glm::value_ptr(glm::vec3(viewMatrix * glm::vec4(lightPos[0], lightPos[1], lightPos[2], 1.0))));
+        }
         ImGui::Text("Optimization:");
         if (ImGui::Checkbox("Backface culling ", &backFaceCulling)) {
-            glUniform3fv(glGetUniformLocation(shader.Program, "vLightPos"), 1, glm::value_ptr(glm::vec3(viewMatrix * glm::vec4(lightPos, 1.0))));
+            glUniform1i(glGetUniformLocation(shader.Program, "backFaceCulling"), backFaceCulling);
         }
 
 
         ImGui::End();
 
-        glUniform1i(glGetUniformLocation(shader.Program, "backFaceCulling"), backFaceCulling);
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
         normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix*modelMatrix)));
