@@ -203,8 +203,8 @@ int main()
         ImGui::RadioButton("Phong", &activeSubroutineIdx, 0); ImGui::SameLine();
         ImGui::RadioButton("Dimensionality", &activeSubroutineIdx, 1); ImGui::SameLine();
         ImGui::RadioButton("Normal", &activeSubroutineIdx, 2);
-        ImGui::Text("Light:");
-        if (ImGui::SliderFloat3("Light position", lightPos, -10.0f, 10.0f)) {
+        ImGui::Text("Lighting:");
+        if (ImGui::SliderFloat3("Light position", lightPos, -100.0f, 100.0f)) {
             glUniform3fv(glGetUniformLocation(shader.Program, "vLightPos"), 1, glm::value_ptr(glm::vec3(viewMatrix * glm::vec4(lightPos[0], lightPos[1], lightPos[2], 1.0))));
         }
         if (ImGui::SliderFloat3("Diffuse color", diffuseColor, 0.0f, 1.0f)) {
