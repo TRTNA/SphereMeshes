@@ -63,6 +63,8 @@ glm::mat4 projectionMatrix = glm::mat4(1.0f);
 glm::vec3 viewPos = defaultViewPos;
 
 bool useNormalColouring = false;
+GLuint subroutinesIdxs[3];
+GLuint activeSubroutineIdx = 0;
 
 int main()
 {
@@ -150,8 +152,9 @@ int main()
     shader.Use();
     glPointSize(5.0f);
     glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-    GLuint normalColouringSubroutineIndex = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "normalColoring");
-    GLuint diffuseColouringSubroutineIndex = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "diffuseColoring");
+    subroutinesIdxs[0] = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "shadingColoring");
+    subroutinesIdxs[1] = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "diffuseColoring");
+    subroutinesIdxs[2] = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "normalColoring");
     GLint activeSubroutineCount;
     glGetProgramStageiv(shader.Program, GL_FRAGMENT_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &activeSubroutineCount);
 
@@ -196,11 +199,8 @@ int main()
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
         normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix*modelMatrix)));
         glUniformMatrix3fv(glGetUniformLocation(shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
-         if (useNormalColouring) {
-            glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &normalColouringSubroutineIndex);
-        } else {
-            glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &diffuseColouringSubroutineIndex);
-        }
+        glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &subroutinesIdxs[activeSubroutineIdx]);
+
         rpc.Draw(shader);
 
 
@@ -295,11 +295,12 @@ void apply_key_commands()
     }
 
     if(keys[GLFW_KEY_N]) {
+        activeSubroutineIdx = (activeSubroutineIdx + 1) % 3;
         useNormalColouring = true;
         return;
     }
     if(keys[GLFW_KEY_C]) {
-        useNormalColouring = false;
+        activeSubroutineIdx = 0;
         return;
     }
     

@@ -51,5 +51,5 @@ subroutine uniform ColoringType coloringSubroutine;
 void main()
 {
     if (dot(-vPos, vNormal) < 0.0) discard;
-    FragColor = shadingColoring();
+    FragColor = coloringSubroutine();
 }
