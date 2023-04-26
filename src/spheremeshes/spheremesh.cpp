@@ -301,7 +301,7 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
     {
         vec3 C = c * s0.center + a * s1.center + b * s2.center;
         float interpRadius = c * s0.radius + a * s1.radius + b * s2.radius;
-        if (glm::abs(d) > interpRadius - EPSILON)
+        if (d > interpRadius - EPSILON)
         {
             dimensionality = -1;
             return Point(pos, vec3(0.0f));
