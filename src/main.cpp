@@ -186,6 +186,7 @@ int main()
 
         // we "clear" the frame and z buffer
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glEnable(GL_DEPTH_TEST);
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -194,7 +195,7 @@ int main()
         // render your GUI
         ImGui::Begin("Controls");
         ImGui::Text("Points:");
-        bool pointsNumberChanged = ImGui::SliderInt("Points number", &pointsNumber, 100, 1000000);
+        bool pointsNumberChanged = ImGui::SliderInt("Points number", &pointsNumber, 100, 100000);
         if (pointsNumberChanged) {
             pc_ptr->repopulate(pointsNumber, sm);
             rpc.updateBuffers();
