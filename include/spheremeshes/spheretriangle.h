@@ -7,10 +7,14 @@
 #include <ostream>
 
 //TODO: triangle should store two matrices, one for the bottom plane and one for the upper one
+//TODO: nei calcoli sui triangoli servono: S0S1, S0S2, normale, correzione
 
 struct SphereTriangle {
     std::array<U32, 3> vertices;
     glm::mat3 projectorMatrix;
+    glm::vec3 S0S1, S0S2;
+    glm::vec3 N;
+    glm::vec3 invN;
     SphereTriangle() = default;
     SphereTriangle(uint v0, uint v1, uint v2);
     SphereTriangle(uint v0, uint v1, uint v2, glm::mat3 projMat);
