@@ -49,7 +49,7 @@ class SphereMesh {
 
 bool readFromFile(const std::string& path, SphereMesh& out, std::string& errorMsg);
 float computeCapsuloidFactor(const Sphere& s0, const Sphere& s1);
-glm::mat3 computeSphereTriangleProjMat(const glm::vec3& v0, const glm::vec3 v1, const glm::vec3& v2);
+glm::mat3 computeSphereTriangleProjMat(const Sphere& s0, const Sphere& s1, const Sphere& s2);
 
 
 std::ostream& operator<<(std::ostream& ost, const SphereMesh& sm);

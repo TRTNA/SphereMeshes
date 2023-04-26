@@ -11,6 +11,7 @@
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/matrix_major_storage.hpp>
 
 using std::clog;
 using std::endl;
@@ -53,7 +54,7 @@ void SphereMesh::addSphereTriangle(const SphereTriangle &st)
     const Sphere &s0 = spheres.at(st.vertices[0]);
     const Sphere &s1 = spheres.at(st.vertices[1]);
     const Sphere &s2 = spheres.at(st.vertices[2]);
-    sphereTriangles.emplace_back(st.vertices, computeSphereTriangleProjMat(s0.center, s1.center, s2.center));
+    sphereTriangles.emplace_back(st.vertices, computeSphereTriangleProjMat(s0, s1, s2));
 }
 
 void SphereMesh::addSingleton(uint sphereIdx)
@@ -225,7 +226,7 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
     const Sphere &s2 = spheres.at(tri.vertices[2]);
 
     const vec3 q = pos - s0.center;
-
+    
     vec3 res = tri.projectorMatrix * q;
     float d = res.z;
     float k0 = res.x;
@@ -272,48 +273,29 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
         Capsuloid &tempCapsule = Capsuloid(tri.vertices[0], tri.vertices[2], computeCapsuloidFactor(s0, s2));
         return pushOutsideOneCapsule(tempCapsule, pos, dimensionality);
     }
-
     if (a > 0.0f && a < 1.0f && b > 0.0f && b < 1.0f && c > 0.0f && c < 1.0f)
     {
-        vec3 wrongProjection = c * s0.center + a * s1.center + b * s2.center;
-        vec3 C0minusC1 = s0.center - s1.center;
-        vec3 C2minusC1 = s2.center - s1.center;
-        vec3 n = glm::normalize(glm::cross(-C0minusC1, C2minusC1));
-        vec3 e = vec3(1.0f, 1.0f, 1.0f);
-        vec3 oldN = n;
-        do
-        {
-            glm::mat3 A = glm::mat3(C0minusC1, C2minusC1, n);
-            A = glm::transpose(A); // put rows as columns because glm is row major, so transposition is needed
-            vec3 t = vec3(
-                s1.radius - s0.radius - glm::dot(C0minusC1, n),
-                s1.radius - s2.radius - glm::dot(C2minusC1, n),
-                0.0f);
-            e = t * glm::inverse(A);
-            n = glm::normalize(n + e);
-        } while (e.x > EPSILON && e.y > EPSILON && e.z > EPSILON);
-
-        float cosAlpha = glm::dot(n, oldN);
-        float projDist = d / cosAlpha;
-
-        vec3 C = pos + projDist * (-n);
-
+        vec3 C = c * s0.center + a * s1.center + b * s2.center;
+        vec3 N = tri.projectorMatrix[2];
         // for now exclude point under the plane
-        if (glm::dot(pos - wrongProjection, oldN) < 0.0)
+        if (glm::dot(pos - C, N) < 0.0)
         {
+            // here normal should be adjusted
             dimensionality = -1;
             return Point(pos, vec3(0.0f));
         }
+
+
         // PUSH OUTSIDE TRIANGLE
-        float wrongInterpRadius = c * s0.radius + a * s1.radius + b * s2.radius;
-        float correctInterpRadius = glm::sqrt(glm::pow(glm::length(wrongProjection - C), 2) + glm::pow(wrongInterpRadius, 2));
-        if (projDist > correctInterpRadius - EPSILON)
+        float interpRadius = c * s0.radius + a * s1.radius + b * s2.radius;
+        if (d > interpRadius - EPSILON)
         {
             dimensionality = -1;
             return Point(pos, vec3(0.0f));
         }
         dimensionality = 2;
-        return Point(C + correctInterpRadius * n, n);
+        glm::vec3 normal = glm::normalize(pos - C);
+        return Point(C + interpRadius * normal, normal);
     }
     dimensionality = -1;
     return Point(pos, vec3(0.0f));
@@ -344,7 +326,7 @@ void SphereMesh::updateSphereTriangleProjMat(uint sphereTriangleIndex)
     const Sphere &s1 = spheres.at(st.vertices[1]);
     const Sphere &s2 = spheres.at(st.vertices[2]);
 
-    st.setProjectorMatrix(computeSphereTriangleProjMat(s0.center, s1.center, s2.center));
+    st.setProjectorMatrix(computeSphereTriangleProjMat(s0, s1, s2));
 }
 void SphereMesh::updateAllSphereTrianglesProjMat()
 {
@@ -353,7 +335,7 @@ void SphereMesh::updateAllSphereTrianglesProjMat()
         const Sphere &s0 = spheres.at(st.vertices[0]);
         const Sphere &s1 = spheres.at(st.vertices[1]);
         const Sphere &s2 = spheres.at(st.vertices[2]);
-        st.setProjectorMatrix(computeSphereTriangleProjMat(s0.center, s1.center, s2.center));
+        st.setProjectorMatrix(computeSphereTriangleProjMat(s0, s1, s2));
     }
 }
 
@@ -452,11 +434,25 @@ float computeCapsuloidFactor(const Sphere &s0, const Sphere &s1)
     return (s1.radius - s0.radius) / (glm::dot(l, l));
 }
 
-glm::mat3 computeSphereTriangleProjMat(const vec3 &v0, const vec3 v1, const vec3 &v2)
+glm::mat3 computeSphereTriangleProjMat(const Sphere &s0, const Sphere &s1, const Sphere &s2)
 {
-    const vec3 A = v1 - v0;
-    const vec3 B = v2 - v0;
-    const vec3 N = glm::normalize(glm::cross(A, B));
+    const vec3 A = s1.center - s0.center;
+    const vec3 B = s2.center - s0.center;
+    vec3 N = glm::normalize(glm::cross(A, B));
+
+    vec3 C0minusC1 = s0.center - s1.center;
+    vec3 C2minusC1 = s2.center - s1.center;
+    vec3 e = vec3(1.0f, 1.0f, 1.0f);
+    do
+    {
+        glm::mat3 A = glm::rowMajor3(C0minusC1, C2minusC1, N);
+        vec3 t = vec3(
+            s1.radius - s0.radius - glm::dot(C0minusC1, N),
+            s1.radius - s2.radius - glm::dot(C2minusC1, N),
+            0.0f);
+        e = glm::inverse(A) * t;
+        N = glm::normalize(N + e);
+    } while (e.x > EPSILON && e.y > EPSILON && e.z > EPSILON);
     return glm::inverse(glm::mat3(A, B, N));
 }
 
