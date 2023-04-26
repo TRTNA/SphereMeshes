@@ -15,6 +15,7 @@
 using std::clog;
 using std::endl;
 
+using glm::vec3;
 using std::array;
 using std::ifstream;
 using std::ostream;
@@ -92,10 +93,10 @@ std::string SphereMesh::toString() const
     }
     return ss.str();
 }
-Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality) const
+Point SphereMesh::pushOutside(const vec3 &pos, int &dimensionality) const
 {
     bool outsideEverything = false;
-    Point lastPoint = Point(pos, glm::vec3(0.0f));
+    Point lastPoint = Point(pos, vec3(0.0f));
     int lastDimensionality = -1;
     uint singletonStart = 0;
     uint edgeStart = singletonStart + singletons.size();
@@ -107,7 +108,7 @@ Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality) const
     while (!outsideEverything && tries < maxTries)
     {
         // storing last position, because it may vary when it is pushed by multiple primitives
-        glm::vec3 lastPos = lastPoint.pos;
+        vec3 lastPos = lastPoint.pos;
         int tempDimensionality = -1;
         for (size_t uniqueIdx = 0; uniqueIdx < maxUniqueIdx; uniqueIdx++)
         {
@@ -157,24 +158,24 @@ Point SphereMesh::pushOutside(const glm::vec3 &pos, int &dimensionality) const
     return lastPoint;
 }
 
-Point SphereMesh::pushOutsideOneCapsule(const Capsuloid &caps, const glm::vec3 &pos, int &dimensionality) const
+Point SphereMesh::pushOutsideOneCapsule(const Capsuloid &caps, const vec3 &pos, int &dimensionality) const
 {
     const Sphere &A = spheres.at(caps.s0);
     const Sphere &B = spheres.at(caps.s1);
 
-    const glm::vec3 BminusA = B.center - A.center;
+    const vec3 BminusA = B.center - A.center;
     const float BminusAsqrd = glm::dot(BminusA, BminusA);
     float k = glm::dot(pos - A.center, BminusA) / BminusAsqrd;
-    glm::vec3 fakeC = A.center + k * BminusA;
+    vec3 fakeC = A.center + k * BminusA;
     float d = length(fakeC - pos);
 
     k += (caps.factor * d);
 
     const float clampedK = glm::clamp(k, 0.0f, 1.0f);
 
-    const glm::vec3 C = A.center + clampedK * BminusA;
+    const vec3 C = A.center + clampedK * BminusA;
 
-    const glm::vec3 CtoPos = pos - C;
+    const vec3 CtoPos = pos - C;
 
     const float CtoPossqrd = glm::dot(CtoPos, CtoPos);
 
@@ -185,7 +186,7 @@ Point SphereMesh::pushOutsideOneCapsule(const Capsuloid &caps, const glm::vec3 &
     if (CtoPossqrd > interpRadius * interpRadius - EPSILON)
     {
         dimensionality = -1;
-        return Point(pos, glm::vec3(0.0f));
+        return Point(pos, vec3(0.0f));
     }
 
     // if we are here, pos is inside the capsule
@@ -193,39 +194,39 @@ Point SphereMesh::pushOutsideOneCapsule(const Capsuloid &caps, const glm::vec3 &
     // if clampedK == k then pos is inside the cylinder, so dimensionality = 1
     // else pos is inside one of the spheres, so dimensionality = 0
     dimensionality = k == clampedK ? 1 : 0;
-    const glm::vec3 normal = glm::normalize(CtoPos);
+    const vec3 normal = glm::normalize(CtoPos);
 
-    return Point(glm::vec3(C + interpRadius * normal), normal);
+    return Point(vec3(C + interpRadius * normal), normal);
 }
 
-Point SphereMesh::pushOutsideOneSingleton(const Sphere &sphere, const glm::vec3 &pos, int &dimensionality) const
+Point SphereMesh::pushOutsideOneSingleton(const Sphere &sphere, const vec3 &pos, int &dimensionality) const
 {
-    const glm::vec3 &C = sphere.center;
-    const glm::vec3 CtoPos = pos - C;
+    const vec3 &C = sphere.center;
+    const vec3 CtoPos = pos - C;
     const float CtoPossqrd = glm::dot(CtoPos, CtoPos);
 
     // pos is outside sphere
     if (CtoPossqrd > sphere.radius * sphere.radius - EPSILON)
     {
         dimensionality = -1;
-        return Point(pos, glm::vec3(0.0f));
+        return Point(pos, vec3(0.0f));
     }
 
     // if we are here, pos is inside the sphere
     dimensionality = 0;
-    const glm::vec3 normal = glm::normalize(CtoPos);
-    return Point(glm::vec3(C + sphere.radius * normal), normal);
+    const vec3 normal = glm::normalize(CtoPos);
+    return Point(vec3(C + sphere.radius * normal), normal);
 }
 
-Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const glm::vec3 &pos, int &dimensionality) const
+Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const vec3 &pos, int &dimensionality) const
 {
     const Sphere &s0 = spheres.at(tri.vertices[0]);
     const Sphere &s1 = spheres.at(tri.vertices[1]);
     const Sphere &s2 = spheres.at(tri.vertices[2]);
 
-    const glm::vec3 q = pos - s0.center;
+    const vec3 q = pos - s0.center;
 
-    glm::vec3 res = tri.projectorMatrix * q;
+    vec3 res = tri.projectorMatrix * q;
     float d = res.z;
     float k0 = res.x;
     float k1 = res.y;
@@ -233,26 +234,26 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
     float a = k0;
     float b = k1;
     float c = (1.0f - k0 - k1);
-/*
-    if (a <= 0.0f && b <= 0.0f)
-    {
-        // PUSH OUTSIDE SPHERE S0
-        return pushOutsideOneSingleton(s0, pos, dimensionality);
-    }
+    /*
+        if (a <= 0.0f && b <= 0.0f)
+        {
+            // PUSH OUTSIDE SPHERE S0
+            return pushOutsideOneSingleton(s0, pos, dimensionality);
+        }
 
-    if (b <= 0.0f && c <= 0.0f)
-    {
-        // PUSH OUTSIDE SPHERE S1
-        return pushOutsideOneSingleton(s1, pos, dimensionality);
-    }
+        if (b <= 0.0f && c <= 0.0f)
+        {
+            // PUSH OUTSIDE SPHERE S1
+            return pushOutsideOneSingleton(s1, pos, dimensionality);
+        }
 
-    if (a <= 0.0f && c <= 0.0f)
-    {
-        // PUSH OUTSIDE SPHERE S2
-        return pushOutsideOneSingleton(s2, pos, dimensionality);
-    }
+        if (a <= 0.0f && c <= 0.0f)
+        {
+            // PUSH OUTSIDE SPHERE S2
+            return pushOutsideOneSingleton(s2, pos, dimensionality);
+        }
 
-*/
+    */
     if (b <= 0.0f)
     {
         // PUSH OUTSIDE CAPSULE V0V1
@@ -274,21 +275,48 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
 
     if (a > 0.0f && a < 1.0f && b > 0.0f && b < 1.0f && c > 0.0f && c < 1.0f)
     {
-        // PUSH OUTSIDE TRIANGLE
-        float interpRadius = c * s0.radius + a * s1.radius + b * s2.radius;
-        if (d > interpRadius - EPSILON)
+        vec3 wrongProjection = c * s0.center + a * s1.center + b * s2.center;
+        vec3 C0minusC1 = s0.center - s1.center;
+        vec3 C2minusC1 = s2.center - s1.center;
+        vec3 n = glm::normalize(glm::cross(-C0minusC1, C2minusC1));
+        vec3 e = vec3(1.0f, 1.0f, 1.0f);
+        vec3 oldN = n;
+        do
+        {
+            glm::mat3 A = glm::mat3(C0minusC1, C2minusC1, n);
+            A = glm::transpose(A); // put rows as columns because glm is row major, so transposition is needed
+            vec3 t = vec3(
+                s1.radius - s0.radius - glm::dot(C0minusC1, n),
+                s1.radius - s2.radius - glm::dot(C2minusC1, n),
+                0.0f);
+            e = t * glm::inverse(A);
+            n = glm::normalize(n + e);
+        } while (e.x > EPSILON && e.y > EPSILON && e.z > EPSILON);
+
+        float cosAlpha = glm::dot(n, oldN);
+        float projDist = d / cosAlpha;
+
+        vec3 C = pos + projDist * (-n);
+
+        // for now exclude point under the plane
+        if (glm::dot(pos - wrongProjection, oldN) < 0.0)
         {
             dimensionality = -1;
-            return Point(pos, glm::vec3(0.0f));
+            return Point(pos, vec3(0.0f));
         }
-
-        glm::vec3 fakeC = c * s0.center + a * s1.center + b * s2.center;
-        const glm::vec3 normal = glm::normalize(pos - fakeC);
+        // PUSH OUTSIDE TRIANGLE
+        float wrongInterpRadius = c * s0.radius + a * s1.radius + b * s2.radius;
+        float correctInterpRadius = glm::sqrt(glm::pow(glm::length(wrongProjection - C), 2) + glm::pow(wrongInterpRadius, 2));
+        if (projDist > correctInterpRadius - EPSILON)
+        {
+            dimensionality = -1;
+            return Point(pos, vec3(0.0f));
+        }
         dimensionality = 2;
-        return Point(fakeC + interpRadius * normal, normal);
+        return Point(C + correctInterpRadius * n, n);
     }
     dimensionality = -1;
-    return Point(pos, glm::vec3(0.0f));
+    return Point(pos, vec3(0.0f));
 }
 
 void SphereMesh::updateCapsuloidFactor(uint capsuloidIndex)
@@ -420,15 +448,15 @@ std::ostream &operator<<(std::ostream &ost, const SphereMesh &sm)
 
 float computeCapsuloidFactor(const Sphere &s0, const Sphere &s1)
 {
-    const glm::vec3 l = s1.center - s0.center;
+    const vec3 l = s1.center - s0.center;
     return (s1.radius - s0.radius) / (glm::dot(l, l));
 }
 
-glm::mat3 computeSphereTriangleProjMat(const glm::vec3 &v0, const glm::vec3 v1, const glm::vec3 &v2)
+glm::mat3 computeSphereTriangleProjMat(const vec3 &v0, const vec3 v1, const vec3 &v2)
 {
-    const glm::vec3 A = v1 - v0;
-    const glm::vec3 B = v2 - v0;
-    const glm::vec3 N = glm::normalize(glm::cross(A, B));
+    const vec3 A = v1 - v0;
+    const vec3 B = v2 - v0;
+    const vec3 N = glm::normalize(glm::cross(A, B));
     return glm::inverse(glm::mat3(A, B, N));
 }
 
