@@ -53,13 +53,14 @@ class SphereMesh {
 };
 
 
-bool readFromFile(const std::string& path, SphereMesh& out, std::string& errorMsg);
 float computeCapsuloidFactor(const Sphere& s0, const Sphere& s1);
-
 //Transform a position (passed as q which is the vector from the center of the sphere0 to the position) 
 // in the reference system of the sphere triangle, computing the barycentric coordinates (outA, outB and outC) and the distance from the plane
 void toSphereTriangleReferenceSystem(const SphereTriangle& tri, const glm::vec3& q, float& outA, float& outB, float& outC, float& outD);
 Point pointOutsideSphereMesh(const glm::vec3& pos, int &dimensionality);
 
+
+// I/O
+bool readFromFile(const std::string& path, SphereMesh& out, std::string& errorMsg);
 std::ostream& operator<<(std::ostream& ost, const SphereMesh& sm);
 std::istream& operator>>(std::istream& ost, SphereMesh& sm);
