@@ -32,26 +32,26 @@ SphereMesh::SphereMesh(vector<Sphere> &pSpheres, vector<Capsuloid> &pCapsuloids,
     clog << "- Capsuloids:\t" << capsuloids.size() << "\n";
     clog << "- Triangles:\t" << sphereTriangles.size() << "\n";
     clog << "- Singletons:\t" << singletons.size() << "\n";
-    updateAllCapsuloidsFactors();
+    updateAllCapsuloidsFeatures();
     updateAllSphereTriangleFeatures();
     updateBoundingSphere();
 }
 
-void SphereMesh::addSphere(const Sphere &sphere)
+void SphereMesh::addSphere(Sphere sphere)
 {
     spheres.emplace_back(sphere.center, sphere.radius);
 }
 
-void SphereMesh::addCapsuloid(const Capsuloid &caps)
-{
-    capsuloids.emplace_back(caps.s0, caps.s1, computeCapsuloidFactor(spheres.at(caps.s0), spheres.at(caps.s1)));
+void SphereMesh::addCapsuloid(Capsuloid caps)
+{   
+    updateCapsuloidFeatures(caps, spheres.at(caps.s0), spheres.at(caps.s1));
+    capsuloids.push_back(caps);
 }
 
-void SphereMesh::addSphereTriangle(const SphereTriangle &st)
+void SphereMesh::addSphereTriangle(SphereTriangle st)
 {
-    SphereTriangle copy = st;
-    updateSphereTriangleFeatures(copy);
-    sphereTriangles.push_back(copy);
+    updateSphereTriangleFeatures(st);
+    sphereTriangles.push_back(st);
 }
 
 void SphereMesh::addSingleton(uint sphereIdx)
@@ -63,6 +63,18 @@ void SphereMesh::updateBoundingSphere()
 {
     boundingSphere = computeBoundingSphere(spheres);
 }
+
+void SphereMesh::scale(float k)
+{
+    for (auto &s : spheres)
+    {
+        s.scale(k);
+    }
+    boundingSphere.scale(k);
+    updateAllCapsuloidsFeatures();
+    updateAllSphereTriangleFeatures();
+}
+
 std::string SphereMesh::toString() const
 {
     stringstream ss;
@@ -227,19 +239,22 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
     if (b < 0.0f)
     {
         // PUSH OUTSIDE CAPSULE V0V1
-        Capsuloid &tempCapsule = Capsuloid(tri.vertices[0], tri.vertices[1], computeCapsuloidFactor(s0, s1));
+        Capsuloid &tempCapsule = Capsuloid(tri.vertices[0], tri.vertices[1]);
+        updateCapsuloidFeatures(tempCapsule, s0, s1);
         return pushOutsideOneCapsule(tempCapsule, pos, dimensionality);
     }
     if (c < 0.0f)
     {
         // PUSH OUTSIDE CAPSULE V1V2
-        Capsuloid &tempCapsule = Capsuloid(tri.vertices[1], tri.vertices[2], computeCapsuloidFactor(s1, s2));
+        Capsuloid &tempCapsule = Capsuloid(tri.vertices[1], tri.vertices[2]);
+        updateCapsuloidFeatures(tempCapsule, s1, s2);
         return pushOutsideOneCapsule(tempCapsule, pos, dimensionality);
     }
     if (a < 0.0f)
     {
         // PUSH OUTSIDE CAPSULE V0V2
-        Capsuloid &tempCapsule = Capsuloid(tri.vertices[0], tri.vertices[2], computeCapsuloidFactor(s0, s2));
+        Capsuloid &tempCapsule = Capsuloid(tri.vertices[0], tri.vertices[2]);
+        updateCapsuloidFeatures(tempCapsule, s0, s2);
         return pushOutsideOneCapsule(tempCapsule, pos, dimensionality);
     }
     //PUSH OUTSIDE TRIANGLE
@@ -260,13 +275,13 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
 }
 
 
-void SphereMesh::updateAllCapsuloidsFactors()
+void SphereMesh::updateAllCapsuloidsFeatures()
 {
     for (Capsuloid &c : capsuloids)
     {
         const Sphere &s0 = spheres.at(c.s0);
         const Sphere &s1 = spheres.at(c.s1);
-        c.factor = computeCapsuloidFactor(s0, s1);
+        updateCapsuloidFeatures(c, s0, s1);
     }
 }
 

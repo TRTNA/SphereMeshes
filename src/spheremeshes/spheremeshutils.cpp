@@ -99,10 +99,11 @@ std::ostream &operator<<(std::ostream &ost, const SphereMesh &sm)
     return ost;
 }
 
-float computeCapsuloidFactor(const Sphere &s0, const Sphere &s1)
+void updateCapsuloidFeatures(Capsuloid& caps, const Sphere& s0, const Sphere& s1)
 {
-    const vec3 l = s1.center - s0.center;
-    return (s1.radius - s0.radius) / (glm::dot(l, l));
+    caps.S0toS1 = s1.center - s0.center;
+    caps.sqrdL = glm::dot(caps.S0toS1, caps.S0toS1);
+    caps.factor = (s1.radius - s0.radius) / caps.sqrdL;
 }
 
 void SphereMesh::updateSphereTriangleFeatures(SphereTriangle &tri)
@@ -134,16 +135,6 @@ void SphereMesh::updateSphereTriangleFeatures(SphereTriangle &tri)
     } while (e.x > EPSILON && e.y > EPSILON && e.z > EPSILON);
 }
 
-void SphereMesh::scale(float k)
-{
-    for (auto &s : spheres)
-    {
-        s.scale(k);
-    }
-    boundingSphere.scale(k);
-    updateAllCapsuloidsFactors();
-    updateAllSphereTriangleFeatures();
-}
 
 void toSphereTriangleReferenceSystem(const SphereTriangle& tri, const glm::vec3& q, float& outA, float& outB, float& outC, float& outD) {
     float d, k0, k1, a, b, c;
