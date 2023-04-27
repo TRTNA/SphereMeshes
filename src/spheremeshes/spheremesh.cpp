@@ -226,13 +226,7 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
 
 
     const vec3 q = pos - s0.center;
-    float d;
-    float k0;
-    float k1;
-
-    float a;
-    float b;
-    float c;
+    float d, k0, k1, a, b, c;
     glm::mat3 projMatrix;
     if (glm::dot(pos - s0.center, tri.planeN) < 0)
     {
