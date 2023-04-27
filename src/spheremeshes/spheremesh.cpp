@@ -224,6 +224,7 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
     const Sphere &s1 = spheres.at(tri.vertices[1]);
     const Sphere &s2 = spheres.at(tri.vertices[2]);
 
+
     const vec3 q = pos - s0.center;
     float d;
     float k0;
@@ -233,9 +234,9 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
     float b;
     float c;
     glm::mat3 projMatrix;
-    if (glm::dot(pos - s0.center, tri.N) < 0)
+    if (glm::dot(pos - s0.center, tri.planeN) < 0)
     {
-        projMatrix = glm::inverse(glm::mat3(tri.S0S2, tri.S0S1, tri.invN));
+        projMatrix = glm::inverse(glm::mat3(tri.S0S2, tri.S0S1, tri.bottomPlaneN));
         vec3 res = projMatrix * q;
         d = res.z;
         k0 = res.y;
@@ -246,7 +247,7 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
     }
     else
     {
-        projMatrix = glm::inverse(glm::mat3(tri.S0S1, tri.S0S2, tri.N));
+        projMatrix = glm::inverse(glm::mat3(tri.S0S1, tri.S0S2, tri.upperPlaneN));
         vec3 res = projMatrix * q;
 
         d = res.z;
@@ -450,22 +451,23 @@ void SphereMesh::updateSphereTriangleFeatures(SphereTriangle &tri)
     tri.S0S1 = s1.center - s0.center;
     tri.S0S2 = s2.center - s0.center;
 
-    tri.N = glm::normalize(glm::cross(tri.S0S1, tri.S0S2));
-    tri.invN = - tri.N;
+    tri.planeN = glm::normalize(glm::cross(tri.S0S1, tri.S0S2));
+    tri.upperPlaneN = tri.planeN;
+    tri.bottomPlaneN = - tri.planeN;
 
     const vec3 C0minusC1 = -tri.S0S1;
     const vec3 C2minusC1 = s2.center - s1.center;
     vec3 e = vec3(1.0f, 1.0f, 1.0f);
     do
     {
-        glm::mat3 A = glm::rowMajor3(C0minusC1, C2minusC1, tri.N);
+        glm::mat3 A = glm::rowMajor3(C0minusC1, C2minusC1, tri.upperPlaneN);
         vec3 t = vec3(
-            s1.radius - s0.radius - glm::dot(C0minusC1, tri.N),
-            s1.radius - s2.radius - glm::dot(C2minusC1, tri.N),
+            s1.radius - s0.radius - glm::dot(C0minusC1, tri.upperPlaneN),
+            s1.radius - s2.radius - glm::dot(C2minusC1, tri.upperPlaneN),
             0.0f);
         e = glm::inverse(A) * t;
-        tri.N = glm::normalize(tri.N + e);
-        tri.invN = glm::normalize(tri.invN + e);
+        tri.upperPlaneN = glm::normalize(tri.upperPlaneN + e);
+        tri.bottomPlaneN = glm::normalize(tri.bottomPlaneN + e);
     } while (e.x > EPSILON && e.y > EPSILON && e.z > EPSILON);
 }
 
