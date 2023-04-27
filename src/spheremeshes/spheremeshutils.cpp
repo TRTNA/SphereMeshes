@@ -112,33 +112,34 @@ void updateSphereTriangleFeatures(SphereTriangle& tri, const Sphere& s0, const S
     tri.S0S2 = s2.center - s0.center;
 
     tri.planeN = glm::normalize(glm::cross(tri.S0S1, tri.S0S2));
-    tri.upperPlaneN = tri.planeN;
-    tri.bottomPlaneN = - tri.planeN;
+    glm::vec3 upperPlaneN = tri.planeN;
+    glm::vec3 lowerPlaneN = - tri.planeN;
 
     const vec3 C0minusC1 = -tri.S0S1;
     const vec3 C2minusC1 = s2.center - s1.center;
     vec3 e = vec3(1.0f, 1.0f, 1.0f);
     do
     {
-        glm::mat3 A = glm::rowMajor3(C0minusC1, C2minusC1, tri.upperPlaneN);
+        glm::mat3 A = glm::rowMajor3(C0minusC1, C2minusC1, upperPlaneN);
         vec3 t = vec3(
-            s1.radius - s0.radius - glm::dot(C0minusC1, tri.upperPlaneN),
-            s1.radius - s2.radius - glm::dot(C2minusC1, tri.upperPlaneN),
+            s1.radius - s0.radius - glm::dot(C0minusC1, upperPlaneN),
+            s1.radius - s2.radius - glm::dot(C2minusC1, upperPlaneN),
             0.0f);
         e = glm::inverse(A) * t;
-        tri.upperPlaneN = glm::normalize(tri.upperPlaneN + e);
-        tri.bottomPlaneN = glm::normalize(tri.bottomPlaneN + e);
+        upperPlaneN = glm::normalize(upperPlaneN + e);
+        lowerPlaneN = glm::normalize(lowerPlaneN + e);
     } while (e.x > EPSILON && e.y > EPSILON && e.z > EPSILON);
+    tri.upperProjMatrix = glm::inverse(glm::mat3(tri.S0S1, tri.S0S2, upperPlaneN));
+    tri.lowerProjMatrix = glm::inverse(glm::mat3(tri.S0S2, tri.S0S1, lowerPlaneN));
+
 }
 
 
 void toSphereTriangleReferenceSystem(const SphereTriangle& tri, const glm::vec3& q, float& outA, float& outB, float& outC, float& outD) {
     float d, k0, k1, a, b, c;
-    glm::mat3 projMatrix;
     if (glm::dot(q, tri.planeN) < 0)
     {
-        projMatrix = glm::inverse(glm::mat3(tri.S0S2, tri.S0S1, tri.bottomPlaneN));
-        vec3 res = projMatrix * q;
+        const vec3 res = tri.lowerProjMatrix * q;
         outD = res.z;
         k0 = res.y;
         k1 = res.x;
@@ -148,9 +149,7 @@ void toSphereTriangleReferenceSystem(const SphereTriangle& tri, const glm::vec3&
     }
     else
     {
-        projMatrix = glm::inverse(glm::mat3(tri.S0S1, tri.S0S2, tri.upperPlaneN));
-        vec3 res = projMatrix * q;
-
+        const vec3 res = tri.upperProjMatrix * q;
         d = res.z;
         k0 = res.x;
         k1 = res.y;

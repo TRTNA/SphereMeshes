@@ -13,8 +13,8 @@ struct SphereTriangle {
     std::array<U32, 3> vertices;
     glm::mat3 projectorMatrix;
     glm::vec3 S0S1, S0S2;
-    glm::vec3 upperPlaneN;
-    glm::vec3 bottomPlaneN;
+    glm::mat3 upperProjMatrix;
+    glm::mat3 lowerProjMatrix;
     glm::vec3 planeN;
     SphereTriangle() = default;
     SphereTriangle(uint v0, uint v1, uint v2);
