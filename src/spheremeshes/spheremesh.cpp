@@ -259,13 +259,6 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
     return pointOutsideSphereMesh(pos, dimensionality);
 }
 
-void SphereMesh::updateCapsuloidFactor(uint capsuloidIndex)
-{
-    Capsuloid &c = capsuloids.at(capsuloidIndex);
-    const Sphere &s0 = spheres.at(c.s0);
-    const Sphere &s1 = spheres.at(c.s1);
-    c.factor = computeCapsuloidFactor(s0, s1);
-}
 
 void SphereMesh::updateAllCapsuloidsFactors()
 {
@@ -277,11 +270,6 @@ void SphereMesh::updateAllCapsuloidsFactors()
     }
 }
 
-void SphereMesh::updateSphereTriangleFeatures(uint sphereTriangleIndex)
-{
-    SphereTriangle &st = sphereTriangles.at(sphereTriangleIndex);
-    updateSphereTriangleFeatures(st);
-}
 void SphereMesh::updateAllSphereTriangleFeatures()
 {
     for (SphereTriangle &st : sphereTriangles)
