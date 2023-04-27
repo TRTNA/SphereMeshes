@@ -279,25 +279,26 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
         }
 
     */
-    if (b <= 0.0f)
+    if (b < 0.0f)
     {
         // PUSH OUTSIDE CAPSULE V0V1
         Capsuloid &tempCapsule = Capsuloid(tri.vertices[0], tri.vertices[1], computeCapsuloidFactor(s0, s1));
         return pushOutsideOneCapsule(tempCapsule, pos, dimensionality);
     }
-    if (c <= 0.0f)
+    if (c < 0.0f)
     {
         // PUSH OUTSIDE CAPSULE V1V2
         Capsuloid &tempCapsule = Capsuloid(tri.vertices[1], tri.vertices[2], computeCapsuloidFactor(s1, s2));
         return pushOutsideOneCapsule(tempCapsule, pos, dimensionality);
     }
-    if (a <= 0.0f)
+    if (a < 0.0f)
     {
         // PUSH OUTSIDE CAPSULE V0V2
         Capsuloid &tempCapsule = Capsuloid(tri.vertices[0], tri.vertices[2], computeCapsuloidFactor(s0, s2));
         return pushOutsideOneCapsule(tempCapsule, pos, dimensionality);
     }
-    if (a > 0.0f && a < 1.0f && b > 0.0f && b < 1.0f && c > 0.0f && c < 1.0f)
+    //PUSH OUTSIDE TRIANGLE
+    if (a >= 0.0f && a <= 1.0f && b >= 0.0f && b <= 1.0f && c >= 0.0f && c <= 1.0f)
     {
         vec3 C = c * s0.center + a * s1.center + b * s2.center;
         float interpRadius = c * s0.radius + a * s1.radius + b * s2.radius;

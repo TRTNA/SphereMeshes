@@ -136,9 +136,9 @@ int main()
         return 1;
     }
 
-   //sm.scale(10.0f);
 
     cout << "Sphere mesh:\n" << sm << endl;
+    sm.scale(10.0f);
     PointCloud pc = PointCloud();
     int pointsNumber = 10000;
 
