@@ -28,10 +28,7 @@ struct SphereTriangle {
     glm::vec3 planeN;
     SphereTriangle() = default;
     SphereTriangle(uint v0, uint v1, uint v2);
-    SphereTriangle(uint v0, uint v1, uint v2, glm::mat3 projMat);
     SphereTriangle(const std::array<uint, 3>& pVertices);
-    SphereTriangle(const std::array<uint, 3>& pVertices, glm::mat3 projMat);
-    void setProjectorMatrix(glm::mat3 mat);
 };
 
 std::ostream& operator<<(std::ostream& ost, const SphereTriangle& val);

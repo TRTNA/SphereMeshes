@@ -5,10 +5,8 @@
 using std::array;
 
 SphereTriangle::SphereTriangle(uint v0, uint v1, uint v2) : vertices(array<uint, 3>{{v0, v1, v2}}) {}
-SphereTriangle::SphereTriangle(uint v0, uint v1, uint v2, glm::mat3 projMat) : vertices(array<uint, 3>{{v0, v1, v2}}), projectorMatrix(projMat) {}
 
 SphereTriangle::SphereTriangle(const std::array<uint, 3>& pVertices) : vertices(array<uint, 3>{pVertices}) {}
-SphereTriangle::SphereTriangle(const std::array<uint, 3>& pVertices, glm::mat3 projMat) : vertices(array<uint, 3>{pVertices}), projectorMatrix(projMat) {}
 
 
 std::ostream& operator<<(std::ostream& ost, const SphereTriangle& val) {
@@ -23,8 +21,5 @@ std::istream& operator>>(std::istream& ist, SphereTriangle& val) {
     return ist;
 }
 
-void SphereTriangle::setProjectorMatrix(glm::mat3 mat) {
-    projectorMatrix = mat;
-}
 
 
