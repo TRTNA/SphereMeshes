@@ -10,6 +10,69 @@ using std::ostream;
 using std::string;
 using std::stringstream;
 
+
+void updateCapsuloidFeatures(Capsuloid& caps, const Sphere& s0, const Sphere& s1)
+{
+    caps.S0toS1 = s1.center - s0.center;
+    caps.sqrdL = glm::dot(caps.S0toS1, caps.S0toS1);
+    caps.factor = (s1.radius - s0.radius) / caps.sqrdL;
+}
+
+void updateSphereTriangleFeatures(SphereTriangle& tri, const Sphere& s0, const Sphere& s1, const Sphere& s2)
+{
+    tri.S0S1 = s1.center - s0.center;
+    tri.S0S2 = s2.center - s0.center;
+
+    tri.planeN = glm::normalize(glm::cross(tri.S0S1, tri.S0S2));
+    glm::vec3 upperPlaneN = tri.planeN;
+    glm::vec3 lowerPlaneN = - tri.planeN;
+
+    const vec3 C0minusC1 = -tri.S0S1;
+    const vec3 C2minusC1 = s2.center - s1.center;
+    vec3 e = vec3(1.0f, 1.0f, 1.0f);
+    do
+    {
+        glm::mat3 A = glm::rowMajor3(C0minusC1, C2minusC1, upperPlaneN);
+        vec3 t = vec3(
+            s1.radius - s0.radius - glm::dot(C0minusC1, upperPlaneN),
+            s1.radius - s2.radius - glm::dot(C2minusC1, upperPlaneN),
+            0.0f);
+        e = glm::inverse(A) * t;
+        upperPlaneN = glm::normalize(upperPlaneN + e);
+        lowerPlaneN = glm::normalize(lowerPlaneN + e);
+    } while (e.x > EPSILON && e.y > EPSILON && e.z > EPSILON);
+    tri.upperProjMatrix = glm::inverse(glm::mat3(tri.S0S1, tri.S0S2, upperPlaneN));
+    tri.lowerProjMatrix = glm::inverse(glm::mat3(tri.S0S2, tri.S0S1, lowerPlaneN));
+
+}
+
+
+void toSphereTriangleReferenceSystem(const SphereTriangle& tri, const glm::vec3& q, float& outA, float& outB, float& outC, float& outD) {
+    float d, k0, k1, a, b, c;
+    if (glm::dot(q, tri.planeN) < 0)
+    {
+        const vec3 res = tri.lowerProjMatrix * q;
+        outD = res.z;
+        k0 = res.y;
+        k1 = res.x;
+        outA = k0;
+        outB = k1;
+        outC = (1.0f - k0 - k1);
+    }
+    else
+    {
+        const vec3 res = tri.upperProjMatrix * q;
+        d = res.z;
+        k0 = res.x;
+        k1 = res.y;
+
+        outA = k0;
+        outB = k1;
+        outC = (1.0f - k0 - k1);
+    }
+
+}
+
 bool readFromFile(const std::string &path, SphereMesh &out, std::string &errorMsg)
 {
     ifstream file;
@@ -99,67 +162,6 @@ std::ostream &operator<<(std::ostream &ost, const SphereMesh &sm)
     return ost;
 }
 
-void updateCapsuloidFeatures(Capsuloid& caps, const Sphere& s0, const Sphere& s1)
-{
-    caps.S0toS1 = s1.center - s0.center;
-    caps.sqrdL = glm::dot(caps.S0toS1, caps.S0toS1);
-    caps.factor = (s1.radius - s0.radius) / caps.sqrdL;
-}
-
-void updateSphereTriangleFeatures(SphereTriangle& tri, const Sphere& s0, const Sphere& s1, const Sphere& s2)
-{
-    tri.S0S1 = s1.center - s0.center;
-    tri.S0S2 = s2.center - s0.center;
-
-    tri.planeN = glm::normalize(glm::cross(tri.S0S1, tri.S0S2));
-    glm::vec3 upperPlaneN = tri.planeN;
-    glm::vec3 lowerPlaneN = - tri.planeN;
-
-    const vec3 C0minusC1 = -tri.S0S1;
-    const vec3 C2minusC1 = s2.center - s1.center;
-    vec3 e = vec3(1.0f, 1.0f, 1.0f);
-    do
-    {
-        glm::mat3 A = glm::rowMajor3(C0minusC1, C2minusC1, upperPlaneN);
-        vec3 t = vec3(
-            s1.radius - s0.radius - glm::dot(C0minusC1, upperPlaneN),
-            s1.radius - s2.radius - glm::dot(C2minusC1, upperPlaneN),
-            0.0f);
-        e = glm::inverse(A) * t;
-        upperPlaneN = glm::normalize(upperPlaneN + e);
-        lowerPlaneN = glm::normalize(lowerPlaneN + e);
-    } while (e.x > EPSILON && e.y > EPSILON && e.z > EPSILON);
-    tri.upperProjMatrix = glm::inverse(glm::mat3(tri.S0S1, tri.S0S2, upperPlaneN));
-    tri.lowerProjMatrix = glm::inverse(glm::mat3(tri.S0S2, tri.S0S1, lowerPlaneN));
-
-}
-
-
-void toSphereTriangleReferenceSystem(const SphereTriangle& tri, const glm::vec3& q, float& outA, float& outB, float& outC, float& outD) {
-    float d, k0, k1, a, b, c;
-    if (glm::dot(q, tri.planeN) < 0)
-    {
-        const vec3 res = tri.lowerProjMatrix * q;
-        outD = res.z;
-        k0 = res.y;
-        k1 = res.x;
-        outA = k0;
-        outB = k1;
-        outC = (1.0f - k0 - k1);
-    }
-    else
-    {
-        const vec3 res = tri.upperProjMatrix * q;
-        d = res.z;
-        k0 = res.x;
-        k1 = res.y;
-
-        outA = k0;
-        outB = k1;
-        outC = (1.0f - k0 - k1);
-    }
-
-}
 
 Point pointOutsideSphereMesh(const glm::vec3& pos, int &dimensionality) {
     dimensionality = -1;
