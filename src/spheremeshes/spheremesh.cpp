@@ -173,9 +173,8 @@ Point SphereMesh::pushOutsideOneCapsule(const Capsuloid &caps, const vec3 &pos, 
     const Sphere &A = spheres.at(caps.s0);
     const Sphere &B = spheres.at(caps.s1);
 
-    const vec3 BminusA = B.center - A.center;
-    const float BminusAsqrd = glm::dot(BminusA, BminusA);
-    float k = glm::dot(pos - A.center, BminusA) / BminusAsqrd;
+    const vec3& BminusA = caps.S0toS1;
+    float k = glm::dot(pos - A.center, BminusA) / caps.sqrdL;
     vec3 fakeC = A.center + k * BminusA;
     float d = length(fakeC - pos);
 
