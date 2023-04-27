@@ -182,11 +182,9 @@ Point SphereMesh::pushOutsideOneCapsule(const Capsuloid &caps, const vec3 &pos, 
     const float interpRadius = A.radius * (1.0f - clampedK) + B.radius * clampedK;
 
     // pos is outside the capsule, dimensionality is -1 (not pushed out)
-    // controllo con epsilon, se è sulla superficie non lo spingo
     if (CtoPossqrd > interpRadius * interpRadius - EPSILON)
     {
-        dimensionality = -1;
-        return Point(pos, vec3(0.0f));
+        return pointOutsideSphereMesh(pos, dimensionality);
     }
 
     // if we are here, pos is inside the capsule
@@ -208,8 +206,7 @@ Point SphereMesh::pushOutsideOneSingleton(const Sphere &sphere, const vec3 &pos,
     // pos is outside sphere
     if (CtoPossqrd > sphere.radius * sphere.radius - EPSILON)
     {
-        dimensionality = -1;
-        return Point(pos, vec3(0.0f));
+        return pointOutsideSphereMesh(pos, dimensionality);
     }
 
     // if we are here, pos is inside the sphere
@@ -226,54 +223,9 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
 
 
     const vec3 q = pos - s0.center;
-    float d, k0, k1, a, b, c;
-    glm::mat3 projMatrix;
-    if (glm::dot(pos - s0.center, tri.planeN) < 0)
-    {
-        projMatrix = glm::inverse(glm::mat3(tri.S0S2, tri.S0S1, tri.bottomPlaneN));
-        vec3 res = projMatrix * q;
-        d = res.z;
-        k0 = res.y;
-        k1 = res.x;
-        a = k0;
-        b = k1;
-        c = (1.0f - k0 - k1);
-    }
-    else
-    {
-        projMatrix = glm::inverse(glm::mat3(tri.S0S1, tri.S0S2, tri.upperPlaneN));
-        vec3 res = projMatrix * q;
-
-        d = res.z;
-        k0 = res.x;
-        k1 = res.y;
-
-        a = k0;
-        b = k1;
-        c = (1.0f - k0 - k1);
-    }
-
+    float d, a, b, c;
+    toSphereTriangleReferenceSystem(tri, q, a, b, c, d);
     
-    /*
-        if (a <= 0.0f && b <= 0.0f)
-        {
-            // PUSH OUTSIDE SPHERE S0
-            return pushOutsideOneSingleton(s0, pos, dimensionality);
-        }
-
-        if (b <= 0.0f && c <= 0.0f)
-        {
-            // PUSH OUTSIDE SPHERE S1
-            return pushOutsideOneSingleton(s1, pos, dimensionality);
-        }
-
-        if (a <= 0.0f && c <= 0.0f)
-        {
-            // PUSH OUTSIDE SPHERE S2
-            return pushOutsideOneSingleton(s2, pos, dimensionality);
-        }
-
-    */
     if (b < 0.0f)
     {
         // PUSH OUTSIDE CAPSULE V0V1
@@ -299,15 +251,14 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
         float interpRadius = c * s0.radius + a * s1.radius + b * s2.radius;
         if (d > interpRadius - EPSILON)
         {
-            dimensionality = -1;
-            return Point(pos, vec3(0.0f));
+            return pointOutsideSphereMesh(pos, dimensionality);
         }
         dimensionality = 2;
         glm::vec3 normal = glm::normalize(pos - C);
         return Point(C + interpRadius * normal, normal);
     }
-    dimensionality = -1;
-    return Point(pos, vec3(0.0f));
+
+    return pointOutsideSphereMesh(pos, dimensionality);
 }
 
 void SphereMesh::updateCapsuloidFactor(uint capsuloidIndex)
@@ -475,3 +426,40 @@ void SphereMesh::scale(float k)
     updateAllCapsuloidsFactors();
     updateAllSphereTriangleFeatures();
 }
+
+void toSphereTriangleReferenceSystem(const SphereTriangle& tri, const glm::vec3& q, float& outA, float& outB, float& outC, float& outD) {
+    float d, k0, k1, a, b, c;
+    glm::mat3 projMatrix;
+    if (glm::dot(q, tri.planeN) < 0)
+    {
+        projMatrix = glm::inverse(glm::mat3(tri.S0S2, tri.S0S1, tri.bottomPlaneN));
+        vec3 res = projMatrix * q;
+        outD = res.z;
+        k0 = res.y;
+        k1 = res.x;
+        outA = k0;
+        outB = k1;
+        outC = (1.0f - k0 - k1);
+    }
+    else
+    {
+        projMatrix = glm::inverse(glm::mat3(tri.S0S1, tri.S0S2, tri.upperPlaneN));
+        vec3 res = projMatrix * q;
+
+        d = res.z;
+        k0 = res.x;
+        k1 = res.y;
+
+        outA = k0;
+        outB = k1;
+        outC = (1.0f - k0 - k1);
+    }
+
+}
+
+Point pointOutsideSphereMesh(const glm::vec3& pos, int &dimensionality) {
+    dimensionality = -1;
+    return Point(pos, glm::vec3(0.0f));
+}
+
+
