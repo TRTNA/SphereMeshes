@@ -10,6 +10,9 @@ using std::vector;
 struct Point;
 class AABB;
 
+/*
+    Simple sphere with a given center and radius
+*/
 struct Sphere {
     Sphere();
     Sphere(glm::vec3 pCenter, float pRadius);
