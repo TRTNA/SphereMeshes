@@ -50,7 +50,7 @@ void SphereMesh::addCapsuloid(Capsuloid caps)
 
 void SphereMesh::addSphereTriangle(SphereTriangle st)
 {
-    updateSphereTriangleFeatures(st);
+    updateSphereTriangleFeatures(st, spheres.at(st.vertices[0]), spheres.at(st.vertices[1]), spheres.at(st.vertices[2]));
     sphereTriangles.push_back(st);
 }
 
@@ -289,7 +289,7 @@ void SphereMesh::updateAllSphereTriangleFeatures()
 {
     for (SphereTriangle &st : sphereTriangles)
     {
-        updateSphereTriangleFeatures(st);
+        updateSphereTriangleFeatures(st, spheres.at(st.vertices[0]), spheres.at(st.vertices[1]), spheres.at(st.vertices[2]));
     }
 }
 

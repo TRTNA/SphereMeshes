@@ -106,12 +106,8 @@ void updateCapsuloidFeatures(Capsuloid& caps, const Sphere& s0, const Sphere& s1
     caps.factor = (s1.radius - s0.radius) / caps.sqrdL;
 }
 
-void SphereMesh::updateSphereTriangleFeatures(SphereTriangle &tri)
+void updateSphereTriangleFeatures(SphereTriangle& tri, const Sphere& s0, const Sphere& s1, const Sphere& s2)
 {
-    const Sphere &s0 = spheres.at(tri.vertices[0]);
-    const Sphere &s1 = spheres.at(tri.vertices[1]);
-    const Sphere &s2 = spheres.at(tri.vertices[2]);
-
     tri.S0S1 = s1.center - s0.center;
     tri.S0S2 = s2.center - s0.center;
 
