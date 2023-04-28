@@ -72,7 +72,7 @@ int activeSubroutineIdx = 0;
 bool backFaceCulling = true;
 
 
-int main()
+int main(int argc, char** argv)
 {
     // glfw: initialize and configure
     // ------------------------------
@@ -116,6 +116,12 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 410");
 
+    std::string smToLoad;
+    if (argc > 0) {
+        smToLoad = argv[1];
+        printf("ooo %s\n", smToLoad);
+    }
+
     // build and compile our shader program
     Shader shader("assets/shaders/default.vert", "assets/shaders/default.frag");
     glClearColor(0.3f, 0.3f, 0.6f, 1.0f);  
@@ -130,7 +136,7 @@ int main()
 
     SphereMesh sm;
     string readErrorMsg;
-    bool read = readFromFile("assets/spheremeshes/spheremesh.sm", sm, readErrorMsg);
+    bool read = readFromFile("assets/spheremeshes/"+smToLoad, sm, readErrorMsg);
     if (! read) {
         std::cerr << readErrorMsg << std::endl;
         return 1;
