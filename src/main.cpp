@@ -38,8 +38,7 @@ void processInput(GLFWwindow *window);
 // callback functions for keyboard and mouse events
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
-void cursor_position_callback(GLFWwindow *window, double mouse_x, double mouse_y);
-
+void mouse_button_callback(GLFWwindow *window, int button, int action, int mods);
 // if one of the WASD keys is pressed, we call the corresponding method of the Camera class
 void apply_key_commands();
 
@@ -100,7 +99,7 @@ int main(int argc, char *argv[])
     glfwMakeContextCurrent(window);
     // we put in relation the window and the callbacks
     glfwSetKeyCallback(window, key_callback);
-    glfwSetCursorPosCallback(window, cursor_position_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     // glad: load all OpenGL function pointers
@@ -340,14 +339,13 @@ void apply_key_commands()
     }
 }
 
-void cursor_position_callback(GLFWwindow *window, double mouse_x, double mouse_y)
+void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 {
-    static uint intersections = 0;
-    static uint click = 0;
-    int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
-    if (state == GLFW_PRESS)
-    {   
-        printf("%d clicked\n", ++click);
+    static double mouse_x = 0.0;
+    static double mouse_y = 0.0;
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    {
+        glfwGetCursorPos(window, &mouse_x, &mouse_y);
         // trace ray
         float x = (2.0f * mouse_x) / SCR_WIDTH - 1.0f;
         float y = 1.0f - (2.0f * mouse_y) / SCR_HEIGHT;
@@ -360,10 +358,19 @@ void cursor_position_callback(GLFWwindow *window, double mouse_x, double mouse_y
         ray_wor = glm::normalize(ray_wor);
         Ray r = Ray(viewPos, ray_wor);
         Point null;
-        if (intersects(r, sm.boundingSphere, null)) {
-            intersections++;
-            printf("%d Interseca!\n", intersections);
+        if (intersects(r, sm.boundingSphere, null))
+        {
+            printf("Interseca!\n");
         }
+    }
+}
 
+void cursor_position_callback(GLFWwindow *window, double mouse_x, double mouse_y)
+{
+    static uint intersections = 0;
+    static uint click = 0;
+    int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+    if (state == GLFW_PRESS)
+    {
     }
 }
