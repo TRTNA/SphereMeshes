@@ -1,5 +1,6 @@
 #include <utils/ray.h>
 #include <spheremeshes/sphere.h>
+#include <spheremeshes/point.h>
 
 #include <glm/gtx/string_cast.hpp>
 
@@ -14,10 +15,20 @@ string Ray::toString() const {
 }
 
 bool intersects(const Ray& ray, const Sphere& sphere, Point& outIntersPoint) {
-    //ray starting pos is inside the sphere, it intersects
-    //FIXME inefficiente perchè in isInside vengono calcolate informazioni che sono utili anche qui
-    if (isInside(ray.pos, sphere)) return true;
+    vec3 rayToSphere = sphere.center - ray.pos;
 
     //ray dir is perpendicular to or facing away from the vector that connects ray pos to sphere
-    if (dot(sphere.center - ray.pos, ray.dir) <= 0.0f) return false;
+    const float tP = dot(rayToSphere, ray.dir);
+    if (tP < 0.0f) return false;
+
+    const vec3 distVector = sphere.center - (ray.pos + tP*ray.dir);
+    const float sqrdDist = dot(distVector, distVector);
+    const float sphereRadiusSqrd = sphere.radius * sphere.radius;
+    
+    if (dot(distVector, distVector) > sphereRadiusSqrd) return false;
+    
+    const float tI = glm::sqrt(sphereRadiusSqrd - sqrdDist);
+    outIntersPoint.pos = ray.pos + (tP - tI)*ray.dir;
+    outIntersPoint.normal = glm::normalize(outIntersPoint.pos - sphere.center);
+    return true;
 }

@@ -32,9 +32,10 @@ const Sphere& getBiggerSphere(const Sphere& s1, const Sphere& s2) {
 bool isInside(const glm::vec3& pos, const Sphere& sphere) {
     glm::vec3 posToCenter = sphere.center - pos;
     //sqrd distance from pos to sphere center is less than squared radius --> inside
-    //FIXME: put a general EPSILON somewhere and use it whenever is necessaru
+    //FIXME: put a general EPSILON somewhere and use it whenever is necessary
     return dot(posToCenter, posToCenter) < sphere.radius * sphere.radius + 0.0001f;
 }
+
 
 
  
