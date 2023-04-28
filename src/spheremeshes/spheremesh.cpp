@@ -1,4 +1,5 @@
 #include <spheremeshes/spheremesh.h>
+#include <utils/common.h>
 
 #include <iostream>
 #include <stdio.h>
@@ -255,7 +256,7 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
         return pushOutsideOneCapsule(tempCapsule, pos, dimensionality);
     }
     //PUSH OUTSIDE TRIANGLE
-    if (a >= 0.0f && a <= 1.0f && b >= 0.0f && b <= 1.0f && c >= 0.0f && c <= 1.0f)
+    if(isInRangeIncl(a, 0.0f, 1.0f) && isInRangeIncl(b, 0.0f, 1.0f) && isInRangeIncl(c, 0.0f, 1.0f))
     {
         vec3 C = c * s0.center + a * s1.center + b * s2.center;
         float interpRadius = c * s0.radius + a * s1.radius + b * s2.radius;
