@@ -255,6 +255,7 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
         updateCapsuloidFeatures(tempCapsule, s0, s2);
         return pushOutsideOneCapsule(tempCapsule, pos, dimensionality);
     }
+    //FIXME: già controllato e nessuno sarà minore di zero, si potrebbe controllare solo che siano minori di 1.0 incluso e risparmiare tre confronti
     //PUSH OUTSIDE TRIANGLE
     if(isInRangeIncl(a, 0.0f, 1.0f) && isInRangeIncl(b, 0.0f, 1.0f) && isInRangeIncl(c, 0.0f, 1.0f))
     {
