@@ -8,15 +8,12 @@
 
 void PointCloud::addPoint(const SphereMesh & sphereMesh)
 {
-    //printf("[METHOD] addPoint...\n");
     int dimensionality = -1;
     glm::vec3 pos;
     Point point;
     while (true) {
         pos = getRandomPositionInSphere(sphereMesh.boundingSphere);
-        //printf("Got random position in sphere: %s\n", glm::to_string(pos).c_str());
         point = sphereMesh.pushOutside(pos, dimensionality);
-        //printf("Points pushed outside by %d\n", dimensionality);
         //point is inside the sphere mesh and has been pushed on its surface
         if (dimensionality != -1) {
             points.emplace_back(point.pos, point.normal, dimensionality);
