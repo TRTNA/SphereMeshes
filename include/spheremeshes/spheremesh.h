@@ -32,10 +32,12 @@ public:
     void addSphereTriangle(SphereTriangle sphereTriangle);
     void addSingleton(uint sphereIdx);
     void updateBoundingSphere();
+    void setMaxPushOutsideTries(uint val);
     Point pushOutside(const glm::vec3 &pos, int &dimensionality) const;
     std::string toString() const;
 
 private:
+    uint maxPushOutsideTries = 10U;
     Point pushOutsideOneCapsule(const Capsuloid &caps, const glm::vec3 &pos, int &dimensionality) const;
     Point pushOutsideOneSphereTriangle(const SphereTriangle &tri, const glm::vec3 &pos, int &dimensionality) const;
     Point pushOutsideOneSingleton(const Sphere &sphere, const glm::vec3 &pos, int &dimensionality) const;

@@ -113,9 +113,7 @@ Point SphereMesh::pushOutside(const vec3 &pos, int &dimensionality) const
     uint triangleStart = edgeStart + capsuloids.size();
     uint maxUniqueIdx = triangleStart + sphereTriangles.size();
     uint tries = 0;
-    const uint maxTries = 10;
-
-    while (!outsideEverything && tries < maxTries)
+    while (!outsideEverything && tries < maxPushOutsideTries)
     {
         // storing last position, because it may vary when it is pushed by multiple primitives
         vec3 lastPos = lastPoint.pos;
@@ -272,6 +270,11 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
 
     return pointOutsideSphereMesh(pos, dimensionality);
 }
+
+void SphereMesh::setMaxPushOutsideTries(uint val) {
+    maxPushOutsideTries = val;
+}
+
 
 
 void SphereMesh::updateAllCapsuloidsFeatures()
