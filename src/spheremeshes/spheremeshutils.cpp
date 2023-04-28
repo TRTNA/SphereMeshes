@@ -77,7 +77,7 @@ bool readFromFile(const std::string &path, SphereMesh &out, std::string &errorMs
 {
     ifstream file;
     file.exceptions(std::ios::failbit | std::ios::badbit);
-    file.open(path, std::ios::in);
+    file.open(path, std::ios::in | std::ios::binary);
     if (!file.is_open())
     {
         errorMsg = "Cannot open file " + path;
@@ -124,7 +124,7 @@ bool readFromFile(const std::string &path, SphereMesh &out, std::string &errorMs
     }
     catch (const std::ios::failure &ex)
     {
-        errorMsg = path + " badly formattated\n";
+        errorMsg = "Error while reading " + path +"\n";
         file.close();
         return false;
     }
