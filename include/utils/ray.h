@@ -5,7 +5,6 @@
 struct Sphere;
 struct Point;
 
-static const float EPSILON = 0.0001f;
 
 struct Ray {
     Ray(glm::vec3 dir);

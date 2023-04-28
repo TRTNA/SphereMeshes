@@ -13,6 +13,7 @@
 #include <spheremeshes/spheremesh.h>
 #include <spheremeshes/capsuloid.h>
 #include <spheremeshes/spheretriangle.h>
+#include <utils/ray.h>
 #include <rendering/renderablepointcloud.h>
 
 #include <rendering/shader.h>
@@ -25,24 +26,26 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
 
+using glm::vec3;
+using glm::vec4;
 using std::cout;
 using std::endl;
-using std::vector;
 using std::string;
+using std::vector;
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
 // callback functions for keyboard and mouse events
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
+void mouse_callback(GLFWwindow *window, double xpos, double ypos);
+void cursor_position_callback(GLFWwindow *window, double mouse_x, double mouse_y);
+
 // if one of the WASD keys is pressed, we call the corresponding method of the Camera class
 void apply_key_commands();
-
 
 // settings
 const unsigned int SCR_WIDTH = 1200;
 const unsigned int SCR_HEIGHT = 800;
-
 
 // we initialize an array of booleans for each keyboard key
 bool keys[1024];
@@ -56,14 +59,13 @@ const glm::vec3 defaultViewPos = glm::vec3(0.0f, 0.0f, 3.0f);
 
 float lightPos[3] = {0.0f, 3.0f, 3.0f};
 float ambientColor[3] = {0.1, 0.0, 0.0};
-float  diffuseColor[3] = {0.5, 0.0, 0.0};
-float  specColor[3] = {1.0, 1.0, 1.0};
+float diffuseColor[3] = {0.5, 0.0, 0.0};
+float specColor[3] = {1.0, 1.0, 1.0};
 float shininess = 16.0;
 
 glm::mat4 modelMatrix = glm::mat4(1.0f);
 glm::mat4 viewMatrix = glm::mat4(1.0f);
 glm::mat4 projectionMatrix = glm::mat4(1.0f);
-
 
 glm::vec3 viewPos = defaultViewPos;
 
@@ -71,8 +73,9 @@ GLuint subroutinesIdxs[3];
 int activeSubroutineIdx = 0;
 bool backFaceCulling = true;
 
+SphereMesh sm;
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     // glfw: initialize and configure
     // ------------------------------
@@ -87,7 +90,7 @@ int main(int argc, char* argv[])
 
     // glfw window creation
     // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "SphereMesh_PointCloudViewer", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "SphereMesh_PointCloudViewer", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -97,6 +100,7 @@ int main(int argc, char* argv[])
     glfwMakeContextCurrent(window);
     // we put in relation the window and the callbacks
     glfwSetKeyCallback(window, key_callback);
+    glfwSetCursorPosCallback(window, cursor_position_callback);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     // glad: load all OpenGL function pointers
@@ -118,29 +122,28 @@ int main(int argc, char* argv[])
 
     // build and compile our shader program
     Shader shader("assets/shaders/default.vert", "assets/shaders/default.frag");
-    glClearColor(0.3f, 0.3f, 0.6f, 1.0f);  
-    
+    glClearColor(0.3f, 0.3f, 0.6f, 1.0f);
+
     // Projection matrix: FOV angle, aspect ratio, near and far planes
     float fovY = 45.0f;
-    float aspect =(float)SCR_WIDTH/(float)SCR_HEIGHT;
+    float aspect = (float)SCR_WIDTH / (float)SCR_HEIGHT;
     projectionMatrix = glm::perspective(fovY, aspect, 0.1f, 1000.0f);
 
     glm::mat3 normalMatrix;
 
-
     std::string smToLoad = argc > 1 ? argv[1] : "default.sm";
 
-    SphereMesh sm;
     string readErrorMsg;
-    bool read = readFromFile("assets/spheremeshes/"+smToLoad, sm, readErrorMsg);
-    if (! read) {
+    bool read = readFromFile("assets/spheremeshes/" + smToLoad, sm, readErrorMsg);
+    if (!read)
+    {
         std::cerr << readErrorMsg << std::endl;
         return 1;
     }
 
-
-    cout << "Sphere mesh:\n" << sm << endl;
-    //sm.scale(10.0f);
+    cout << "Sphere mesh:\n"
+         << sm << endl;
+    // sm.scale(10.0f);
     PointCloud pc = PointCloud();
     int pointsNumber = 10000;
 
@@ -151,11 +154,10 @@ int main(int argc, char* argv[])
     float oppositeFovY = 90.0f - 45.0f;
     float dist = sm.boundingSphere.radius * glm::tan(oppositeFovY);
     viewPos = sm.boundingSphere.center;
-    viewPos.z += aspect*dist;
+    viewPos.z += aspect * dist;
 
-        // View matrix (=camera): position, view direction, camera "up" vector
+    // View matrix (=camera): position, view direction, camera "up" vector
     viewMatrix = glm::lookAt(viewPos, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
 
     shader.Use();
     glPointSize(5.0f);
@@ -168,7 +170,6 @@ int main(int argc, char* argv[])
     GLint activeSubroutineCount;
     glGetProgramStageiv(shader.Program, GL_FRAGMENT_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &activeSubroutineCount);
 
-     
     // render loop
     // -----------
 
@@ -198,51 +199,56 @@ int main(int argc, char* argv[])
         ImGui::Begin("Controls");
         ImGui::Text("Points:");
         bool pointsNumberChanged = ImGui::SliderInt("Points number", &pointsNumber, 100, 100000);
-        if (pointsNumberChanged) {
+        if (pointsNumberChanged)
+        {
             pc_ptr->repopulate(pointsNumber, sm);
             rpc.updateBuffers();
         }
         ImGui::Text("Shading:");
-        ImGui::RadioButton("Phong", &activeSubroutineIdx, 0); ImGui::SameLine();
-        ImGui::RadioButton("Dimensionality", &activeSubroutineIdx, 1); ImGui::SameLine();
+        ImGui::RadioButton("Phong", &activeSubroutineIdx, 0);
+        ImGui::SameLine();
+        ImGui::RadioButton("Dimensionality", &activeSubroutineIdx, 1);
+        ImGui::SameLine();
         ImGui::RadioButton("Normal", &activeSubroutineIdx, 2);
         ImGui::Text("Lighting:");
-        if (ImGui::SliderFloat3("Light position", lightPos, -100.0f, 100.0f)) {
+        if (ImGui::SliderFloat3("Light position", lightPos, -100.0f, 100.0f))
+        {
             glUniform3fv(glGetUniformLocation(shader.Program, "vLightPos"), 1, glm::value_ptr(glm::vec3(viewMatrix * glm::vec4(lightPos[0], lightPos[1], lightPos[2], 1.0))));
         }
-        if (ImGui::SliderFloat3("Diffuse color", diffuseColor, 0.0f, 1.0f)) {
+        if (ImGui::SliderFloat3("Diffuse color", diffuseColor, 0.0f, 1.0f))
+        {
             glUniform3fv(glGetUniformLocation(shader.Program, "diffuseColor"), 1, diffuseColor);
         }
-        if (ImGui::SliderFloat3("Specular color", specColor, 0.0f, 1.0f)) {
+        if (ImGui::SliderFloat3("Specular color", specColor, 0.0f, 1.0f))
+        {
             glUniform3fv(glGetUniformLocation(shader.Program, "specColor"), 1, specColor);
         }
-        if (ImGui::SliderFloat3("Ambient color", ambientColor, 0.0f, 1.0f)) {
+        if (ImGui::SliderFloat3("Ambient color", ambientColor, 0.0f, 1.0f))
+        {
             glUniform3fv(glGetUniformLocation(shader.Program, "ambientColor"), 1, ambientColor);
         }
-        if (ImGui::SliderFloat("Shininess", &shininess, 0.0f, 100.0f)) {
+        if (ImGui::SliderFloat("Shininess", &shininess, 0.0f, 100.0f))
+        {
             glUniform1f(glGetUniformLocation(shader.Program, "shininess"), shininess);
         }
         ImGui::Text("Optimization:");
-        if (ImGui::Checkbox("Backface culling ", &backFaceCulling)) {
+        if (ImGui::Checkbox("Backface culling ", &backFaceCulling))
+        {
             glUniform1i(glGetUniformLocation(shader.Program, "backFaceCulling"), backFaceCulling);
         }
-
 
         ImGui::End();
 
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
-        normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix*modelMatrix)));
+        normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix * modelMatrix)));
         glUniformMatrix3fv(glGetUniformLocation(shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
         glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &subroutinesIdxs[activeSubroutineIdx]);
 
         rpc.Draw(shader);
 
-
-
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -263,32 +269,30 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-
-
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
-    // make sure the viewport matches the new window dimensions; note that width and 
+    // make sure the viewport matches the new window dimensions; note that width and
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
 }
 
 //////////////////////////////////////////
 // callback for keyboard events
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
+void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode)
 {
     // if ESC is pressed, we close the application
-    if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
-    
+
     // we keep trace of the pressed keys
     // with this method, we can manage 2 keys pressed at the same time:
     // many I/O managers often consider only 1 key pressed at the time (the first pressed, until it is released)
     // using a boolean array, we can then check and manage all the keys pressed at the same time
-    if(action == GLFW_PRESS)
+    if (action == GLFW_PRESS)
         keys[key] = true;
-    else if(action == GLFW_RELEASE)
+    else if (action == GLFW_RELEASE)
         keys[key] = false;
 }
 
@@ -296,39 +300,70 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 // If one of the WASD keys is pressed, the camera is moved accordingly (the code is in utils/camera.h)
 void apply_key_commands()
 {
-    if(keys[GLFW_KEY_R]){
+    if (keys[GLFW_KEY_R])
+    {
         viewPos = defaultViewPos;
         modelMatrix = glm::mat4(1.0f);
         return;
     }
-    if(keys[GLFW_KEY_A]) {
-        modelMatrix = glm::rotate(modelMatrix, -defaultRotationSpeed*deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
+    if (keys[GLFW_KEY_A])
+    {
+        modelMatrix = glm::rotate(modelMatrix, -defaultRotationSpeed * deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
         return;
     }
-    if(keys[GLFW_KEY_S]) {
-        modelMatrix = glm::rotate(modelMatrix, -defaultRotationSpeed*deltaTime, glm::vec3(1.0f, 0.0f, 0.0f));
+    if (keys[GLFW_KEY_S])
+    {
+        modelMatrix = glm::rotate(modelMatrix, -defaultRotationSpeed * deltaTime, glm::vec3(1.0f, 0.0f, 0.0f));
         return;
     }
-    if(keys[GLFW_KEY_D])
-    {        
-        modelMatrix = glm::rotate(modelMatrix, defaultRotationSpeed*deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
+    if (keys[GLFW_KEY_D])
+    {
+        modelMatrix = glm::rotate(modelMatrix, defaultRotationSpeed * deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
         return;
     }
-    if(keys[GLFW_KEY_W]) {
-        modelMatrix = glm::rotate(modelMatrix, defaultRotationSpeed*deltaTime, glm::vec3(1.0f, 0.0f, 0.0f));
+    if (keys[GLFW_KEY_W])
+    {
+        modelMatrix = glm::rotate(modelMatrix, defaultRotationSpeed * deltaTime, glm::vec3(1.0f, 0.0f, 0.0f));
         return;
     }
 
-    if(keys[GLFW_KEY_Z] && keys[GLFW_KEY_I]) {
-        viewPos.z = glm::max(0.0f, viewPos.z - 0.5f*deltaTime);
+    if (keys[GLFW_KEY_Z] && keys[GLFW_KEY_I])
+    {
+        viewPos.z = glm::max(0.0f, viewPos.z - 0.5f * deltaTime);
         return;
     }
 
-    if(keys[GLFW_KEY_Z] && keys[GLFW_KEY_O]) {
-        viewPos.z += 0.5f*deltaTime;
+    if (keys[GLFW_KEY_Z] && keys[GLFW_KEY_O])
+    {
+        viewPos.z += 0.5f * deltaTime;
         return;
     }
-    
 }
 
+void cursor_position_callback(GLFWwindow *window, double mouse_x, double mouse_y)
+{
+    static uint intersections = 0;
+    static uint click = 0;
+    int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+    if (state == GLFW_PRESS)
+    {   
+        printf("%d clicked\n", ++click);
+        // trace ray
+        float x = (2.0f * mouse_x) / SCR_WIDTH - 1.0f;
+        float y = 1.0f - (2.0f * mouse_y) / SCR_HEIGHT;
+        float z = 1.0f;
+        vec3 ray_nds = vec3(x, y, z);
+        vec4 ray_clip = vec4(ray_nds.x, ray_nds.y, -1.0, 1.0);
+        vec4 ray_eye = glm::inverse(projectionMatrix) * ray_clip;
+        ray_eye = vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
+        vec3 ray_wor = glm::vec3((glm::inverse(viewMatrix) * ray_eye));
+        ray_wor = glm::normalize(ray_wor);
+        Ray r = Ray(viewPos, ray_wor);
+        Point null;
+        if (intersects(r, sm.boundingSphere, null)) {
+            intersections++;
+            printf("%d Interseca!\n", intersections);
+        }
 
+    }
+}
