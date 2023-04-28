@@ -1,6 +1,4 @@
-#ifndef _AABB_H
-#define _AABB_H
-
+#pragma once
 #include <utility>
 
 typedef std::pair<float, float> floatRange;
@@ -17,5 +15,3 @@ class AABB {
     floatRange getZRange() const;
 
 };
-
-#endif

@@ -2,13 +2,12 @@
 
 #include <glm/vec3.hpp>
 #include <glm/gtx/matrix_major_storage.hpp>
-#include <sstream>
 #include <fstream>
+
 using glm::vec3;
 using std::ifstream;
 using std::ostream;
 using std::string;
-using std::stringstream;
 
 
 void updateCapsuloidFeatures(Capsuloid& caps, const Sphere& s0, const Sphere& s1)
