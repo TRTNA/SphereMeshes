@@ -24,6 +24,7 @@ struct Sphere {
 std::ostream& operator<<(std::ostream& ost, const Sphere& val);
 std::istream& operator>>(std::istream& ist, Sphere& val);
 
+bool isInside(glm::vec3 pos, const Sphere& sphere);
 
 const Sphere& getBiggerSphere(const Sphere& s1, const Sphere& s2);
 
