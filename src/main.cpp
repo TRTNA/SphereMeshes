@@ -14,6 +14,8 @@
 #include <spheremeshes/capsuloid.h>
 #include <spheremeshes/spheretriangle.h>
 #include <utils/ray.h>
+#include <utils/common.h>
+
 #include <rendering/renderablepointcloud.h>
 
 #include <rendering/shader.h>
@@ -346,31 +348,12 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
     {
         glfwGetCursorPos(window, &mouse_x, &mouse_y);
-        // trace ray
-        float x = (2.0f * mouse_x) / SCR_WIDTH - 1.0f;
-        float y = 1.0f - (2.0f * mouse_y) / SCR_HEIGHT;
-        float z = 1.0f;
-        vec3 ray_nds = vec3(x, y, z);
-        vec4 ray_clip = vec4(ray_nds.x, ray_nds.y, -1.0, 1.0);
-        vec4 ray_eye = glm::inverse(projectionMatrix) * ray_clip;
-        ray_eye = vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
-        vec3 ray_wor = glm::vec3((glm::inverse(viewMatrix) * ray_eye));
-        ray_wor = glm::normalize(ray_wor);
-        Ray r = Ray(viewPos, ray_wor);
+        vec3 rayDir = screenToWorldDir(glm::vec2(mouse_x, mouse_y), SCR_WIDTH, SCR_HEIGHT, viewMatrix, projectionMatrix);
+        Ray r = Ray(viewPos, rayDir);
         Point null;
         if (intersects(r, sm.boundingSphere, null))
         {
             printf("Interseca!\n");
         }
-    }
-}
-
-void cursor_position_callback(GLFWwindow *window, double mouse_x, double mouse_y)
-{
-    static uint intersections = 0;
-    static uint click = 0;
-    int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
-    if (state == GLFW_PRESS)
-    {
     }
 }
