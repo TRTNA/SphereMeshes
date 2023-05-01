@@ -255,8 +255,6 @@ int main(int argc, char *argv[])
 
         ImGui::End();
 
-        glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
-
         viewMatrix = glm::lookAt(viewPos, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
 
@@ -272,6 +270,8 @@ int main(int argc, char *argv[])
             last_mx = cur_mx;
             last_my = cur_my;
         }
+
+        glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
 
         normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix)* glm::mat3(modelMatrix)));
         glUniformMatrix3fv(glGetUniformLocation(shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
