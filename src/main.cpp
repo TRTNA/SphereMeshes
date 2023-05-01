@@ -38,23 +38,29 @@ using std::endl;
 using std::string;
 using std::vector;
 
-GLFWwindow* glfwSetup(std::string windowTitle, float width, float height);
-void imGuiSetup(GLFWwindow* window);
+GLFWwindow *glfwSetup(std::string windowTitle, float width, float height);
+void imGuiSetup(GLFWwindow *window);
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
 // callback functions for keyboard and mouse events
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods);
+void cursor_position_callback(GLFWwindow *window, double xpos, double ypos);
+glm::vec3 get_arcball_vector(int x, int y);
 // if one of the WASD keys is pressed, we call the corresponding method of the Camera class
 void apply_key_commands();
 
 // settings
-const unsigned int SCR_WIDTH = 1200;
-const unsigned int SCR_HEIGHT = 800;
+const unsigned int SCR_WIDTH = 1280;
+const unsigned int SCR_HEIGHT = 720;
 
 // we initialize an array of booleans for each keyboard key
 bool keys[1024];
+
+// Mouse events
+double last_mx = 0.0, last_my = 0.0, cur_mx = 0.0, cur_my = 0.0;
+bool archball = false;
 
 // parameters for time calculation (for animations)
 GLfloat deltaTime = 0.0f;
@@ -91,9 +97,10 @@ int boundingSpherePointsNumber = pointsNumber;
 
 int main(int argc, char *argv[])
 {
-    //Context creation
-    GLFWwindow* window = glfwSetup("SphereMeshes", SCR_WIDTH, SCR_HEIGHT);
-    if (window == nullptr) {
+    // Context creation
+    GLFWwindow *window = glfwSetup("SphereMeshes", SCR_WIDTH, SCR_HEIGHT);
+    if (window == nullptr)
+    {
         std::cerr << "Failed to initialize GLFW" << std::endl;
         return -1;
     }
@@ -106,7 +113,7 @@ int main(int argc, char *argv[])
 
     imGuiSetup(window);
 
-    //Sphere mesh loading
+    // Sphere mesh loading
     std::string smToLoad = argc > 1 ? argv[1] : "default.sm";
     string readErrorMsg;
     bool read = readFromFile("assets/spheremeshes/" + smToLoad, sm, readErrorMsg);
@@ -115,22 +122,23 @@ int main(int argc, char *argv[])
         std::cerr << readErrorMsg << std::endl;
         return 1;
     }
-    cout << "Sphere mesh:\n" << sm << endl;
+    cout << "Sphere mesh:\n"
+         << sm << endl;
 
-    //Sphere mesh rendering setup
+    // Sphere mesh rendering setup
     PointCloud pc = PointCloud();
     pc.repopulate(pointsNumber, sm);
     std::shared_ptr<PointCloud> pc_ptr = std::make_shared<PointCloud>(pc);
     RenderablePointCloud rpc = RenderablePointCloud(pc_ptr);
 
-    //Sphere mesh's bounding sphere rendering setup
+    // Sphere mesh's bounding sphere rendering setup
     SphereMesh boundingSphereFakeSm;
     PointCloud boundingSphereFakePc = PointCloud();
     boundingSphereFakePc.repopulate(boundingSpherePointsNumber, sm);
     std::shared_ptr<PointCloud> boundingSphereFakePc_ptr = std::make_shared<PointCloud>(boundingSphereFakePc);
     RenderablePointCloud boundingSphereFakeRpc = RenderablePointCloud(boundingSphereFakePc_ptr);
 
-    //Setting up viewMatrix and projection matrix to take into account sphere mesh dimension
+    // Setting up viewMatrix and projection matrix to take into account sphere mesh dimension
     float fovY = 45.0f;
     float aspect = (float)SCR_WIDTH / (float)SCR_HEIGHT;
     projectionMatrix = glm::perspective(fovY, aspect, 0.1f, 1000.0f);
@@ -140,7 +148,7 @@ int main(int argc, char *argv[])
     viewPos.z += aspect * dist;
     viewMatrix = glm::lookAt(viewPos, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-    //Shader setup
+    // Shader setup
     Shader shader("assets/shaders/default.vert", "assets/shaders/default.frag");
     shader.Use();
     glPointSize(pointsSize);
@@ -155,7 +163,6 @@ int main(int argc, char *argv[])
     glGetProgramStageiv(shader.Program, GL_FRAGMENT_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &activeSubroutineCount);
 
     glClearColor(0.3f, 0.3f, 0.6f, 1.0f);
-
 
     // render loop
     // -----------
@@ -209,7 +216,8 @@ int main(int argc, char *argv[])
             pc_ptr->repopulate(pointsNumber, sm);
             rpc.updateBuffers();
         }
-        if (ImGui::SliderFloat("Points size", &pointsSize, 0.1f, 10.0f)) {
+        if (ImGui::SliderFloat("Points size", &pointsSize, 0.1f, 10.0f))
+        {
             glPointSize(pointsSize);
         }
         ImGui::Text("Shading:");
@@ -248,11 +256,24 @@ int main(int argc, char *argv[])
         ImGui::End();
 
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
-        
+
         viewMatrix = glm::lookAt(viewPos, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
-        
-        normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix * modelMatrix)));
+
+        if (cur_mx != last_mx || cur_my != last_my)
+        {
+            glm::vec3 va = get_arcball_vector(last_mx, last_my);
+            glm::vec3 vb = get_arcball_vector(cur_mx, cur_my);
+            float angle = glm::acos(glm::min(1.0f, glm::dot(va, vb)));
+            glm::vec3 axis_in_camera_coord = glm::cross(va, vb);
+            glm::mat3 camera2object = glm::inverse(glm::mat3(viewMatrix) * glm::mat3(modelMatrix));
+            glm::vec3 axis_in_object_coord = camera2object * axis_in_camera_coord;
+            modelMatrix = glm::rotate(modelMatrix, glm::degrees(angle*deltaTime), axis_in_object_coord);
+            last_mx = cur_mx;
+            last_my = cur_my;
+        }
+
+        normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix)* glm::mat3(modelMatrix)));
         glUniformMatrix3fv(glGetUniformLocation(shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
         if (renderBoundingSphere)
@@ -357,15 +378,25 @@ void apply_key_commands()
         viewPos.z += 0.5f * deltaTime;
         return;
     }
-}
+
+} 
 
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 {
     static double mouse_x = 0.0;
     static double mouse_y = 0.0;
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    glfwGetCursorPos(window, &mouse_x, &mouse_y);
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && keys[GLFW_KEY_LEFT_ALT])
+    {   
+        archball = true;
+        last_mx = cur_mx = mouse_x;
+        last_my = cur_my = mouse_y;
+    } else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE || ! keys[GLFW_KEY_LEFT_ALT]) {
+        archball = false;
+    }   
+    
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
     {
-        glfwGetCursorPos(window, &mouse_x, &mouse_y);
         vec3 rayDir = screenToWorldDir(glm::vec2(mouse_x, mouse_y), SCR_WIDTH, SCR_HEIGHT, viewMatrix, projectionMatrix);
         Ray r = Ray(viewPos, rayDir);
         Point null;
@@ -376,8 +407,9 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
     }
 }
 
-GLFWwindow* glfwSetup(std::string windowTitle, float width, float height) {
-     // glfw: initialize and configure
+GLFWwindow *glfwSetup(std::string windowTitle, float width, float height)
+{
+    // glfw: initialize and configure
     // ------------------------------
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_VERSION_MAJOR);
@@ -401,19 +433,47 @@ GLFWwindow* glfwSetup(std::string windowTitle, float width, float height) {
     // we put in relation the window and the callbacks
     glfwSetKeyCallback(window, key_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetCursorPosCallback(window, cursor_position_callback);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     return window;
 }
 
-void imGuiSetup(GLFWwindow* window) {
+void cursor_position_callback(GLFWwindow *window, double xpos, double ypos)
+{
+    if (archball)
+    {
+        cur_mx = xpos;
+        cur_my = ypos;
+    }
+}
+
+/**
+ * Get a normalized vector from the center of the virtual ball O to a
+ * point P on the virtual ball surface, such that P is aligned on
+ * screen's (X,Y) coordinates.  If (X,Y) is too far away from the
+ * sphere, return the nearest point on the virtual ball surface.
+ */
+glm::vec3 get_arcball_vector(int x, int y)
+{
+    glm::vec3 P = glm::vec3(1.0 * x / SCR_WIDTH * 2 - 1.0,
+                            1.0 * y / SCR_HEIGHT * 2 - 1.0,
+                            0);
+    P.y = -P.y;
+    float OP_squared = P.x * P.x + P.y * P.y;
+    if (OP_squared <= 1 * 1)
+        P.z = sqrt(1 * 1 - OP_squared); // Pythagoras
+    else
+        P = glm::normalize(P); // nearest point
+    return P;
+}
+
+void imGuiSetup(GLFWwindow *window)
+{
     // ImGui SETUP
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 410");
-
 }
-
-
