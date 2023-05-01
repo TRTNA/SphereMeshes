@@ -28,6 +28,9 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
 
+#define OPENGL_VERSION_MAJOR 4
+#define OPENGL_VERSION_MINOR 1
+
 using glm::vec3;
 using glm::vec4;
 using std::cout;
@@ -35,6 +38,8 @@ using std::endl;
 using std::string;
 using std::vector;
 
+GLFWwindow* glfwSetup(std::string windowTitle, float width, float height);
+void imGuiSetup(GLFWwindow* window);
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
 // callback functions for keyboard and mouse events
@@ -56,7 +61,6 @@ GLfloat deltaTime = 0.0f;
 GLfloat lastFrame = 0.0f;
 
 const float defaultRotationSpeed = 1.0f;
-const glm::vec3 defaultViewPos = glm::vec3(0.0f, 0.0f, 3.0f);
 
 float lightPos[3] = {0.0f, 3.0f, 3.0f};
 float ambientColor[3] = {0.1, 0.0, 0.0};
@@ -67,76 +71,43 @@ float specColor[3] = {1.0, 1.0, 1.0};
 float shininess = 16.0;
 
 glm::mat4 modelMatrix = glm::mat4(1.0f);
+glm::mat3 normalMatrix;
 glm::mat4 viewMatrix = glm::mat4(1.0f);
 glm::mat4 projectionMatrix = glm::mat4(1.0f);
 
+const glm::vec3 defaultViewPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 viewPos = defaultViewPos;
 
 GLuint subroutinesIdxs[4];
 int activeSubroutineIdx = 0;
-bool backFaceCulling = true;
+
+bool backFaceCulling = false;
 bool renderBoundingSphere = false;
 
 SphereMesh sm;
+int pointsNumber = 10000;
+float pointsSize = 5.0f;
+int boundingSpherePointsNumber = pointsNumber;
 
 int main(int argc, char *argv[])
 {
-    // glfw: initialize and configure
-    // ------------------------------
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-#ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-
-    // glfw window creation
-    // --------------------
-    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "SphereMesh_PointCloudViewer", NULL, NULL);
-    if (window == NULL)
-    {
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
+    //Context creation
+    GLFWwindow* window = glfwSetup("SphereMeshes", SCR_WIDTH, SCR_HEIGHT);
+    if (window == nullptr) {
+        std::cerr << "Failed to initialize GLFW" << std::endl;
         return -1;
     }
-    glfwMakeContextCurrent(window);
-    // we put in relation the window and the callbacks
-    glfwSetKeyCallback(window, key_callback);
-    glfwSetMouseButtonCallback(window, mouse_button_callback);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-    // glad: load all OpenGL function pointers
-    // ---------------------------------------
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        std::cout << "Failed to initialize GLAD" << std::endl;
+        std::cerr << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
 
-    // ImGui SETUP
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
-    (void)io;
-    ImGui::StyleColorsDark();
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 410");
+    imGuiSetup(window);
 
-    // build and compile our shader program
-    Shader shader("assets/shaders/default.vert", "assets/shaders/default.frag");
-    glClearColor(0.3f, 0.3f, 0.6f, 1.0f);
-
-    // Projection matrix: FOV angle, aspect ratio, near and far planes
-    float fovY = 45.0f;
-    float aspect = (float)SCR_WIDTH / (float)SCR_HEIGHT;
-    projectionMatrix = glm::perspective(fovY, aspect, 0.1f, 1000.0f);
-
-    glm::mat3 normalMatrix;
-
+    //Sphere mesh loading
     std::string smToLoad = argc > 1 ? argv[1] : "default.sm";
-
     string readErrorMsg;
     bool read = readFromFile("assets/spheremeshes/" + smToLoad, sm, readErrorMsg);
     if (!read)
@@ -144,37 +115,35 @@ int main(int argc, char *argv[])
         std::cerr << readErrorMsg << std::endl;
         return 1;
     }
-
     cout << "Sphere mesh:\n" << sm << endl;
-     // sm.scale(10.0f);
 
-     cout << "bounding sphere " << sm.boundingSphere << endl;
-    
-    
-    int pointsNumber = 10000;
-
-    SphereMesh boundingSphereFakeSm;
-
-    PointCloud boundingSphereFakePc = PointCloud();
-    std::shared_ptr<PointCloud> boundingSphereFakePc_ptr = std::make_shared<PointCloud>(boundingSphereFakePc);
-    RenderablePointCloud boundingSphereFakeRpc = RenderablePointCloud(boundingSphereFakePc_ptr);
-
-
+    //Sphere mesh rendering setup
     PointCloud pc = PointCloud();
     pc.repopulate(pointsNumber, sm);
     std::shared_ptr<PointCloud> pc_ptr = std::make_shared<PointCloud>(pc);
     RenderablePointCloud rpc = RenderablePointCloud(pc_ptr);
 
+    //Sphere mesh's bounding sphere rendering setup
+    SphereMesh boundingSphereFakeSm;
+    PointCloud boundingSphereFakePc = PointCloud();
+    boundingSphereFakePc.repopulate(boundingSpherePointsNumber, sm);
+    std::shared_ptr<PointCloud> boundingSphereFakePc_ptr = std::make_shared<PointCloud>(boundingSphereFakePc);
+    RenderablePointCloud boundingSphereFakeRpc = RenderablePointCloud(boundingSphereFakePc_ptr);
+
+    //Setting up viewMatrix and projection matrix to take into account sphere mesh dimension
+    float fovY = 45.0f;
+    float aspect = (float)SCR_WIDTH / (float)SCR_HEIGHT;
+    projectionMatrix = glm::perspective(fovY, aspect, 0.1f, 1000.0f);
     float oppositeFovY = 90.0f - 45.0f;
     float dist = sm.boundingSphere.radius * glm::tan(oppositeFovY);
     viewPos = sm.boundingSphere.center;
     viewPos.z += aspect * dist;
-
-    // View matrix (=camera): position, view direction, camera "up" vector
     viewMatrix = glm::lookAt(viewPos, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
+    //Shader setup
+    Shader shader("assets/shaders/default.vert", "assets/shaders/default.frag");
     shader.Use();
-    glPointSize(5.0f);
+    glPointSize(pointsSize);
     glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
     glUniform3fv(glGetUniformLocation(shader.Program, "vLightPos"), 1, glm::value_ptr(glm::vec3(viewMatrix * glm::vec4(lightPos[0], lightPos[1], lightPos[2], 1.0))));
     glUniform1i(glGetUniformLocation(shader.Program, "backFaceCulling"), backFaceCulling);
@@ -184,6 +153,9 @@ int main(int argc, char *argv[])
     subroutinesIdxs[3] = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "flatColoring");
     GLint activeSubroutineCount;
     glGetProgramStageiv(shader.Program, GL_FRAGMENT_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &activeSubroutineCount);
+
+    glClearColor(0.3f, 0.3f, 0.6f, 1.0f);
+
 
     // render loop
     // -----------
@@ -200,7 +172,6 @@ int main(int argc, char *argv[])
         glfwPollEvents();
 
         apply_key_commands();
-        viewMatrix = glm::lookAt(viewPos, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
         // we "clear" the frame and z buffer
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -213,22 +184,33 @@ int main(int argc, char *argv[])
         // render your GUI
         ImGui::Begin("Controls");
         ImGui::Text("Sphere mesh:");
-        if(ImGui::Checkbox("Render bounding sphere", &renderBoundingSphere)) {
+        if (ImGui::Checkbox("Render bounding sphere", &renderBoundingSphere))
+        {
             boundingSphereFakeSm.singletons.clear();
             sm.updateBoundingSphere();
             boundingSphereFakeSm.addSphere(sm.boundingSphere);
             boundingSphereFakeSm.addSingleton(0U);
             boundingSphereFakeSm.updateBoundingSphere();
             boundingSphereFakePc_ptr->clear();
-            boundingSphereFakePc_ptr->repopulate(100000U, boundingSphereFakeSm);
+            boundingSphereFakePc_ptr->repopulate(boundingSpherePointsNumber, boundingSphereFakeSm);
             boundingSphereFakeRpc.updateBuffers();
         }
+        if (renderBoundingSphere)
+        {
+            if (ImGui::SliderInt("Bounding sphere points number", &boundingSpherePointsNumber, 100, 1000000))
+            {
+                boundingSphereFakePc_ptr->repopulate(boundingSpherePointsNumber, boundingSphereFakeSm);
+                boundingSphereFakeRpc.updateBuffers();
+            }
+        }
         ImGui::Text("Pointcloud:");
-        bool pointsNumberChanged = ImGui::SliderInt("Points number", &pointsNumber, 100, 100000);
-        if (pointsNumberChanged)
+        if (ImGui::SliderInt("Points number", &pointsNumber, 100, 100000))
         {
             pc_ptr->repopulate(pointsNumber, sm);
             rpc.updateBuffers();
+        }
+        if (ImGui::SliderFloat("Points size", &pointsSize, 0.1f, 10.0f)) {
+            glPointSize(pointsSize);
         }
         ImGui::Text("Shading:");
         ImGui::RadioButton("Phong", &activeSubroutineIdx, 0);
@@ -266,17 +248,21 @@ int main(int argc, char *argv[])
         ImGui::End();
 
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+        
+        viewMatrix = glm::lookAt(viewPos, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
+        
         normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix * modelMatrix)));
         glUniformMatrix3fv(glGetUniformLocation(shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
-        if (renderBoundingSphere) {
+        if (renderBoundingSphere)
+        {
             glUniform3fv(glGetUniformLocation(shader.Program, "diffuseColor"), 1, boundingSphereColor);
             glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &subroutinesIdxs[3]);
             boundingSphereFakeRpc.Draw(shader);
         }
         glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &subroutinesIdxs[activeSubroutineIdx]);
-        
+
         glUniform3fv(glGetUniformLocation(shader.Program, "diffuseColor"), 1, diffuseColor);
         rpc.Draw(shader);
 
@@ -389,3 +375,45 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
         }
     }
 }
+
+GLFWwindow* glfwSetup(std::string windowTitle, float width, float height) {
+     // glfw: initialize and configure
+    // ------------------------------
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_VERSION_MAJOR);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_VERSION_MINOR);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+
+    // glfw window creation
+    // --------------------
+    GLFWwindow *window = glfwCreateWindow(width, height, windowTitle.c_str(), NULL, NULL);
+    if (window == NULL)
+    {
+        std::cout << "Failed to create GLFW window" << std::endl;
+        glfwTerminate();
+        return nullptr;
+    }
+    glfwMakeContextCurrent(window);
+    // we put in relation the window and the callbacks
+    glfwSetKeyCallback(window, key_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+    return window;
+}
+
+void imGuiSetup(GLFWwindow* window) {
+    // ImGui SETUP
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 410");
+
+}
+
+
