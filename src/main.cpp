@@ -258,6 +258,7 @@ int main(int argc, char *argv[])
         viewMatrix = glm::lookAt(viewPos, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
 
+        //Archball rotation of sphere mesh
         if (cur_mx != last_mx || cur_my != last_my)
         {
             glm::vec3 va = get_arcball_vector(last_mx, last_my);
