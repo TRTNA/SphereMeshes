@@ -61,6 +61,8 @@ const glm::vec3 defaultViewPos = glm::vec3(0.0f, 0.0f, 3.0f);
 float lightPos[3] = {0.0f, 3.0f, 3.0f};
 float ambientColor[3] = {0.1, 0.0, 0.0};
 float diffuseColor[3] = {0.5, 0.0, 0.0};
+float boundingSphereColor[3] = {0.0, 0.0, 0.5};
+
 float specColor[3] = {1.0, 1.0, 1.0};
 float shininess = 16.0;
 
@@ -70,9 +72,10 @@ glm::mat4 projectionMatrix = glm::mat4(1.0f);
 
 glm::vec3 viewPos = defaultViewPos;
 
-GLuint subroutinesIdxs[3];
+GLuint subroutinesIdxs[4];
 int activeSubroutineIdx = 0;
 bool backFaceCulling = true;
+bool renderBoundingSphere = false;
 
 SphereMesh sm;
 
@@ -142,12 +145,22 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    cout << "Sphere mesh:\n"
-         << sm << endl;
-    // sm.scale(10.0f);
-    PointCloud pc = PointCloud();
+    cout << "Sphere mesh:\n" << sm << endl;
+     // sm.scale(10.0f);
+
+     cout << "bounding sphere " << sm.boundingSphere << endl;
+    
+    
     int pointsNumber = 10000;
 
+    SphereMesh boundingSphereFakeSm;
+
+    PointCloud boundingSphereFakePc = PointCloud();
+    std::shared_ptr<PointCloud> boundingSphereFakePc_ptr = std::make_shared<PointCloud>(boundingSphereFakePc);
+    RenderablePointCloud boundingSphereFakeRpc = RenderablePointCloud(boundingSphereFakePc_ptr);
+
+
+    PointCloud pc = PointCloud();
     pc.repopulate(pointsNumber, sm);
     std::shared_ptr<PointCloud> pc_ptr = std::make_shared<PointCloud>(pc);
     RenderablePointCloud rpc = RenderablePointCloud(pc_ptr);
@@ -168,6 +181,7 @@ int main(int argc, char *argv[])
     subroutinesIdxs[0] = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "shadingColoring");
     subroutinesIdxs[1] = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "diffuseColoring");
     subroutinesIdxs[2] = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "normalColoring");
+    subroutinesIdxs[3] = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "flatColoring");
     GLint activeSubroutineCount;
     glGetProgramStageiv(shader.Program, GL_FRAGMENT_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &activeSubroutineCount);
 
@@ -198,7 +212,18 @@ int main(int argc, char *argv[])
 
         // render your GUI
         ImGui::Begin("Controls");
-        ImGui::Text("Points:");
+        ImGui::Text("Sphere mesh:");
+        if(ImGui::Checkbox("Render bounding sphere", &renderBoundingSphere)) {
+            boundingSphereFakeSm.singletons.clear();
+            sm.updateBoundingSphere();
+            boundingSphereFakeSm.addSphere(sm.boundingSphere);
+            boundingSphereFakeSm.addSingleton(0U);
+            boundingSphereFakeSm.updateBoundingSphere();
+            boundingSphereFakePc_ptr->clear();
+            boundingSphereFakePc_ptr->repopulate(100000U, boundingSphereFakeSm);
+            boundingSphereFakeRpc.updateBuffers();
+        }
+        ImGui::Text("Pointcloud:");
         bool pointsNumberChanged = ImGui::SliderInt("Points number", &pointsNumber, 100, 100000);
         if (pointsNumberChanged)
         {
@@ -244,8 +269,15 @@ int main(int argc, char *argv[])
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
         normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix * modelMatrix)));
         glUniformMatrix3fv(glGetUniformLocation(shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
-        glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &subroutinesIdxs[activeSubroutineIdx]);
 
+        if (renderBoundingSphere) {
+            glUniform3fv(glGetUniformLocation(shader.Program, "diffuseColor"), 1, boundingSphereColor);
+            glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &subroutinesIdxs[3]);
+            boundingSphereFakeRpc.Draw(shader);
+        }
+        glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &subroutinesIdxs[activeSubroutineIdx]);
+        
+        glUniform3fv(glGetUniformLocation(shader.Program, "diffuseColor"), 1, diffuseColor);
         rpc.Draw(shader);
 
         ImGui::Render();

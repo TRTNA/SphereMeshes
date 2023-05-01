@@ -60,7 +60,7 @@ glm::vec3 getRandomPositionInSphere(const Sphere& sphere) {
         glm::vec3 pointPos = generatePosition(sphereAABB);
         glm::vec3 centerToPos = pointPos - sphere.center;
         //generated position is inside the sphere, so return the Point with position pointPos
-        if (glm::dot(centerToPos, centerToPos) < sphere.radius*sphere.radius) {
+        if (glm::dot(centerToPos, centerToPos) <= sphere.radius*sphere.radius) {
             return pointPos;
         }
     }
