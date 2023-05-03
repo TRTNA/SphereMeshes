@@ -145,8 +145,6 @@ Point SphereMesh::pushOutside(const vec3 &pos, int &dimensionality) const
                     break;
                 }
             }
-
-            // Commented until pushOutsideOneSphereTriangle is implemented
             else if (uniqueIdx >= triangleStart)
             {
                 Point tempPoint = pushOutsideOneSphereTriangle(sphereTriangles.at(uniqueIdx - triangleStart), lastPos, tempDimensionality);
@@ -162,6 +160,10 @@ Point SphereMesh::pushOutside(const vec3 &pos, int &dimensionality) const
         }
         tries++;
         outsideEverything = tempDimensionality == -1;
+    }
+    if (tries == maxPushOutsideTries) {
+        dimensionality = -1;
+        return lastPoint;
     }
     dimensionality = lastDimensionality;
     return lastPoint;
@@ -261,7 +263,8 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
     {
         vec3 C = c * s0.center + a * s1.center + b * s2.center;
         float interpRadius = c * s0.radius + a * s1.radius + b * s2.radius;
-        if (d > interpRadius - EPSILON)
+        float distPosC = glm::length(pos - C);
+        if (distPosC > interpRadius - EPSILON)
         {
             return pointOutsideSphereMesh(pos, dimensionality);
         }
