@@ -29,6 +29,7 @@ void updateSphereTriangleFeatures(SphereTriangle& tri, const Sphere& s0, const S
     const vec3 C0minusC1 = -tri.S0S1;
     const vec3 C2minusC1 = s2.center - s1.center;
     vec3 e = vec3(1.0f, 1.0f, 1.0f);
+    //TODO lowerPlaneN calcolata come upperPlaneN da zero
     do
     {
         glm::mat3 A = glm::rowMajor3(C0minusC1, C2minusC1, upperPlaneN);
@@ -38,38 +39,28 @@ void updateSphereTriangleFeatures(SphereTriangle& tri, const Sphere& s0, const S
             0.0f);
         e = glm::inverse(A) * t;
         upperPlaneN = glm::normalize(upperPlaneN + e);
+
+        A = glm::rowMajor3(C0minusC1, C2minusC1, lowerPlaneN);
+        t = vec3(
+            s1.radius - s0.radius - glm::dot(C0minusC1, lowerPlaneN),
+            s1.radius - s2.radius - glm::dot(C2minusC1, lowerPlaneN),
+            0.0f);
+        e = glm::inverse(A) * t;
         lowerPlaneN = glm::normalize(lowerPlaneN + e);
     } while (e.x > EPSILON && e.y > EPSILON && e.z > EPSILON);
     tri.upperProjMatrix = glm::inverse(glm::mat3(tri.S0S1, tri.S0S2, upperPlaneN));
-    tri.lowerProjMatrix = glm::inverse(glm::mat3(tri.S0S2, tri.S0S1, lowerPlaneN));
+    tri.lowerProjMatrix = glm::inverse(glm::mat3(tri.S0S1, tri.S0S2, lowerPlaneN));
 
 }
 
 
 void toSphereTriangleReferenceSystem(const SphereTriangle& tri, const glm::vec3& q, float& outA, float& outB, float& outC, float& outD) {
-    float d, k0, k1, a, b, c;
-    if (glm::dot(q, tri.planeN) < 0)
-    {
-        const vec3 res = tri.lowerProjMatrix * q;
-        outD = res.z;
-        k0 = res.y;
-        k1 = res.x;
-        outA = k0;
-        outB = k1;
-        outC = (1.0f - k0 - k1);
-    }
-    else
-    {
-        const vec3 res = tri.upperProjMatrix * q;
-        d = res.z;
-        k0 = res.x;
-        k1 = res.y;
-
-        outA = k0;
-        outB = k1;
-        outC = (1.0f - k0 - k1);
-    }
-
+    const glm::mat3 projMatrix = glm::dot(q, tri.planeN) < 0 ? tri.lowerProjMatrix : tri.upperProjMatrix;
+    const vec3 res = projMatrix * q;
+    outD = res.z;
+    outA = res.x;
+    outB = res.y;
+    outC = (1.0f - outA - outB);
 }
 
 bool readFromFile(const std::string &path, SphereMesh &out, std::string &errorMsg)

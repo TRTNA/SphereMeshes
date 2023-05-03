@@ -264,8 +264,8 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
         vec3 C = c * s0.center + a * s1.center + b * s2.center;
         float interpRadius = c * s0.radius + a * s1.radius + b * s2.radius;
         vec3 CtoPos = pos - C;
-        float distPosC = glm::length(CtoPos);
-        if (distPosC > interpRadius - EPSILON)
+        //float distPosC = glm::length(CtoPos);
+        if (d > interpRadius - EPSILON)
         {
             return pointOutsideSphereMesh(pos, dimensionality);
         }
