@@ -28,7 +28,7 @@ void updateSphereTriangleFeatures(SphereTriangle& tri, const Sphere& s0, const S
 
     const vec3 C0minusC1 = -tri.S0S1;
     const vec3 C2minusC1 = s2.center - s1.center;
-    vec3 e = vec3(1.0f, 1.0f, 1.0f);
+    vec3 e = vec3(0.0f, 0.0f, 0.0f);
     //TODO lowerPlaneN calcolata come upperPlaneN da zero
     do
     {
@@ -39,15 +39,9 @@ void updateSphereTriangleFeatures(SphereTriangle& tri, const Sphere& s0, const S
             0.0f);
         e = glm::inverse(A) * t;
         upperPlaneN = glm::normalize(upperPlaneN + e);
-
-        A = glm::rowMajor3(C0minusC1, C2minusC1, lowerPlaneN);
-        t = vec3(
-            s1.radius - s0.radius - glm::dot(C0minusC1, lowerPlaneN),
-            s1.radius - s2.radius - glm::dot(C2minusC1, lowerPlaneN),
-            0.0f);
-        e = glm::inverse(A) * t;
         lowerPlaneN = glm::normalize(lowerPlaneN + e);
     } while (e.x > EPSILON && e.y > EPSILON && e.z > EPSILON);
+
     tri.upperProjMatrix = glm::inverse(glm::mat3(tri.S0S1, tri.S0S2, upperPlaneN));
     tri.lowerProjMatrix = glm::inverse(glm::mat3(tri.S0S1, tri.S0S2, lowerPlaneN));
 
