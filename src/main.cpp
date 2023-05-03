@@ -91,7 +91,7 @@ bool backFaceCulling = false;
 bool renderBoundingSphere = false;
 
 SphereMesh sm;
-int pointsNumber = 10000;
+int pointsNumber = 1000000;
 float pointsSize = 5.0f;
 int boundingSpherePointsNumber = pointsNumber;
 
@@ -211,7 +211,7 @@ int main(int argc, char *argv[])
             }
         }
         ImGui::Text("Pointcloud:");
-        if (ImGui::SliderInt("Points number", &pointsNumber, 100, 100000))
+        if (ImGui::SliderInt("Points number", &pointsNumber, 100, 1000000))
         {
             pc_ptr->repopulate(pointsNumber, sm);
             rpc.updateBuffers();
