@@ -166,31 +166,34 @@ int main(int argc, char *argv[])
 
     glClearColor(0.3f, 0.3f, 0.6f, 1.0f);
 
-    Cloth cloth(4, 3.0f);
+    Cloth cloth(16, 1.0f / 16.0f);
     vector<Vertex> vertices;
-    vec3** clothPoints;
+    vec3 **clothPoints;
     uint dim = cloth.getPoints(clothPoints);
-    for (size_t i = 0; i < dim; i++) {
-        for(size_t j = 0; j < dim; j++) {
+    for (size_t i = 0; i < dim; i++)
+    {
+        for (size_t j = 0; j < dim; j++)
+        {
             Vertex v;
             v.Position = clothPoints[i][j];
             vertices.push_back(v);
         }
     }
     vector<uint> indices;
-    for (size_t i = 0; i < dim - 1; i++) {
-        for(size_t j = 0; j < dim - 1; j++) {
+    for (size_t i = 0; i < dim - 1; i++)
+    {
+        for (size_t j = 0; j < dim - 1; j++)
+        {
             indices.push_back(dim * i + j);
-            indices.push_back(dim * (i+1) + j);
-            indices.push_back(dim * (i+1) + j + 1);
+            indices.push_back(dim * (i + 1) + j);
+            indices.push_back(dim * (i + 1) + j + 1);
 
             indices.push_back(dim * i + j);
-            indices.push_back(dim * (i+1) + j + 1);
+            indices.push_back(dim * (i + 1) + j + 1);
             indices.push_back(dim * i + j + 1);
         }
     }
     Mesh clothMesh(vertices, indices);
-    Shader flat("assets/shaders/flat.vert", "assets/shaders/flat.frag");
 
     // render loop
     // -----------
@@ -207,6 +210,37 @@ int main(int argc, char *argv[])
         glfwPollEvents();
 
         apply_key_commands();
+        if (keys[GLFW_KEY_T])
+        {
+            vertices.clear();
+            indices.clear();
+            dim = cloth.getPoints(clothPoints);
+            clothPoints[0][0] += glm::vec3(-1.0f*deltaTime, 1.0f*deltaTime, 1.0f * deltaTime);
+            cloth.enforceConstraints();
+            for (size_t i = 0; i < dim; i++)
+            {
+                for (size_t j = 0; j < dim; j++)
+                {
+                    Vertex v;
+                    v.Position = clothPoints[i][j];
+                    vertices.push_back(v);
+                }
+            }
+            for (size_t i = 0; i < dim - 1; i++)
+            {
+                for (size_t j = 0; j < dim - 1; j++)
+                {
+                    indices.push_back(dim * i + j);
+                    indices.push_back(dim * (i + 1) + j);
+                    indices.push_back(dim * (i + 1) + j + 1);
+
+                    indices.push_back(dim * i + j);
+                    indices.push_back(dim * (i + 1) + j + 1);
+                    indices.push_back(dim * i + j + 1);
+                }
+            }
+            clothMesh = Mesh(vertices, indices);
+        }
 
         // we "clear" the frame and z buffer
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -286,7 +320,7 @@ int main(int argc, char *argv[])
         viewMatrix = glm::lookAt(viewPos, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
 
-        //Archball rotation of sphere mesh
+        // Archball rotation of sphere mesh
         if (cur_mx != last_mx || cur_my != last_my)
         {
             glm::vec3 va = get_arcball_vector(last_mx, last_my);
@@ -295,15 +329,15 @@ int main(int argc, char *argv[])
             glm::vec3 axis_in_camera_coord = glm::cross(va, vb);
             glm::mat3 camera2object = glm::inverse(glm::mat3(viewMatrix) * glm::mat3(modelMatrix));
             glm::vec3 axis_in_object_coord = camera2object * axis_in_camera_coord;
-            modelMatrix = glm::rotate(modelMatrix, glm::degrees(angle*deltaTime), axis_in_object_coord);
+            modelMatrix = glm::rotate(modelMatrix, glm::degrees(angle * deltaTime), axis_in_object_coord);
             last_mx = cur_mx;
             last_my = cur_my;
         }
-        
+
         shader.Use();
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
 
-        normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix)* glm::mat3(modelMatrix)));
+        normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix) * glm::mat3(modelMatrix)));
         glUniformMatrix3fv(glGetUniformLocation(shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
         if (renderBoundingSphere)
@@ -317,16 +351,7 @@ int main(int argc, char *argv[])
         glUniform3fv(glGetUniformLocation(shader.Program, "diffuseColor"), 1, diffuseColor);
         rpc.Draw(shader);
 
-        flat.Use();
-        //todo non va niente
-        glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-
-        glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
-
-        normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix)* glm::mat3(modelMatrix)));
-        glUniformMatrix3fv(glGetUniformLocation(shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
-
-        glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
+        glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &subroutinesIdxs[3]);
         clothMesh.Draw();
 
         ImGui::Render();
@@ -420,8 +445,7 @@ void apply_key_commands()
         viewPos.z += 0.5f * deltaTime;
         return;
     }
-
-} 
+}
 
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 {
@@ -429,14 +453,16 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
     static double mouse_y = 0.0;
     glfwGetCursorPos(window, &mouse_x, &mouse_y);
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && keys[GLFW_KEY_LEFT_ALT])
-    {   
+    {
         archball = true;
         last_mx = cur_mx = mouse_x;
         last_my = cur_my = mouse_y;
-    } else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE || ! keys[GLFW_KEY_LEFT_ALT]) {
+    }
+    else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE || !keys[GLFW_KEY_LEFT_ALT])
+    {
         archball = false;
-    }   
-    
+    }
+
     if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
     {
         vec3 rayDir = screenToWorldDir(glm::vec2(mouse_x, mouse_y), SCR_WIDTH, SCR_HEIGHT, viewMatrix, projectionMatrix);
