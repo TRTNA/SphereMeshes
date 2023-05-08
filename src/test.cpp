@@ -12,12 +12,13 @@ using namespace std;
 
 int main()  {
     cout << "Started..." << endl;
-    Cloth cloth(4, 5);
+    Cloth cloth(4, 5.0f);
     cout << cloth.toString();
 
     vec3** pts;
     cloth.getPoints(pts);
-    pts[0][0] = vec3(-2.0f, -2.0f, 0.0f);
+    pts[0][0] = vec3(-1.0f, -1.0f, 0.0f);
+
     cloth.enforceConstraints();
 
     cout << cloth.toString();

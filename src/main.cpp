@@ -13,14 +13,16 @@
 #include <spheremeshes/spheremesh.h>
 #include <spheremeshes/capsuloid.h>
 #include <spheremeshes/spheretriangle.h>
+
 #include <utils/ray.h>
 #include <utils/common.h>
+#include <utils/pointcloud.h>
 
 #include <rendering/renderablepointcloud.h>
-
 #include <rendering/shader.h>
 #include <rendering/model.h>
-#include <utils/pointcloud.h>
+
+#include <cloth/cloth.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -164,6 +166,32 @@ int main(int argc, char *argv[])
 
     glClearColor(0.3f, 0.3f, 0.6f, 1.0f);
 
+    Cloth cloth(4, 3.0f);
+    vector<Vertex> vertices;
+    vec3** clothPoints;
+    uint dim = cloth.getPoints(clothPoints);
+    for (size_t i = 0; i < dim; i++) {
+        for(size_t j = 0; j < dim; j++) {
+            Vertex v;
+            v.Position = clothPoints[i][j];
+            vertices.push_back(v);
+        }
+    }
+    vector<uint> indices;
+    for (size_t i = 0; i < dim - 1; i++) {
+        for(size_t j = 0; j < dim - 1; j++) {
+            indices.push_back(dim * i + j);
+            indices.push_back(dim * (i+1) + j);
+            indices.push_back(dim * (i+1) + j + 1);
+
+            indices.push_back(dim * i + j);
+            indices.push_back(dim * (i+1) + j + 1);
+            indices.push_back(dim * i + j + 1);
+        }
+    }
+    Mesh clothMesh(vertices, indices);
+    Shader flat("assets/shaders/flat.vert", "assets/shaders/flat.frag");
+
     // render loop
     // -----------
 
@@ -271,7 +299,8 @@ int main(int argc, char *argv[])
             last_mx = cur_mx;
             last_my = cur_my;
         }
-
+        
+        shader.Use();
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
 
         normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix)* glm::mat3(modelMatrix)));
@@ -287,6 +316,18 @@ int main(int argc, char *argv[])
 
         glUniform3fv(glGetUniformLocation(shader.Program, "diffuseColor"), 1, diffuseColor);
         rpc.Draw(shader);
+
+        flat.Use();
+        //todo non va niente
+        glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+
+        glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+
+        normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix)* glm::mat3(modelMatrix)));
+        glUniformMatrix3fv(glGetUniformLocation(shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
+
+        glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
+        clothMesh.Draw();
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

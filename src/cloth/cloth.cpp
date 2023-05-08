@@ -3,6 +3,7 @@
 #include <glm/gtx/string_cast.hpp>
 
 #include <utils/common.h>
+#include <stdio.h>
 
 
 using std::vector;
@@ -10,12 +11,12 @@ using glm::vec3;
 using glm::vec2;
 using std::string;
 
-Cloth::Cloth(uint dim, uint dist) : dim(dim), dist(dist) {
+Cloth::Cloth(uint dim, float dist) : dim(dim), dist(dist) {
     points = (vec3**) malloc(dim*sizeof(points)); 
     for(size_t i = 0; i < dim; i++) {
         points[i] = (vec3*)malloc(dim*sizeof(vec3));
         for (size_t j = 0; j < dim; j++) {
-            points[i][j] = vec3(i * dist, j * dist, 0.0f);
+            points[i][j] = vec3((float)i * dist, (float)j * dist, 0.0f);
         }
     }
 
@@ -43,35 +44,43 @@ uint Cloth::getPoints(vec3**& outPoints) {
     outPoints = points;
     return dim;
 }
+std::vector<SpringEdge> Cloth::getEdges() const {
+    return edges;
+}
 
-bool Cloth::enforceConstraint(glm::vec3& p1, glm::vec3 p2) {
-    vec3 v = p1 - p2;
+
+bool Cloth::enforceConstraint(glm::vec3& p1, glm::vec3& p2) {
+    vec3 v = p2 - p1;
     float currDist = glm::length(v);
-    if(isInRangeIncl(currDist, dist - 0.001f, dist + 0.001f)) {
-        return true;
+    if (isInRangeIncl(currDist, dist - 0.0001f, dist + 0.0001f)) {
+        return false;
     }
-    v = glm::normalize(v);
+    v /= currDist;
     float delta = currDist - dist;
     p1 += (0.5f * delta) * v;
-    p2 += (0.5f * delta) * v;
-    return false;
+    p2 -= (0.5f * delta) * v;
+    return true;
 }
 
 
 void Cloth::enforceConstraints() {
     //TODO implementare funzione che mantiene distanza tra posizioni collegate
-    bool allEnforced = false;
-    const uint maxTries = 10;
+    bool AllNotDisplaced = true;
+    const uint maxTries = 10U;
     uint tries = 0;
-    while (! allEnforced && tries < maxTries) {
+    do {
+        int i = 0;
+        AllNotDisplaced = true;
         for (const auto& e : edges) {
             vec3& p1 = points[e.first.x][e.first.y];
             vec3& p2 = points[e.second.x][e.second.y];
-            enforceConstraint(p1, p2);
+            bool displaced = enforceConstraint(p1, p2);
+            AllNotDisplaced = AllNotDisplaced && (! displaced); 
         }
         tries++;
     }
-
+    while (! AllNotDisplaced && tries < maxTries);
+    printf("Exited with allNotDisplaced = %s and tries = %d\n", AllNotDisplaced ? "true" : "false", tries);
 }
 
 
