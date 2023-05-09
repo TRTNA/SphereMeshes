@@ -184,10 +184,6 @@ int main(int argc, char *argv[])
         glfwPollEvents();
 
         apply_key_commands();
-        if (keys[GLFW_KEY_T])
-        {
-            
-        }
 
         // we "clear" the frame and z buffer
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
