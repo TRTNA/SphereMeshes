@@ -66,11 +66,10 @@ bool Cloth::enforceConstraint(glm::vec3& p1, glm::vec3& p2) {
 
 void Cloth::enforceConstraints() {
     //TODO implementare funzione che mantiene distanza tra posizioni collegate
-    bool AllNotDisplaced = true;
+    bool AllNotDisplaced;
     const uint maxTries = 10U;
     uint tries = 0;
     do {
-        int i = 0;
         AllNotDisplaced = true;
         for (const auto& e : edges) {
             vec3& p1 = points[e.first.x][e.first.y].pos;
