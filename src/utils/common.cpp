@@ -1,5 +1,6 @@
 #include <utils/common.h>
 
+using std::vector;
 using glm::vec3;
 using glm::vec4;
 
@@ -21,4 +22,20 @@ glm::vec3 screenToWorldDir(const glm::vec2& screenPos, float width, float height
         ray_eye = vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
         vec3 ray_wor = glm::vec3((glm::inverse(viewMatrix) * ray_eye));
         return glm::normalize(ray_wor);
+}
+
+void triangulateSquareGrid(uint dim, std::vector<uint>& outIndices) {
+    for (size_t i = 0; i < dim - 1; i++)
+    {
+        for (size_t j = 0; j < dim - 1; j++)
+        {
+            outIndices.push_back(dim * i + j);
+            outIndices.push_back(dim * (i + 1) + j);
+            outIndices.push_back(dim * (i + 1) + j + 1);
+
+            outIndices.push_back(dim * i + j);
+            outIndices.push_back(dim * (i + 1) + j + 1);
+            outIndices.push_back(dim * i + j + 1);
+        }
+    }
 }
