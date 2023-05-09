@@ -15,3 +15,5 @@ bool isInRangeExcl(float n, float min, float max);
 glm::vec3 screenToWorldDir(const glm::vec2& screenPos, float width, float height, const glm::mat4& viewMatrix, const glm::mat4 projectionMatrix);
 
 void triangulateSquareGrid(uint dim, std::vector<uint>& outIndices);
+
+uint linearizedIndexSquareGrid(uint dim, uint x, uint y);

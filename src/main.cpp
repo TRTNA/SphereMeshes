@@ -23,6 +23,7 @@
 #include <rendering/model.h>
 
 #include <cloth/cloth.h>
+#include <rendering/renderablecloth.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -166,35 +167,8 @@ int main(int argc, char *argv[])
 
     glClearColor(0.3f, 0.3f, 0.6f, 1.0f);
 
-    Cloth cloth(16, 1.0f / 16.0f);
-    vector<Vertex> vertices;
-    Point **clothPoints;
-    uint dim = cloth.getPoints(clothPoints);
-    for (size_t i = 0; i < dim; i++)
-    {
-        for (size_t j = 0; j < dim; j++)
-        {
-            Vertex v;
-            v.Position = clothPoints[i][j].pos;
-            vertices.push_back(v);
-        }
-    }
-    vector<uint> indices;
-    for (size_t i = 0; i < dim - 1; i++)
-    {
-        for (size_t j = 0; j < dim - 1; j++)
-        {
-            indices.push_back(dim * i + j);
-            indices.push_back(dim * (i + 1) + j);
-            indices.push_back(dim * (i + 1) + j + 1);
-
-            indices.push_back(dim * i + j);
-            indices.push_back(dim * (i + 1) + j + 1);
-            indices.push_back(dim * i + j + 1);
-        }
-    }
-    Mesh clothMesh(vertices, indices);
-
+    RenderableCloth cloth(4U, 1.0f);
+    //cout << cloth.toString() << endl;
     // render loop
     // -----------
 
@@ -212,39 +186,13 @@ int main(int argc, char *argv[])
         apply_key_commands();
         if (keys[GLFW_KEY_T])
         {
-            vertices.clear();
-            indices.clear();
-            dim = cloth.getPoints(clothPoints);
-            clothPoints[0][0].pos += glm::vec3(-1.0f*deltaTime, 1.0f*deltaTime, 1.0f * deltaTime);
-            cloth.enforceConstraints();
-            for (size_t i = 0; i < dim; i++)
-            {
-                for (size_t j = 0; j < dim; j++)
-                {
-                    Vertex v;
-                    v.Position = clothPoints[i][j].pos;
-                    vertices.push_back(v);
-                }
-            }
-            for (size_t i = 0; i < dim - 1; i++)
-            {
-                for (size_t j = 0; j < dim - 1; j++)
-                {
-                    indices.push_back(dim * i + j);
-                    indices.push_back(dim * (i + 1) + j);
-                    indices.push_back(dim * (i + 1) + j + 1);
-
-                    indices.push_back(dim * i + j);
-                    indices.push_back(dim * (i + 1) + j + 1);
-                    indices.push_back(dim * i + j + 1);
-                }
-            }
-            clothMesh = Mesh(vertices, indices);
+            
         }
 
         // we "clear" the frame and z buffer
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_DEPTH_TEST);
+        glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -352,7 +300,7 @@ int main(int argc, char *argv[])
         rpc.Draw(shader);
 
         glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &subroutinesIdxs[3]);
-        clothMesh.Draw();
+        cloth.draw();
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

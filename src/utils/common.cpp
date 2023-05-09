@@ -30,12 +30,16 @@ void triangulateSquareGrid(uint dim, std::vector<uint>& outIndices) {
         for (size_t j = 0; j < dim - 1; j++)
         {
             outIndices.push_back(dim * i + j);
-            outIndices.push_back(dim * (i + 1) + j);
-            outIndices.push_back(dim * (i + 1) + j + 1);
-
-            outIndices.push_back(dim * i + j);
-            outIndices.push_back(dim * (i + 1) + j + 1);
             outIndices.push_back(dim * i + j + 1);
+            outIndices.push_back(dim * (i + 1) + j);
+
+            outIndices.push_back(dim * (i + 1) + j);
+            outIndices.push_back(dim * i + j + 1);
+            outIndices.push_back(dim * (i + 1) + j + 1);
         }
     }
+}
+
+uint linearizedIndexSquareGrid(uint dim, uint x, uint y) {
+    return x * dim + y;
 }

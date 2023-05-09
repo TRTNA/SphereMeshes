@@ -12,10 +12,11 @@ typedef std::pair<glm::uvec2, glm::uvec2> SpringEdge;
 struct Point;
 
 class Cloth {
-    private:
-        Point** points;
+    protected:
+        Point* points;
         uint dim;
         float dist;
+    private:
         std::vector<SpringEdge> edges;
         bool enforceConstraint(glm::vec3& p1, glm::vec3& p2);
     public:
@@ -23,7 +24,7 @@ class Cloth {
         ~Cloth();
         std::string toString() const;
         void enforceConstraints();
-        uint getPoints(Point**& outPoints);
+        uint getPoints(Point*& outPoints);
         std::vector<SpringEdge> getEdges() const;
 };
 
