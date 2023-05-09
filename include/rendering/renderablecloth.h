@@ -14,11 +14,13 @@ public:
     ~RenderableCloth();
     void enforceConstraints();
     void draw();
+        void timeStep();
+
 private:
     uint VAO, EBO, VBO;
     std::vector<uint> indices;
     void updateBuffers();
     void updateNormals();
-    uint getPoints(Point*& outPoints);
+
 
 };

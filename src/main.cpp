@@ -171,6 +171,7 @@ int main(int argc, char *argv[])
     //cout << cloth.toString() << endl;
     // render loop
     // -----------
+    cloth.addForce(glm::vec3(0.0f, -9.8f, 0.0f));
 
     while (!glfwWindowShouldClose(window))
     {
@@ -259,6 +260,9 @@ int main(int argc, char *argv[])
         }
 
         ImGui::End();
+
+        //phys simulation
+        cloth.timeStep();
 
         viewMatrix = glm::lookAt(viewPos, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));

@@ -90,3 +90,11 @@ void RenderableCloth::updateNormals()
 }
 
 
+void RenderableCloth::timeStep() {
+    Cloth::timeStep();
+    updateNormals();
+    updateBuffers();
+}
+
+
+

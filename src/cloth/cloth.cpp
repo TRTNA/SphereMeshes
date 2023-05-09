@@ -21,6 +21,8 @@ Cloth::Cloth(uint dim, float dist) : dim(dim), dist(dist)
         particles[i].pos = startingPos;
         particles[i].lastPos = startingPos;
         particles[i].massKg = 1.0f;
+        particles[i].force = glm::vec3(0.0f);
+        particles[i].normal = glm::vec3(0.0f);
     }
 
     bool mustConnectToRight, mustConnectToBottom;
@@ -120,3 +122,16 @@ SpringEdge connectToBottom(uint x, uint y)
 {
     return SpringEdge(glm::vec2(x, y), glm::vec2(x + 1, y));
 }
+
+void Cloth::addForce(const glm::vec3& force) {
+    for (size_t i = 0; i < dim*dim; i++) {
+        particles[i].addForce(force);
+    }
+}
+void Cloth::timeStep() {
+    for (size_t i = 0; i < dim*dim; i++) {
+        particles[i].timeStep();
+    }
+}
+
+
