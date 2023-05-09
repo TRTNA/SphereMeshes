@@ -5,6 +5,8 @@
 
 typedef unsigned int uint;
 
+struct Point;
+
 class RenderableCloth : public Cloth
 {
 public:
@@ -17,6 +19,6 @@ private:
     std::vector<uint> indices;
     void updateBuffers();
     void updateNormals();
-
+    uint getPoints(Point*& outPoints);
 
 };

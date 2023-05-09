@@ -4,6 +4,7 @@
 #include <spheremeshes/point.h>
 
 #include <utils/common.h>
+#include <cloth/particle.h>
 #include <stdio.h>
 
 using glm::vec2;
@@ -13,10 +14,13 @@ using std::vector;
 
 Cloth::Cloth(uint dim, float dist) : dim(dim), dist(dist)
 {
-    points = (Point *)malloc(dim * dim * sizeof(Point));
+    particles = (Particle *)malloc(dim * dim * sizeof(Particle));
     for (size_t i = 0; i < dim * dim; i++)
     {
-        points[i].pos = vec3((float)(i % dim) * dist, (float)(i / dim) * dist, 0.0f);
+        vec3 startingPos = vec3((float)(i % dim) * dist, (float)(i / dim) * dist, 0.0f);
+        particles[i].pos = startingPos;
+        particles[i].lastPos = startingPos;
+        particles[i].massKg = 1.0f;
     }
 
     bool mustConnectToRight, mustConnectToBottom;
@@ -38,12 +42,12 @@ Cloth::Cloth(uint dim, float dist) : dim(dim), dist(dist)
 
 Cloth::~Cloth()
 {
-    delete points;
+    delete particles;
 }
 
-uint Cloth::getPoints(Point *&outPoints)
+uint Cloth::getParticles(Particle *&outParticles)
 {
-    outPoints = points;
+    outParticles = particles;
     return dim;
 }
 std::vector<SpringEdge> Cloth::getEdges() const
@@ -78,8 +82,8 @@ void Cloth::enforceConstraints()
         AllNotDisplaced = true;
         for (const auto &e : edges)
         {
-            vec3 &p1 = points[linearizedIndexSquareGrid(dim, e.first.x, e.first.y)].pos;
-            vec3 &p2 = points[linearizedIndexSquareGrid(dim, e.second.x, e.second.y)].pos;
+            vec3 &p1 = particles[linearizedIndexSquareGrid(dim, e.first.x, e.first.y)].pos;
+            vec3 &p2 = particles[linearizedIndexSquareGrid(dim, e.second.x, e.second.y)].pos;
             bool displaced = enforceConstraint(p1, p2);
             AllNotDisplaced = AllNotDisplaced && (!displaced);
         }
@@ -96,7 +100,7 @@ std::string Cloth::toString() const
     {
         for (size_t j = 0; j < dim; j++)
         {
-            s += glm::to_string(points[linearizedIndexSquareGrid(dim,i,j)].pos);
+            s += glm::to_string(particles[linearizedIndexSquareGrid(dim,i,j)].pos);
         }
         s += "\n";
     }
