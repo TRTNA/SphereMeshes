@@ -94,7 +94,7 @@ bool backFaceCulling = false;
 bool renderBoundingSphere = false;
 
 SphereMesh sm;
-int pointsNumber = 1000000;
+int pointsNumber = 100;
 float pointsSize = 5.0f;
 int boundingSpherePointsNumber = pointsNumber;
 
@@ -192,7 +192,6 @@ int main(int argc, char *argv[])
         // we "clear" the frame and z buffer
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_DEPTH_TEST);
-        glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -299,7 +298,7 @@ int main(int argc, char *argv[])
         glUniform3fv(glGetUniformLocation(shader.Program, "diffuseColor"), 1, diffuseColor);
         rpc.Draw(shader);
 
-        glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &subroutinesIdxs[3]);
+        glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &subroutinesIdxs[2]);
         cloth.draw();
 
         ImGui::Render();

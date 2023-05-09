@@ -10,11 +10,17 @@ using std::vector;
 
 RenderableCloth::RenderableCloth(uint dim, float dist) : Cloth(dim, dist)
 {
+
     glGenVertexArrays(1, &this->VAO);
     glGenBuffers(1, &this->VBO);
     glGenBuffers(1, &this->EBO);
+    // Indices do not change, so EBO is initialized here and never updated
+    triangulateSquareGrid(dim, indices);
+    glBindVertexArray(this->VAO);
 
-
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(uint), indices.data(), GL_STATIC_DRAW);
+    updateNormals();
     updateBuffers();
 }
 
@@ -30,6 +36,7 @@ RenderableCloth::~RenderableCloth()
 void RenderableCloth::enforceConstraints()
 {
     Cloth::enforceConstraints();
+    updateNormals();
     updateBuffers();
 }
 void RenderableCloth::draw()
@@ -44,15 +51,39 @@ void RenderableCloth::updateBuffers()
     glBindVertexArray(this->VAO);
     glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
     glBufferData(GL_ARRAY_BUFFER, dim * dim * sizeof(Point), this->points, GL_STATIC_DRAW);
-// Indices do not change, so EBO is initialized here and never updated
-    indices.clear();
-    triangulateSquareGrid(dim, indices);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(uint), indices.data(), GL_STATIC_DRAW);
+
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (GLvoid *)0);
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (GLvoid *)offsetof(Point, normal));
 
     glBindVertexArray(0);
+}
+
+void RenderableCloth::updateNormals()
+{
+    // zeroing all normals
+    for (size_t i = 0; i < dim * dim; i++)
+    {
+        points[i].normal = glm::vec3(0.0f);
+    }
+
+    // iterate over triangles
+    for (size_t tri = 0; tri <= indices.size() - 3; tri += 3)
+    {
+        Point &p1 = points[indices.at(tri)];
+        Point &p2 = points[indices.at(tri + 1)];
+        Point &p3 = points[indices.at(tri + 2)];
+
+        glm::vec3 normal = glm::cross(p2.pos - p1.pos, p3.pos - p1.pos);
+        p1.normal += normal;
+        p2.normal += normal;
+        p3.normal += normal;
+    }
+
+    // normalize all normals
+    for (size_t i = 0; i < dim * dim; i++)
+    {
+        points[i].normal = glm::normalize(points[i].normal);
+    }
 }

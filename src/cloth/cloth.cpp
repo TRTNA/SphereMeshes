@@ -13,7 +13,7 @@ using std::vector;
 
 Cloth::Cloth(uint dim, float dist) : dim(dim), dist(dist)
 {
-    points = (Point *)malloc(dim * dim * sizeof(points));
+    points = (Point *)malloc(dim * dim * sizeof(Point));
     for (size_t i = 0; i < dim * dim; i++)
     {
         points[i].pos = vec3((float)(i % dim) * dist, (float)(i / dim) * dist, 0.0f);
@@ -65,6 +65,7 @@ bool Cloth::enforceConstraint(glm::vec3 &p1, glm::vec3 &p2)
     p2 -= (0.5f * delta) * v;
     return true;
 }
+
 
 void Cloth::enforceConstraints()
 {

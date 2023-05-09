@@ -3,10 +3,10 @@
 #include <glm/vec3.hpp>
 
 struct Point {
-    Point();
-    Point(glm::vec3 pos, glm::vec3 normal);
     glm::vec3 pos;
     glm::vec3 normal;
+    Point();
+    Point(glm::vec3 pos, glm::vec3 normal);
 };
 
 struct DimensionalityPoint {
