@@ -9,10 +9,11 @@
 
 typedef unsigned int uint;
 typedef std::pair<glm::uvec2, glm::uvec2> SpringEdge;
+struct Point;
 
 class Cloth {
     private:
-        glm::vec3** points;
+        Point** points;
         uint dim;
         float dist;
         std::vector<SpringEdge> edges;
@@ -22,7 +23,7 @@ class Cloth {
         ~Cloth();
         std::string toString() const;
         void enforceConstraints();
-        uint getPoints(glm::vec3**& outPoints);
+        uint getPoints(Point**& outPoints);
         std::vector<SpringEdge> getEdges() const;
 };
 

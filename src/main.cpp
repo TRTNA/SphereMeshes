@@ -168,14 +168,14 @@ int main(int argc, char *argv[])
 
     Cloth cloth(16, 1.0f / 16.0f);
     vector<Vertex> vertices;
-    vec3 **clothPoints;
+    Point **clothPoints;
     uint dim = cloth.getPoints(clothPoints);
     for (size_t i = 0; i < dim; i++)
     {
         for (size_t j = 0; j < dim; j++)
         {
             Vertex v;
-            v.Position = clothPoints[i][j];
+            v.Position = clothPoints[i][j].pos;
             vertices.push_back(v);
         }
     }
@@ -215,14 +215,14 @@ int main(int argc, char *argv[])
             vertices.clear();
             indices.clear();
             dim = cloth.getPoints(clothPoints);
-            clothPoints[0][0] += glm::vec3(-1.0f*deltaTime, 1.0f*deltaTime, 1.0f * deltaTime);
+            clothPoints[0][0].pos += glm::vec3(-1.0f*deltaTime, 1.0f*deltaTime, 1.0f * deltaTime);
             cloth.enforceConstraints();
             for (size_t i = 0; i < dim; i++)
             {
                 for (size_t j = 0; j < dim; j++)
                 {
                     Vertex v;
-                    v.Position = clothPoints[i][j];
+                    v.Position = clothPoints[i][j].pos;
                     vertices.push_back(v);
                 }
             }

@@ -1,6 +1,7 @@
 #include <cloth/cloth.h>
 
 #include <glm/gtx/string_cast.hpp>
+#include <spheremeshes/point.h>
 
 #include <utils/common.h>
 #include <stdio.h>
@@ -12,11 +13,11 @@ using glm::vec2;
 using std::string;
 
 Cloth::Cloth(uint dim, float dist) : dim(dim), dist(dist) {
-    points = (vec3**) malloc(dim*sizeof(points)); 
+    points = (Point**) malloc(dim*sizeof(points)); 
     for(size_t i = 0; i < dim; i++) {
-        points[i] = (vec3*)malloc(dim*sizeof(vec3));
+        points[i] = (Point*)malloc(dim*sizeof(Point));
         for (size_t j = 0; j < dim; j++) {
-            points[i][j] = vec3((float)i * dist, (float)j * dist, 0.0f);
+            points[i][j] = Point(vec3((float)i * dist, (float)j * dist, 0.0f), vec3(0.0f));
         }
     }
 
@@ -40,7 +41,7 @@ Cloth::~Cloth() {
     delete points;
 }
 
-uint Cloth::getPoints(vec3**& outPoints) {
+uint Cloth::getPoints(Point**& outPoints) {
     outPoints = points;
     return dim;
 }
@@ -72,8 +73,8 @@ void Cloth::enforceConstraints() {
         int i = 0;
         AllNotDisplaced = true;
         for (const auto& e : edges) {
-            vec3& p1 = points[e.first.x][e.first.y];
-            vec3& p2 = points[e.second.x][e.second.y];
+            vec3& p1 = points[e.first.x][e.first.y].pos;
+            vec3& p2 = points[e.second.x][e.second.y].pos;
             bool displaced = enforceConstraint(p1, p2);
             AllNotDisplaced = AllNotDisplaced && (! displaced); 
         }
@@ -89,7 +90,7 @@ std::string Cloth::toString() const {
     s+="Points:\n";
     for (size_t i = 0; i < dim; i++) {
         for (size_t j = 0; j < dim; j++) {
-            s += glm::to_string(points[i][j]);
+            s += glm::to_string(points[i][j].pos);
         }
         s += "\n";
     }
