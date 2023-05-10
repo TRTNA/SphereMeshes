@@ -15,15 +15,9 @@ RenderableCloth::RenderableCloth(uint dim, float dist) : Cloth(dim, dist)
     glGenVertexArrays(1, &this->VAO);
     glGenBuffers(1, &this->VBO);
     glGenBuffers(1, &this->EBO);
+    
     // Indices do not change, so EBO is initialized here and never updated
     glBindVertexArray(this->VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
-    glBufferData(GL_ARRAY_BUFFER, dim * dim * sizeof(Point), this->points, GL_DYNAMIC_DRAW);
-
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (GLvoid *)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (GLvoid *)offsetof(Point, normal));
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
     triangulateSquareGrid(dim, indices);
