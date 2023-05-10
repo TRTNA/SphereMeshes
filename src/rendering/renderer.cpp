@@ -12,6 +12,8 @@ void Renderer::renderScene(Scene* scene) {
     //setup viewMatrices ecc
     glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
     glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
+    glUniform3fv(glGetUniformLocation(shader.Program, "vLightPos"), 1, glm::value_ptr(glm::vec3(viewMatrix * glm::vec4(scene->camera.getPos(), 1.0))));
+
     const std::vector<IglRenderable*> renderablesPtrs = scene->getObjects();
     for (uint i = 0; i < renderablesPtrs.size(); i++) {
         IglRenderable* renderablePtr = renderablesPtrs[i];

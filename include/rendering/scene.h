@@ -3,6 +3,9 @@
 #include <vector>
 #include <glm/glm.hpp>
 
+#include <rendering/pointlight.h>
+
+
 typedef unsigned int uint;
 class Camera;
 class Shader;
@@ -14,6 +17,7 @@ class Scene {
         std::vector<glm::mat4> modelMatrices;
     public:
         Camera camera;
+        PointLight light;
         uint addObject(IglRenderable* objPtr, glm::mat4 modelMatrix);
         void removeObject(uint idx);
         const std::vector<IglRenderable*> getObjects() const;

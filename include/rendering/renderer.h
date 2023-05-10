@@ -4,9 +4,10 @@ class Scene;
 class Shader;
 
 class Renderer {
-    private:
-        Shader shader;
+
     public:
-        Renderer(Shader shader);
+        Shader shader;
+        glm::mat4 projectionMatrix;
+        glm::mat4 viewMatrix;
         void renderScene(Scene* scene);
 };
