@@ -4,6 +4,7 @@
 #include <spheremeshes/point.h>
 
 #include <utils/common.h>
+#include <cloth/particle.h>
 #include <stdio.h>
 
 using glm::vec2;
@@ -13,10 +14,16 @@ using std::vector;
 
 Cloth::Cloth(uint dim, float dist) : dim(dim), dist(dist)
 {
-    points = (Point *)malloc(dim * dim * sizeof(Point));
+    particles = (Particle *)malloc(dim * dim * sizeof(Particle));
     for (size_t i = 0; i < dim * dim; i++)
     {
-        points[i].pos = vec3((float)(i % dim) * dist, (float)(i / dim) * dist, 0.0f);
+        vec3 startingPos = vec3((float)(i % dim) * dist, (float)(i / dim) * dist, 0.0f);
+        particles[i].pos = startingPos;
+        particles[i].lastPos = startingPos;
+        particles[i].massKg = 1.0f;
+        particles[i].force = glm::vec3(0.0f);
+        particles[i].normal = glm::vec3(0.0f);
+        particles[i].pinned = false;
     }
 
     bool mustConnectToRight, mustConnectToBottom;
@@ -34,16 +41,21 @@ Cloth::Cloth(uint dim, float dist) : dim(dim), dist(dist)
                 edges.push_back(connectToBottom(x, y));
         }
     }
+
+    for (size_t i = dim * dim - dim; i < dim * dim; i++)
+    {
+        particles[i].pinned = true;
+    }
 }
 
 Cloth::~Cloth()
 {
-    delete points;
+    delete particles;
 }
 
-uint Cloth::getPoints(Point *&outPoints)
+uint Cloth::getParticles(Particle *&outParticles)
 {
-    outPoints = points;
+    outParticles = particles;
     return dim;
 }
 std::vector<SpringEdge> Cloth::getEdges() const
@@ -51,21 +63,37 @@ std::vector<SpringEdge> Cloth::getEdges() const
     return edges;
 }
 
-bool Cloth::enforceConstraint(glm::vec3 &p1, glm::vec3 &p2)
+bool Cloth::enforceConstraint(Particle &p1, Particle &p2)
 {
-    vec3 v = p2 - p1;
+    if (p1.pinned && p2.pinned) return false;
+    
+    vec3 v = p2.pos - p1.pos;
     float currDist = glm::length(v);
-    if (isInRangeIncl(currDist, dist - 0.0001f, dist + 0.0001f))
-    {
-        return false;
-    }
+
+    if (isInRangeIncl(currDist, dist - 0.0001f, dist + 0.0001f)) return false;
+
     v /= currDist;
     float delta = currDist - dist;
-    p1 += (0.5f * delta) * v;
-    p2 -= (0.5f * delta) * v;
+
+    if (p1.pinned && !p2.pinned)
+    {
+        p2.pos += delta * v;
+        return true;
+    }
+    else if (!p1.pinned && p2.pinned)
+    {
+        p1.pos += delta * v;
+        return true;
+    }
+    else
+    {
+        p1.pos += 0.5f * delta * v;
+        p2.pos -= 0.5f * delta * v;
+        return true;
+    }
+
     return true;
 }
-
 
 void Cloth::enforceConstraints()
 {
@@ -78,8 +106,8 @@ void Cloth::enforceConstraints()
         AllNotDisplaced = true;
         for (const auto &e : edges)
         {
-            vec3 &p1 = points[linearizedIndexSquareGrid(dim, e.first.x, e.first.y)].pos;
-            vec3 &p2 = points[linearizedIndexSquareGrid(dim, e.second.x, e.second.y)].pos;
+            Particle &p1 = particles[linearizedIndexSquareGrid(dim, e.first.x, e.first.y)];
+            Particle &p2 = particles[linearizedIndexSquareGrid(dim, e.second.x, e.second.y)];
             bool displaced = enforceConstraint(p1, p2);
             AllNotDisplaced = AllNotDisplaced && (!displaced);
         }
@@ -96,7 +124,7 @@ std::string Cloth::toString() const
     {
         for (size_t j = 0; j < dim; j++)
         {
-            s += glm::to_string(points[linearizedIndexSquareGrid(dim,i,j)].pos);
+            s += glm::to_string(particles[linearizedIndexSquareGrid(dim, i, j)].pos);
         }
         s += "\n";
     }
@@ -115,4 +143,20 @@ SpringEdge connectToRight(uint x, uint y)
 SpringEdge connectToBottom(uint x, uint y)
 {
     return SpringEdge(glm::vec2(x, y), glm::vec2(x + 1, y));
+}
+
+void Cloth::addForce(const glm::vec3 &force)
+{
+    for (size_t i = 0; i < dim * dim; i++)
+    {
+        particles[i].addForce(force);
+    }
+}
+void Cloth::timeStep()
+{
+    for (size_t i = 0; i < dim * dim; i++)
+    {
+        particles[i].timeStep();
+    }
+    enforceConstraints();
 }

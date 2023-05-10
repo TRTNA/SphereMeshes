@@ -4,28 +4,29 @@
 #include <utility>
 #include <string>
 
-
 #include <glm/glm.hpp>
 
 typedef unsigned int uint;
 typedef std::pair<glm::uvec2, glm::uvec2> SpringEdge;
-struct Point;
+class Particle;
 
 class Cloth {
     protected:
-        Point* points;
+        Particle* particles;
         uint dim;
         float dist;
     private:
         std::vector<SpringEdge> edges;
-        bool enforceConstraint(glm::vec3& p1, glm::vec3& p2);
+        bool enforceConstraint(Particle& p1, Particle& p2);
     public:
         Cloth(uint dim, float dist);
         ~Cloth();
         std::string toString() const;
         void enforceConstraints();
-        uint getPoints(Point*& outPoints);
+        uint getParticles(Particle*& outParticles);
         std::vector<SpringEdge> getEdges() const;
+        void addForce(const glm::vec3& force);
+        void timeStep();
 };
 
 SpringEdge connectToRight(uint x, uint y);

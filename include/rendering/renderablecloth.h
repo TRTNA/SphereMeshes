@@ -5,6 +5,8 @@
 
 typedef unsigned int uint;
 
+struct Point;
+
 class RenderableCloth : public Cloth
 {
 public:
@@ -12,7 +14,9 @@ public:
     ~RenderableCloth();
     void enforceConstraints();
     void draw();
-        void updateBuffers();
+    void timeStep();
+
+    void updateBuffers();
     void updateNormals();
 private:
     uint VAO, EBO, VBO;
