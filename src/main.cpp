@@ -292,12 +292,12 @@ int main(int argc, char *argv[])
         {
             glUniform3fv(glGetUniformLocation(shader.Program, "diffuseColor"), 1, boundingSphereColor);
             glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &subroutinesIdxs[3]);
-            boundingSphereFakeRpc.Draw(shader);
+            boundingSphereFakeRpc.draw();
         }
         glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &subroutinesIdxs[activeSubroutineIdx]);
 
         glUniform3fv(glGetUniformLocation(shader.Program, "diffuseColor"), 1, diffuseColor);
-        rpc.Draw(shader);
+        rpc.draw();
 
         glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &subroutinesIdxs[2]);
         cloth.draw();

@@ -4,10 +4,14 @@
 #include <rendering/camera.h>
 #include <rendering/iglrenderable.h>
 
-Renderer::Renderer(Shader shader) : shader(shader) {}
+#include <glm/gtc/type_ptr.hpp>
+
+
 
 void Renderer::renderScene(Scene* scene) {
     //setup viewMatrices ecc
+    glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
     const std::vector<IglRenderable*> renderablesPtrs = scene->getObjects();
     for (uint i = 0; i < renderablesPtrs.size(); i++) {
         IglRenderable* renderablePtr = renderablesPtrs[i];
