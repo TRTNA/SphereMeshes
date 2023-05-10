@@ -12,6 +12,7 @@ struct Particle {
     glm::vec3 normal;
     glm::vec3 force;
     float massKg;
+    bool pinned;
     Particle(glm::vec3 pos, glm::vec3 normal, float massKg);
     Particle();
     void timeStep();
