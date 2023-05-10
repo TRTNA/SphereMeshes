@@ -2,7 +2,7 @@
 
 #include <exception>
 
-Particle::Particle(glm::vec3 pos, glm::vec3 normal, float massKg) : pos(pos), normal(normal), force(glm::vec3(0.0f)), lastPos(pos), massKg(massKg) {}
+Particle::Particle(glm::vec3 pos, glm::vec3 normal, float massKg) : pos(pos), normal(normal), force(glm::vec3(0.0f)), lastPos(pos), massKg(massKg), pinned(false) {}
 
 Particle::Particle() : Particle(glm::vec3(0.0f), glm::vec3(0.0f), 0.0f) {}
 

@@ -17,7 +17,7 @@ class Cloth {
         float dist;
     private:
         std::vector<SpringEdge> edges;
-        bool enforceConstraint(glm::vec3& p1, glm::vec3& p2);
+        bool enforceConstraint(Particle& p1, Particle& p2);
     public:
         Cloth(uint dim, float dist);
         ~Cloth();
