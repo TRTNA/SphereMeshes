@@ -14,7 +14,7 @@ public:
     ~RenderableCloth();
     void enforceConstraints();
     void draw();
-        void timeStep();
+    void timeStep();
 
 private:
     uint VAO, EBO, VBO;

@@ -23,6 +23,7 @@ Cloth::Cloth(uint dim, float dist) : dim(dim), dist(dist)
         particles[i].massKg = 1.0f;
         particles[i].force = glm::vec3(0.0f);
         particles[i].normal = glm::vec3(0.0f);
+        particles[i].pinned = false;
     }
 
     bool mustConnectToRight, mustConnectToBottom;
@@ -157,4 +158,5 @@ void Cloth::timeStep()
     {
         particles[i].timeStep();
     }
+    enforceConstraints();
 }

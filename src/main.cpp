@@ -172,7 +172,6 @@ int main(int argc, char *argv[])
     // render loop
     // -----------
     cloth.addForce(glm::vec3(0.0f, -9.8f, 0.0f));
-    cloth.addForce(glm::vec3(0.0f, 0.0f, 1.0f));
 
     while (!glfwWindowShouldClose(window))
     {

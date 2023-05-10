@@ -16,13 +16,20 @@ RenderableCloth::RenderableCloth(uint dim, float dist) : Cloth(dim, dist)
     glGenBuffers(1, &this->VBO);
     glGenBuffers(1, &this->EBO);
     // Indices do not change, so EBO is initialized here and never updated
-    triangulateSquareGrid(dim, indices);
     glBindVertexArray(this->VAO);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
+    triangulateSquareGrid(dim, indices);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(uint), indices.data(), GL_STATIC_DRAW);
     updateNormals();
-    updateBuffers();
+
+    glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
+    glBufferData(GL_ARRAY_BUFFER, dim * dim * sizeof(Particle), this->particles, GL_DYNAMIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Particle), (GLvoid *)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Particle), (GLvoid *)offsetof(Particle, normal));
+
 }
 
 RenderableCloth::~RenderableCloth()
@@ -50,14 +57,7 @@ void RenderableCloth::draw()
 void RenderableCloth::updateBuffers()
 {
     glBindVertexArray(this->VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
-    glBufferData(GL_ARRAY_BUFFER, dim * dim * sizeof(Particle), this->particles, GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Particle), (GLvoid *)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Particle), (GLvoid *)offsetof(Particle, normal));
-
+    glBufferSubData(GL_ARRAY_BUFFER, 0, dim * dim * sizeof(Particle), particles);
     glBindVertexArray(0);
 }
 
