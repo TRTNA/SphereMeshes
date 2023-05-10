@@ -1,6 +1,6 @@
 #include <rendering/renderablepointcloud.h>
 
-void RenderablePointCloud::Draw(const Shader &shader)
+void RenderablePointCloud::draw()
 {
     glBindVertexArray(this->VAO);
     glDrawArrays(GL_POINTS, 0, pointsNumber);

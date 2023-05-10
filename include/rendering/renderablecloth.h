@@ -2,18 +2,19 @@
 
 #include <cloth/cloth.h>
 #include <vector>
+#include <rendering/iglrenderable.h>
 
 typedef unsigned int uint;
 
 struct Point;
 
-class RenderableCloth : public Cloth
+class RenderableCloth : public Cloth, public IglRenderable
 {
 public:
     RenderableCloth(uint dim, float dist);
     ~RenderableCloth();
     void enforceConstraints();
-    void draw();
+    void draw() override;
     void timeStep();
     void updateBuffers();
     void updateNormals();

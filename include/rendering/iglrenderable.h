@@ -4,5 +4,5 @@
 
 class IglRenderable {
     public:
-        virtual void Draw(const Shader& shader) = 0;
+        virtual void draw() = 0;
 };

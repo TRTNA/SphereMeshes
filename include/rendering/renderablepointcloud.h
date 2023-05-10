@@ -12,6 +12,6 @@ class RenderablePointCloud : public IglRenderable {
     public:
         RenderablePointCloud(std::shared_ptr<PointCloud> ptr);
         ~RenderablePointCloud();
-        void Draw(const Shader& shader) override;
+        void draw() override;
         void updateBuffers();
 };
