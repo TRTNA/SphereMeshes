@@ -13,3 +13,13 @@ void Scene::removeObject(uint idx) {
     objects.at(idx) = nullptr;
     modelMatrices.at(idx) = glm::mat4(0.0f);
 }
+
+const std::vector<IglRenderable*> Scene::getObjects() const {
+    return objects;
+}
+
+glm::mat4 Scene::getModelMatrixOf(uint idx) const {
+    assert (idx < modelMatrices.size());
+    return modelMatrices.at(idx);
+}
+
