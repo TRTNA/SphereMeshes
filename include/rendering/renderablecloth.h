@@ -12,11 +12,12 @@ public:
     ~RenderableCloth();
     void enforceConstraints();
     void draw();
+        void updateBuffers();
+    void updateNormals();
 private:
     uint VAO, EBO, VBO;
     std::vector<uint> indices;
-    void updateBuffers();
-    void updateNormals();
+
 
 
 };

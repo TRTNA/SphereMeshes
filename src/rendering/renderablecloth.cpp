@@ -17,6 +17,13 @@ RenderableCloth::RenderableCloth(uint dim, float dist) : Cloth(dim, dist)
     // Indices do not change, so EBO is initialized here and never updated
     triangulateSquareGrid(dim, indices);
     glBindVertexArray(this->VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
+    glBufferData(GL_ARRAY_BUFFER, dim * dim * sizeof(Point), this->points, GL_DYNAMIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (GLvoid *)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (GLvoid *)offsetof(Point, normal));
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(uint), indices.data(), GL_STATIC_DRAW);
@@ -49,13 +56,7 @@ void RenderableCloth::draw()
 void RenderableCloth::updateBuffers()
 {
     glBindVertexArray(this->VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
-    glBufferData(GL_ARRAY_BUFFER, dim * dim * sizeof(Point), this->points, GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (GLvoid *)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (GLvoid *)offsetof(Point, normal));
+    glBufferSubData(GL_ARRAY_BUFFER, 0, dim * dim * sizeof(Point), this->points);
 
     glBindVertexArray(0);
 }
