@@ -163,18 +163,8 @@ int main(int argc, char *argv[])
     camera.setPos(viewPos);
 
     // Materials setup
-    Material sphereMeshmat;
-    sphereMeshmat.diffuseColor = diffuseColor;
-    sphereMeshmat.specularColor = specColor;
-    sphereMeshmat.shininess = shininess;
-    sphereMeshmat.type = MaterialType::BLINN_PHONG;
-
-    Material boundingSphereMat;
-    boundingSphereMat.diffuseColor = boundingSphereColor;
-    boundingSphereMat.specularColor = glm::vec3(1.0f, 1.0f, 1.0f);
-    boundingSphereMat.shininess = 1.0f;
-    boundingSphereMat.type = MaterialType::FLAT;
-
+    Material sphereMeshmat(diffuseColor, specColor, shininess, MaterialType::BLINN_PHONG);
+    Material boundingSphereMat(boundingSphereColor, glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, MaterialType::FLAT);
 
     // Model matrices setup
     glm::mat4 sphereMeshModelMatrix = glm::mat4(1.0f);

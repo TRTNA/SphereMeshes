@@ -10,6 +10,8 @@ enum class MaterialType {
 };
 
 struct Material {
+    Material();
+    Material(glm::vec3 diffuseColor, glm::vec3 specularColor, float shininess, MaterialType type);
     glm::vec3 diffuseColor;
     glm::vec3 specularColor;
     float shininess;
