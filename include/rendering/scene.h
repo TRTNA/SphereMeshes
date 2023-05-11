@@ -18,15 +18,23 @@ class Scene {
         std::vector<glm::mat4*> modelMatrices;
         std::vector<Material*> materials;
         std::vector<bool> enabled;
-    public:
         Camera* camera;
         PointLight* light;
+    public:
+        Scene() = default;
+        Scene(Camera* camera, PointLight* light);
+
         uint addObject(IglRenderable* objPtr, glm::mat4* modelMatrix, Material* mat);
         void removeObject(uint idx);
         const std::vector<IglRenderable*> getObjects();
-        glm::mat4* getModelMatrixOf(uint idx);
-        Material* getMaterialOf(uint idx);
         void disableObject(uint idx);
         void enableObject(uint idx);
-        bool isEnabled(uint idx) const;
+        bool isObjectEnabled(uint idx) const;
+
+        glm::mat4* getModelMatrixOf(uint idx);
+        Material* getMaterialOf(uint idx);
+
+        Camera const* getCamera() const;
+        PointLight const* getLight() const;
+
 };

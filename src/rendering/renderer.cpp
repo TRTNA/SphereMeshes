@@ -28,20 +28,22 @@ void Renderer::renderScene(Scene* scene) {
 
     glClearColor(backgroundColor.x, backgroundColor.y, backgroundColor.z, 1.0f);
 
-    const glm::mat4 projectionMatrix = scene->camera->getProjectionMatrix();
-    const glm::mat4 viewMatrix = scene->camera->getViewMatrix();
+    Camera const* camera = scene->getCamera();
+    PointLight const* light = scene->getLight();
+    const glm::mat4 projectionMatrix = camera->getProjectionMatrix();
+    const glm::mat4 viewMatrix = camera->getViewMatrix();
     glUniformMatrix4fv(glGetUniformLocation(shader->Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
     glUniformMatrix4fv(glGetUniformLocation(shader->Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
     GLfloat ambCol[3] = {ambientColor.x, ambientColor.y, ambientColor.z};
     glUniform3fv(glGetUniformLocation(shader->Program, "ambientColor"), 1, ambCol);
-    glUniform3fv(glGetUniformLocation(shader->Program, "vLightPos"), 1, glm::value_ptr(glm::vec3(viewMatrix * glm::vec4(scene->light->pos, 1.0))));
+    glUniform3fv(glGetUniformLocation(shader->Program, "vLightPos"), 1, glm::value_ptr(glm::vec3(viewMatrix * glm::vec4(light->pos, 1.0))));
 
     glUniform1i(glGetUniformLocation(shader->Program, "backFaceCulling"), backfaceCulling);
 
     const std::vector<IglRenderable*> renderablesPtrs = scene->getObjects();
     for (uint i = 0; i < renderablesPtrs.size(); i++) {
         IglRenderable* renderablePtr = renderablesPtrs[i];
-        if (renderablePtr == nullptr || ! scene->isEnabled(i)) continue;
+        if (renderablePtr == nullptr || ! scene->isObjectEnabled(i)) continue;
 
         //MATERIAL SETUP
         const Material* mat = scene->getMaterialOf(i);

@@ -152,10 +152,8 @@ int main(int argc, char *argv[])
     float dist = sm.boundingSphere.radius * glm::tan(oppositeFovY);
     glm::vec3 viewPos = sm.boundingSphere.center;
     viewPos.z += aspect * dist;
-    
+
     camera = Camera(viewPos, glm::vec3(0.0f, 0.0f, -1.0f), 0.1f, 100.0f, (float)SCR_WIDTH, (float)SCR_HEIGHT, fovY);
-
-
 
     // Materials setup
     Material sphereMeshmat(diffuseColor, specColor, shininess, MaterialType::BLINN_PHONG);
@@ -164,13 +162,12 @@ int main(int argc, char *argv[])
     // Model matrices setup
     glm::mat4 sphereMeshModelMatrix = glm::mat4(1.0f);
 
+    // Point light
+    PointLight light;
+    light.pos = lightPos;
 
     // Scene setup
-    scene = Scene();
-    scene.camera = &camera;
-    PointLight pl;
-    pl.pos = lightPos;
-    scene.light = &pl;
+    scene = Scene(&camera, &light);
     sphereMeshSceneIdx = scene.addObject(&rpc, &sphereMeshModelMatrix, &sphereMeshmat);
     boundingSphereSceneIdx = scene.addObject(&boundingSphereFakeRpc, &sphereMeshModelMatrix, &boundingSphereMat);
 
@@ -286,7 +283,7 @@ int main(int argc, char *argv[])
             glm::vec3 vb = get_arcball_vector(cur_mx, cur_my);
             float angle = glm::acos(glm::min(1.0f, glm::dot(va, vb)));
             glm::vec3 axis_in_camera_coord = glm::cross(va, vb);
-            glm::mat3 camera2object = glm::inverse(glm::mat3(scene.camera->getViewMatrix()) * glm::mat3(sphereMeshModelMatrix));
+            glm::mat3 camera2object = glm::inverse(glm::mat3(scene.getCamera()->getViewMatrix()) * glm::mat3(sphereMeshModelMatrix));
             glm::vec3 axis_in_object_coord = camera2object * axis_in_camera_coord;
             sphereMeshModelMatrix = glm::rotate(sphereMeshModelMatrix, glm::degrees(angle * deltaTime), axis_in_object_coord);
             last_mx = cur_mx;
@@ -416,7 +413,8 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 
     if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
     {
-        vec3 rayDir = screenToWorldDir(glm::vec2(mouse_x, mouse_y), SCR_WIDTH, SCR_HEIGHT, scene.camera->getViewMatrix(), scene.camera->getProjectionMatrix());
+        const Camera const* sceneCam = scene.getCamera();
+        vec3 rayDir = screenToWorldDir(glm::vec2(mouse_x, mouse_y), SCR_WIDTH, SCR_HEIGHT, sceneCam->getViewMatrix(), sceneCam->getProjectionMatrix());
         Ray r = Ray(camera.getPos(), rayDir);
         Point null;
         if (intersects(r, sm.boundingSphere, null))

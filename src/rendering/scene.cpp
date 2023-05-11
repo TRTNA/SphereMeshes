@@ -3,6 +3,10 @@
 
 #include <rendering/iglrenderable.h>
 
+Scene::Scene(Camera* camera, PointLight* light) : camera(camera), light(light) {
+    assert(camera != nullptr && light != nullptr);
+}
+
 uint Scene::addObject(IglRenderable *objPtr, glm::mat4 *modelMatrix, Material *mat)
 {
     objects.push_back(objPtr);
@@ -48,8 +52,15 @@ void Scene::enableObject(uint idx)
     enabled.at(idx) = true;
 }
 
-bool Scene::isEnabled(uint idx) const
+bool Scene::isObjectEnabled(uint idx) const
 {
     assert(idx < modelMatrices.size());
     return enabled.at(idx);
+}
+
+Camera const* Scene::getCamera() const {
+    return camera;
+}
+PointLight const* Scene::getLight() const {
+    return light;
 }
