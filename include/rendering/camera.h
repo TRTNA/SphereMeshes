@@ -1,12 +1,19 @@
 #pragma once
 
+#include <glm/glm.hpp>
+
 class Camera {
     private:
         glm::vec3 pos = glm::vec3(0.0f);
         glm::vec3 forward = glm::vec3(0.0f, 0.0f, -1.0f);
         glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+        float near = 0.0f, far = 0.0f;
+        float width = 1.0f, height = 1.0f;
+        float fovY = 0.0f;
         glm::mat4 viewMatrix;
         glm::mat4 projectionMatrix;
+        void updateViewMatrix();
+        void updateProjectionMatrix();
     public:
         void translate(glm::vec3 t);
         void setPos(glm::vec3 newPos);
@@ -17,8 +24,8 @@ class Camera {
         void setFrameHeight(float height);
         void setFovY(float fovY);
 
-        glm::vec3 getPos();
-        glm::vec3 getForward();
+        glm::vec3 getPos() const;
+        glm::vec3 getForward() const;
         float getNearPlane() const;
         float getFarPlane() const;
         float getFrameWidth() const;

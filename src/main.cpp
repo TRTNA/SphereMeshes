@@ -21,6 +21,8 @@
 #include <rendering/renderablepointcloud.h>
 #include <rendering/shader.h>
 #include <rendering/model.h>
+#include <rendering/camera.h>
+#include <rendering/scene.h>
 
 #include <cloth/cloth.h>
 #include <rendering/renderablecloth.h>
@@ -84,8 +86,6 @@ glm::mat3 normalMatrix;
 glm::mat4 viewMatrix = glm::mat4(1.0f);
 glm::mat4 projectionMatrix = glm::mat4(1.0f);
 
-const glm::vec3 defaultViewPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 viewPos = defaultViewPos;
 
 GLuint subroutinesIdxs[4];
 int activeSubroutineIdx = 0;
@@ -97,6 +97,12 @@ SphereMesh sm;
 int pointsNumber = 100;
 float pointsSize = 5.0f;
 int boundingSpherePointsNumber = pointsNumber;
+
+
+
+Camera camera;
+Scene scene;
+
 
 int main(int argc, char *argv[])
 {
@@ -141,15 +147,24 @@ int main(int argc, char *argv[])
     std::shared_ptr<PointCloud> boundingSphereFakePc_ptr = std::make_shared<PointCloud>(boundingSphereFakePc);
     RenderablePointCloud boundingSphereFakeRpc = RenderablePointCloud(boundingSphereFakePc_ptr);
 
-    // Setting up viewMatrix and projection matrix to take into account sphere mesh dimension
+
+    // Camera setup
     float fovY = 45.0f;
     float aspect = (float)SCR_WIDTH / (float)SCR_HEIGHT;
-    projectionMatrix = glm::perspective(fovY, aspect, 0.1f, 1000.0f);
+    camera.setNearPlane(0.01f);
+    camera.setFarPlane(100.0f);
+    camera.setForward(glm::vec3(0.0f, -1.0f, 0.0f));
+    camera.setFrameHeight((float)SCR_HEIGHT);
+    camera.setFrameWidth((float)SCR_WIDTH);
+    camera.setFovY(fovY);
+
     float oppositeFovY = 90.0f - 45.0f;
     float dist = sm.boundingSphere.radius * glm::tan(oppositeFovY);
-    viewPos = sm.boundingSphere.center;
+    glm::vec3 viewPos = sm.boundingSphere.center;
     viewPos.z += aspect * dist;
-    viewMatrix = glm::lookAt(viewPos, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    camera.setPos(viewPos);
+
+    scene.camera = &camera;
 
     // Shader setup
     Shader shader("assets/shaders/default.vert", "assets/shaders/default.frag");
@@ -265,9 +280,6 @@ int main(int argc, char *argv[])
         //phys simulation
         cloth.timeStep();
 
-        viewMatrix = glm::lookAt(viewPos, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
-
         // Archball rotation of sphere mesh
         if (cur_mx != last_mx || cur_my != last_my)
         {
@@ -357,7 +369,6 @@ void apply_key_commands()
 {
     if (keys[GLFW_KEY_R])
     {
-        viewPos = defaultViewPos;
         modelMatrix = glm::mat4(1.0f);
         return;
     }
@@ -384,13 +395,15 @@ void apply_key_commands()
 
     if (keys[GLFW_KEY_Z] && keys[GLFW_KEY_I])
     {
+        glm::vec3 viewPos = camera.getPos();
         viewPos.z = glm::max(0.0f, viewPos.z - 0.5f * deltaTime);
+        camera.setPos(viewPos);
         return;
     }
 
     if (keys[GLFW_KEY_Z] && keys[GLFW_KEY_O])
     {
-        viewPos.z += 0.5f * deltaTime;
+        camera.translate(glm::vec3(0.0f, 0.0f, 0.5f*deltaTime));
         return;
     }
 }
@@ -414,7 +427,7 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
     if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
     {
         vec3 rayDir = screenToWorldDir(glm::vec2(mouse_x, mouse_y), SCR_WIDTH, SCR_HEIGHT, viewMatrix, projectionMatrix);
-        Ray r = Ray(viewPos, rayDir);
+        Ray r = Ray(camera.getPos(), rayDir);
         Point null;
         if (intersects(r, sm.boundingSphere, null))
         {
