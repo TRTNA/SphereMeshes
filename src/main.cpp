@@ -148,19 +148,14 @@ int main(int argc, char *argv[])
     // Camera setup
     float fovY = 45.0f;
     float aspect = (float)SCR_WIDTH / (float)SCR_HEIGHT;
-    camera = Camera();
-    camera.setNearPlane(0.01f);
-    camera.setFarPlane(100.0f);
-    camera.setForward(glm::vec3(0.0f, 0.0f, -1.0f));
-    camera.setFrameHeight((float)SCR_HEIGHT);
-    camera.setFrameWidth((float)SCR_WIDTH);
-    camera.setFovY(fovY);
-
     float oppositeFovY = 90.0f - 45.0f;
     float dist = sm.boundingSphere.radius * glm::tan(oppositeFovY);
     glm::vec3 viewPos = sm.boundingSphere.center;
     viewPos.z += aspect * dist;
-    camera.setPos(viewPos);
+    
+    camera = Camera(viewPos, glm::vec3(0.0f, 0.0f, -1.0f), 0.1f, 100.0f, (float)SCR_WIDTH, (float)SCR_HEIGHT, fovY);
+
+
 
     // Materials setup
     Material sphereMeshmat(diffuseColor, specColor, shininess, MaterialType::BLINN_PHONG);

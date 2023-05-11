@@ -6,6 +6,14 @@
 using glm::mat4;
 using glm::vec3;
 
+Camera::Camera(glm::vec3 pos, glm::vec3 forward, float near, float far, float width, float height, float fovY) 
+: pos(pos), forward(forward), up(vec3(0.0f, 1.0f, 0.0f)), near(near), far(far), width(width), height(height), fovY(fovY) 
+{
+    updateViewMatrix();
+    updateProjectionMatrix();
+}
+
+
 void Camera::updateViewMatrix()
 {
     viewMatrix = glm::lookAt(pos, forward, up);
