@@ -6,7 +6,18 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-Renderer::Renderer(Shader* shader) : shader(shader) {}
+Renderer::Renderer(Shader* shader) : shader(shader) {
+    shader->Use();
+
+    /////////FIXME: oscenità da sistemare ma per ora ho solo un tipo di shader
+    materialTypeToSubroutineIdx.emplace(MaterialType::BLINN_PHONG, glGetSubroutineIndex(shader->Program, GL_FRAGMENT_SHADER, "shadingColoring"));
+    materialTypeToSubroutineIdx.emplace(MaterialType::FLAT, glGetSubroutineIndex(shader->Program, GL_FRAGMENT_SHADER, "flatColoring"));
+    materialTypeToSubroutineIdx.emplace(MaterialType::NORMAL, glGetSubroutineIndex(shader->Program, GL_FRAGMENT_SHADER, "normalColoring"));
+    materialTypeToSubroutineIdx.emplace(MaterialType::DIMENSIONALITY, glGetSubroutineIndex(shader->Program, GL_FRAGMENT_SHADER, "diffuseColoring"));
+    /////////
+
+    glGetProgramStageiv(shader->Program, GL_FRAGMENT_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &activeSubroutineCount);
+}
 
 
 void Renderer::renderScene(Scene* scene) {
@@ -30,16 +41,17 @@ void Renderer::renderScene(Scene* scene) {
     const std::vector<IglRenderable*> renderablesPtrs = scene->getObjects();
     for (uint i = 0; i < renderablesPtrs.size(); i++) {
         IglRenderable* renderablePtr = renderablesPtrs[i];
-        if (renderablePtr == nullptr) continue;
-        if (! scene->isEnabled(i)) continue;
+        if (renderablePtr == nullptr || ! scene->isEnabled(i)) continue;
 
         //MATERIAL SETUP
         const Material* mat = scene->getMaterialOf(i);
         GLfloat diffCol[3] = {mat->diffuseColor.x, mat->diffuseColor.y, mat->diffuseColor.z};
-        glUniform4fv(glGetUniformLocation(shader->Program, "diffuseColor"), 1, diffCol);
+        glUniform3fv(glGetUniformLocation(shader->Program, "diffuseColor"), 1, diffCol);
         GLfloat specCol[3] = {mat->specularColor.x, mat->specularColor.y, mat->specularColor.z};
-        glUniform4fv(glGetUniformLocation(shader->Program, "specularColor"), 1, specCol);
+        glUniform3fv(glGetUniformLocation(shader->Program, "specularColor"), 1, specCol);
         glUniform1f(glGetUniformLocation(shader->Program, "shininess"), mat->shininess);
+        glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &materialTypeToSubroutineIdx.at(mat->type));
+
 
         // TRANSFORM SETUP
         const glm::mat4 modelMatrix = *(scene->getModelMatrixOf(i));

@@ -84,10 +84,6 @@ glm::vec3 boundingSphereColor{0.0f, 0.0f, 0.5f};
 glm::vec3 specColor{1.0f, 1.0f, 1.0f};
 float shininess = 16.0f;
 
-
-GLuint subroutinesIdxs[4];
-int activeSubroutineIdx = 0;
-
 bool backFaceCulling = false;
 bool renderBoundingSphere = false;
 
@@ -155,7 +151,7 @@ int main(int argc, char *argv[])
     camera = Camera();
     camera.setNearPlane(0.01f);
     camera.setFarPlane(100.0f);
-    camera.setForward(glm::vec3(0.0f, -1.0f, 0.0f));
+    camera.setForward(glm::vec3(0.0f, 0.0f, -1.0f));
     camera.setFrameHeight((float)SCR_HEIGHT);
     camera.setFrameWidth((float)SCR_WIDTH);
     camera.setFovY(fovY);
@@ -171,11 +167,13 @@ int main(int argc, char *argv[])
     sphereMeshmat.diffuseColor = diffuseColor;
     sphereMeshmat.specularColor = specColor;
     sphereMeshmat.shininess = shininess;
+    sphereMeshmat.type = MaterialType::BLINN_PHONG;
 
     Material boundingSphereMat;
     boundingSphereMat.diffuseColor = boundingSphereColor;
     boundingSphereMat.specularColor = glm::vec3(1.0f, 1.0f, 1.0f);
     boundingSphereMat.shininess = 1.0f;
+    boundingSphereMat.type = MaterialType::FLAT;
 
 
     // Model matrices setup
@@ -199,14 +197,7 @@ int main(int argc, char *argv[])
 
     // Other openGL params
     glPointSize(pointsSize);
-    
-    shader.Use();
-    subroutinesIdxs[0] = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "shadingColoring");
-    subroutinesIdxs[1] = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "diffuseColoring");
-    subroutinesIdxs[2] = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "normalColoring");
-    subroutinesIdxs[3] = glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "flatColoring");
-    GLint activeSubroutineCount;
-    glGetProgramStageiv(shader.Program, GL_FRAGMENT_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &activeSubroutineCount);
+
 
     //RenderableCloth cloth(4U, 1.0f);
     // cout << cloth.toString() << endl;
@@ -324,8 +315,6 @@ int main(int argc, char *argv[])
         } else {
             scene.disableObject(boundingSphereSceneIdx);
         }
-        shader.Use();
-        glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &subroutinesIdxs[activeSubroutineIdx]);
 
         renderer.renderScene(&scene);
 
