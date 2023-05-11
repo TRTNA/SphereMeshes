@@ -163,8 +163,7 @@ int main(int argc, char *argv[])
     glm::mat4 sphereMeshModelMatrix = glm::mat4(1.0f);
 
     // Point light
-    PointLight light;
-    light.pos = lightPos;
+    PointLight light(lightPos);
 
     // Scene setup
     scene = Scene(&camera, &light);
