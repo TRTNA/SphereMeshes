@@ -10,6 +10,7 @@ Point::Point(float x, float y, float z) : Point::Point(glm::vec3(x, y, z), glm::
 
 DimensionalityPoint::DimensionalityPoint() : DimensionalityPoint(glm::vec3(0.0f), glm::vec3(0.0f), -1) {}
 DimensionalityPoint::DimensionalityPoint(glm::vec3 pos, glm::vec3 normal, int pDimensionality) : pos(pos), normal(normal), dimensionality(pDimensionality) {}
+DimensionalityPoint::DimensionalityPoint(float x, float y, float z) : DimensionalityPoint(glm::vec3(x, y, z), glm::vec3(0.0f), -1) {}
 
 
  ColoredPoint::ColoredPoint() : Point(), color(glm::vec3(0.0f))

@@ -1,4 +1,4 @@
-#include <cuda/spheremesh.h>
+#include <cuda/spheremeshGPU.h>
 #include <spheremeshes/point.h>
 
 #include <stdio.h>
@@ -43,7 +43,7 @@ __global__ void testKernel(float *dX)
     dX[blockIdx.x * blockDim.x + threadIdx.x] = 0.0f;
 }
 
-void createSphereMesh(SphereMesh &sphereMesh, uint numberOfPoints, std::vector<Point> &outPoints)
+void createSphereMesh(SphereMesh &sphereMesh, uint numberOfPoints, std::vector<DimensionalityPoint> &outPoints)
 {
     printf("Starting...\n");
     cudaSetDevice(0);
@@ -161,7 +161,7 @@ void createSphereMesh(SphereMesh &sphereMesh, uint numberOfPoints, std::vector<P
 
     // # 10. Scarto dei punti che non sono stati spinti sulla superficie della sphere mesh (dimensionality != -1)
     // # ovvero punti esterni alla sphere mesh o interni che non sono stati spinti fuori
-    vector<Point> points;
+    vector<DimensionalityPoint> points;
     for (size_t i = 0; i < numberOfPoints; i++)
     {
         if (hostDimensionality[i] != -1)

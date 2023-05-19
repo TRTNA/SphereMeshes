@@ -24,7 +24,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
 
-#include <cuda/spheremesh.h>
+#include <cuda/spheremeshGPU.h>
 
 #define OPENGL_VERSION_MAJOR 4
 #define OPENGL_VERSION_MINOR 1
@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
          << sm << endl;
 
     //codice cuda qui
-    std::vector<Point> points;
+    std::vector<DimensionalityPoint> points;
     createSphereMesh(sm, pointsNumber, points);
 
 
