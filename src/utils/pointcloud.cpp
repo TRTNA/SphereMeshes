@@ -48,3 +48,8 @@ void PointCloud::clear() {
 const void* PointCloud::pointerToData() const {
     return points.data();
 }
+
+void PointCloud::setPoints(std::vector<DimensionalityPoint> pPoints) {
+    this->points.clear();
+    this->points = std::move(pPoints);
+}

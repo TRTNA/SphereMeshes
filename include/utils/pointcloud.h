@@ -16,6 +16,7 @@ class PointCloud {
         void addPoint(const SphereMesh& sphereMesh);
     public:
         void repopulate(const unsigned int nPoints, const SphereMesh& sphereMesh);
+        void setPoints(std::vector<DimensionalityPoint> points);
         void clear();
         unsigned int getPointsNumber() const;
         const void* pointerToData() const;
