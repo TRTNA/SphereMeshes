@@ -78,14 +78,11 @@ bool backFaceCulling = false;
 bool renderBoundingSphere = false;
 
 SphereMesh sm;
-int pointsNumber = 10000;
+uint pointsNumber = 10000U;
 float pointsSize = 5.0f;
 int boundingSpherePointsNumber = pointsNumber;
 
 Camera camera;
-
-uint sphereMeshSceneIdx = 0U;
-uint boundingSphereSceneIdx = 0U;
 
 
 int main(int argc, char *argv[])

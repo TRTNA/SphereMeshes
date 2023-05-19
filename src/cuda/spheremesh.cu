@@ -3,6 +3,10 @@
 
 #include <stdio.h>
 
+#include <array>
+
+using std::array;
+
 typedef unsigned long ulong;
 
 float computeTime(cudaEvent_t &e1, cudaEvent_t &e2)
@@ -10,6 +14,17 @@ float computeTime(cudaEvent_t &e1, cudaEvent_t &e2)
     float time;
     cudaEventElapsedTime(&time, e1, e2);
     return time;
+}
+
+void checkError(cudaError error)
+{
+
+    if (error != 0)
+    {
+        fprintf(stderr, "Error: %s:%d, ", __FILE__, __LINE__);
+        fprintf(stderr, "code: %d, reason: %s\n", error,
+                cudaGetErrorString(error));
+    }
 }
 
 #define CHECK(call)                                                \
@@ -23,33 +38,24 @@ float computeTime(cudaEvent_t &e1, cudaEvent_t &e2)
         }                                                          \
     }
 
-__global__ void testKernel(void)
+__global__ void testKernel(float *dX)
 {
-    printf("funza");
+    dX[blockIdx.x * blockDim.x + threadIdx.x] = 0.0f;
 }
 
 void createSphereMesh(SphereMesh &sphereMesh, uint numberOfPoints, std::vector<Point> &outPoints)
 {
     printf("Starting...\n");
     cudaSetDevice(0);
-      cudaDeviceProp dProp;
-	cudaGetDeviceProperties(&dProp, 0);
-    printf("Major %d Minor %d\n", dProp.major, dProp.minor);
-    cudaEvent_t allAppStart, allAppEnd, hostMemEnd, hostMemStart, deviceMemStart, deviceMemEnd, memCpyHTDStart, memCpyHTDEnd;
-    cudaEvent_t memCpyDTHStart, memCpyDTHEnd;
-    CHECK(cudaEventCreate(&allAppStart));
-    CHECK(cudaEventCreate(&allAppEnd));
-    CHECK(cudaEventCreate(&hostMemStart));
-    CHECK(cudaEventCreate(&hostMemEnd));
-    CHECK(cudaEventCreate(&deviceMemStart));
-    CHECK(cudaEventCreate(&deviceMemEnd));
-    CHECK(cudaEventCreate(&memCpyHTDStart));
-    CHECK(cudaEventCreate(&memCpyHTDEnd));
-    CHECK(cudaEventCreate(&memCpyDTHStart));
-    CHECK(cudaEventCreate(&memCpyDTHEnd));
+    array<cudaEvent_t, 11> events;
+
+    for (cudaEvent_t &event : events)
+    {
+        CHECK(cudaEventCreate(&event));
+    }
 
     // # 1. Inizializzazione memoria host
-    CHECK(cudaEventRecord(allAppStart));
+    CHECK(cudaEventRecord(events[0], 0));
     printf("Inizializzazione memoria host...\n");
     ulong pointsCoordBytes = numberOfPoints * sizeof(float);
     ulong dimensionalityBytes = numberOfPoints * sizeof(int);
@@ -62,8 +68,10 @@ void createSphereMesh(SphereMesh &sphereMesh, uint numberOfPoints, std::vector<P
     {
         hostDimensionality[i] = -1;
     }
-    CHECK(cudaEventRecord(hostMemEnd));
-    printf("Allocati %lu bytes in memoria host in %f secondi...\n", pointsCoordBytes * 3 + dimensionalityBytes, computeTime(allAppStart, hostMemEnd));
+    CHECK(cudaEventRecord(events[1], 0));
+    // wait until the stop event completes
+    CHECK(cudaEventSynchronize(events[1]));
+    printf("Allocati %lu bytes in memoria host in %f millisecondi...\n", pointsCoordBytes * 3 + dimensionalityBytes, computeTime(events[0], events[1]));
 
     // # 2. TODO inizializzare i punti con valori random dentro la bounding sphere della sphere mesh
     // # on GPU?
@@ -72,7 +80,7 @@ void createSphereMesh(SphereMesh &sphereMesh, uint numberOfPoints, std::vector<P
     printf("Inizializzazione memoria device...\n");
     float *deviceX, *deviceY, *deviceZ;
     int *deviceDimensionality;
-    CHECK(cudaEventRecord(deviceMemStart));
+    CHECK(cudaEventRecord(events[2]));
 
     CHECK(cudaMalloc((void **)&deviceX, pointsCoordBytes));
 
@@ -80,25 +88,31 @@ void createSphereMesh(SphereMesh &sphereMesh, uint numberOfPoints, std::vector<P
     CHECK(cudaMalloc((void **)&deviceZ, pointsCoordBytes));
     CHECK(cudaMalloc((void **)&deviceDimensionality, dimensionalityBytes));
 
-    CHECK(cudaEventRecord(deviceMemEnd));
-    printf("Allocati %lu bytes in memoria device in %f secondi...\n", pointsCoordBytes * 3 + dimensionalityBytes, computeTime(deviceMemStart, deviceMemEnd));
+    CHECK(cudaEventRecord(events[3]));
+    CHECK(cudaEventSynchronize(events[3]));
+
+    printf("Allocati %lu bytes in memoria device in %f millisecondi...\n", pointsCoordBytes * 3 + dimensionalityBytes, computeTime(events[2], events[3]));
 
     // # 4. Copia da memoria host a memoria device
     printf("Copia dati da host a device...\n");
-    CHECK(cudaEventRecord(memCpyHTDStart));
+    CHECK(cudaEventRecord(events[4]));
     CHECK(cudaMemcpy(deviceX, hostX, pointsCoordBytes, cudaMemcpyHostToDevice));
     CHECK(cudaMemcpy(deviceY, hostY, pointsCoordBytes, cudaMemcpyHostToDevice));
     CHECK(cudaMemcpy(deviceZ, hostZ, pointsCoordBytes, cudaMemcpyHostToDevice));
     CHECK(cudaMemcpy(deviceDimensionality, hostDimensionality, dimensionalityBytes, cudaMemcpyHostToDevice));
 
-    CHECK(cudaEventRecord(memCpyHTDEnd));
-    printf("Copia dati da host a device TERMINATA in %f secondi\n", computeTime(memCpyHTDStart, memCpyHTDEnd));
+    CHECK(cudaEventRecord(events[5]));
+    CHECK(cudaEventSynchronize(events[5]));
+
+    printf("Copia dati da host a device TERMINATA in %f millisecondi\n", computeTime(events[4], events[5]));
 
     // # 6. Creazione contesto loop
     const uint maxTries = 10U;
     uint tries = 0U;
     bool *allNegativeDim;
     CHECK(cudaMallocManaged(&allNegativeDim, sizeof(int)));
+
+    CHECK(cudaEventRecord(events[6]));
 
     // # 7. Loop di creazione dei punti
     do
@@ -111,11 +125,8 @@ void createSphereMesh(SphereMesh &sphereMesh, uint numberOfPoints, std::vector<P
         printf("Attesa terminazione kernel...\n");
         dim3 grid(1);
         dim3 block(32, 32);
-        testKernel<<<grid, block>>>();
-        cudaError_t error = cudaGetLastError();
-        fprintf(stderr, "Error: %s:%d, ", __FILE__, __LINE__);
-        fprintf(stderr, "code: %d, reason: %s\n", error,
-                cudaGetErrorString(error));
+        testKernel<<<grid, block>>>(deviceX);
+        checkError(cudaGetLastError());
         CHECK(cudaDeviceSynchronize());
 
         // # 7.3 TODO Chiamata al kernel che controlla se sono tutte negative le dimensionality
@@ -124,17 +135,23 @@ void createSphereMesh(SphereMesh &sphereMesh, uint numberOfPoints, std::vector<P
         tries++;
     } while (!(*allNegativeDim) && tries < maxTries);
     // # Esce dal ciclo quanto tutti i punti sono o esterni alla sphere mesh o spinti sulla superficie
+    CHECK(cudaEventRecord(events[7]));
+    CHECK(cudaEventSynchronize(events[7]));
+
+    printf("Creazione punti TERMINATA in %f millisecondi\n", computeTime(events[6], events[7]));
     printf("Creazione punti terminata perche' %s\n", tries == maxTries ? "sono stati esauriti i tentativi" : "i punti sono tutti esterni o sulla superficie");
 
     // # 8. Copia da memoria device a memoria host (funziona così?)
     printf("Copia dati da device a host...\n");
-    CHECK(cudaEventRecord(memCpyDTHStart));
+    CHECK(cudaEventRecord(events[8]));
     CHECK(cudaMemcpy(hostX, deviceX, pointsCoordBytes, cudaMemcpyDeviceToHost));
     CHECK(cudaMemcpy(hostY, deviceY, pointsCoordBytes, cudaMemcpyDeviceToHost));
     CHECK(cudaMemcpy(hostZ, deviceZ, pointsCoordBytes, cudaMemcpyDeviceToHost));
     CHECK(cudaMemcpy(hostDimensionality, deviceDimensionality, dimensionalityBytes, cudaMemcpyDeviceToHost));
-    CHECK(cudaEventRecord(memCpyDTHEnd));
-    printf("Copia dati da device a host TERMINATA in %f secondi\n", computeTime(memCpyDTHStart, memCpyDTHEnd));
+    CHECK(cudaEventRecord(events[9]));
+    CHECK(cudaEventSynchronize(events[9]));
+
+    printf("Copia dati da device a host TERMINATA in %f millisecondi\n", computeTime(events[8], events[9]));
 
     // # 9. Eliminazione memoria allocata sul device (memcpy è bloccante, sono sicuro che non mi serva più quando arrivo qui)
     CHECK(cudaFree(deviceX));
@@ -155,7 +172,7 @@ void createSphereMesh(SphereMesh &sphereMesh, uint numberOfPoints, std::vector<P
             hostZ[i]);
     }
 
-    printf("Sono stati ottenuti %u punti sui %u richiesti\n");
+    printf("Sono stati ottenuti %zu punti sui %zu richiesti\n", points.size(), numberOfPoints);
 
     // # 11. TODO: Controllo di essere arrivato al numero di punti desiderato
     // # se non ci sono arrivato, riavvio creazione punti con un certo numero da definire (metà? Tenendo conto del numero di punti scartati?)
@@ -167,9 +184,13 @@ void createSphereMesh(SphereMesh &sphereMesh, uint numberOfPoints, std::vector<P
     delete hostZ;
     delete hostDimensionality;
 
-    CHECK(cudaEventRecord(allAppEnd, 0));
-    printf("L'esecuzione dell'algoritmo (compresa la gestione della memoria) e' durata %f secondi\n", computeTime(allAppStart, allAppEnd));
+    CHECK(cudaEventRecord(events[10], 0));
+    CHECK(cudaEventSynchronize(events[10]));
 
-    CHECK(cudaEventDestroy(allAppStart));
-    CHECK(cudaEventDestroy(allAppEnd));
+    printf("L'esecuzione dell'algoritmo (compresa la gestione della memoria) e' durata %f millisecondi\n", computeTime(events[0], events[10]));
+
+    for (auto &event : events)
+    {
+        CHECK(cudaEventDestroy(event));
+    }
 }
