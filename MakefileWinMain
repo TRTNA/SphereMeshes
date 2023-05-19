@@ -2,25 +2,28 @@
 FILENAME = main
 
 # Visual Studio compiler
-CC = cl.exe
+CC = nvcc.exe
 
 # Include path
-IDIR = /Iinclude/ /Iimgui/
+#/Iinclude/ /Iimgui/ 
+IDIR = -Iinclude/
 
 # compiler flags:
-CCFLAGS  = /Od /Zi /EHsc /MT
+#/Od /Zi /EHsc /MT
+CCFLAGS  =
 
 # linker flags:
-LFLAGS = /LIBPATH:libs glfw3.lib assimp-vc143-mt.lib zlib.lib minizip.lib kubazip.lib bz2.lib Irrlicht.lib poly2tri.lib polyclipping.lib turbojpeg.lib libpng16.lib gdi32.lib user32.lib Shell32.lib Advapi32.lib
+# --llibs/ibrary 
+LFLAGS = -llibs/glfw3, -llibs/assimp-vc143-mt, -llibs/zlib, -llibs/minizip, -llibs/kubazip, -llibs/bz2, -llibs/Irrlicht, -llibs/poly2tri, -llibs/polyclipping,-llibs/turbojpeg, -llibs/libpng16, -lgdi32, -luser32, -lShell32, -lAdvapi32
 
-SOURCES = include/glad/glad.c src/cloth/*.cpp src/utils/*.cpp src/spheremeshes/*.cpp src/rendering/*.cpp imgui/*.cpp src/$(FILENAME).cpp 
-TARGET = $(FILENAME).exe
+SOURCES = include/glad/glad.c src/spheremeshes/capsuloid.cpp src/spheremeshes/point.cpp src/spheremeshes/sphere.cpp src/spheremeshes/spheremesh.cpp src/spheremeshes/spheremeshutils.cpp src/spheremeshes/spheretriangle.cpp src/utils/aabb.cpp src/utils/common.cpp src/utils/pointcloud.cpp src/utils/random.cpp src/rendering/camera.cpp src/rendering/renderablepointcloud.cpp src/rendering/shader.cpp src/$(FILENAME).cpp 
+TARGET = -o $(FILENAME).exe
 
 .PHONY : all
 all:
-	$(CC) $(CCFLAGS) $(IDIR) $(SOURCES) /Fe:$(TARGET) /link $(LFLAGS)
+	$(CC) $(CCFLAGS) $(IDIR) $(SOURCES) $(TARGET) $(LFLAGS) 
 
 .PHONY : clean
 clean:
 	del $(TARGET)
-	del *.obj *.lib *.exp *.ilk *.pdb
+	del *.obj * *.exp *.ilk *.pdb

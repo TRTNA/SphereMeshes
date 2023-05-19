@@ -1,7 +1,9 @@
 #pragma once
 
 #include <glm/vec3.hpp>
-#include <utils/types.h>
+#include <iostream>
+
+typedef unsigned int uint;
 
 /* 
     Struct that models a capsuloid (a capsule with spheres of possibly different radius)

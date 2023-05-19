@@ -8,8 +8,8 @@ in vec3 vPos;
 
 flat in int fragDimensionality;
 
-uniform vec3 vLightPos;
-uniform bool backFaceCulling;
+uniform vec3 vLightPos = vec3(0.0f, 3.0f, 0.0f);
+uniform bool backFaceCulling = false;
 uniform float opacity = 1.0f;
 
 uniform vec3 ambientColor = vec3(0.1, 0.0, 0.0);

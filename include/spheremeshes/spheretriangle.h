@@ -1,9 +1,11 @@
 #pragma once
 
-#include <utils/types.h>
-#include <glm/mat3x3.hpp>
 #include <array>
-#include <ostream>
+#include <iostream>
+#include <glm/glm.hpp>
+
+typedef unsigned int uint;
+
 
 /*
     Struct that models a triangular prismoid, with three spheres with possibily different radius in its vertices
@@ -21,7 +23,7 @@
     BEWARE: features must updated when data about the spheres are available
 */
 struct SphereTriangle {
-    std::array<U32, 3> vertices;
+    std::array<uint, 3> vertices;
     glm::vec3 S0S1, S0S2;
     glm::mat3 upperProjMatrix;
     glm::mat3 lowerProjMatrix;
