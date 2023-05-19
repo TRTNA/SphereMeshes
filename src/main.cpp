@@ -124,11 +124,11 @@ int main(int argc, char *argv[])
     RenderablePointCloud rpc = RenderablePointCloud(pc_ptr);
 
     // Sphere mesh's bounding sphere rendering setup
-    SphereMesh boundingSphereFakeSm;
+/*     SphereMesh boundingSphereFakeSm;
     PointCloud boundingSphereFakePc = PointCloud();
     boundingSphereFakePc.repopulate(boundingSpherePointsNumber, sm);
     std::shared_ptr<PointCloud> boundingSphereFakePc_ptr = std::make_shared<PointCloud>(boundingSphereFakePc);
-    RenderablePointCloud boundingSphereFakeRpc = RenderablePointCloud(boundingSphereFakePc_ptr);
+    RenderablePointCloud boundingSphereFakeRpc = RenderablePointCloud(boundingSphereFakePc_ptr); */
 
     // Shader setup
     Shader shader("assets/shaders/default.vert", "assets/shaders/default.frag");
