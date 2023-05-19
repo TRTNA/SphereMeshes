@@ -7,6 +7,7 @@ struct Point {
     glm::vec3 normal;
     Point();
     Point(glm::vec3 pos, glm::vec3 normal);
+    Point(float x, float y, float z);
 };
 
 struct DimensionalityPoint {

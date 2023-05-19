@@ -17,11 +17,14 @@
 #include <rendering/shader.h>
 #include <rendering/camera.h>
 
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
+
+#include <cuda/spheremesh.h>
 
 #define OPENGL_VERSION_MAJOR 4
 #define OPENGL_VERSION_MINOR 1
@@ -84,6 +87,7 @@ Camera camera;
 uint sphereMeshSceneIdx = 0U;
 uint boundingSphereSceneIdx = 0U;
 
+
 int main(int argc, char *argv[])
 {
     // Context creation
@@ -111,6 +115,26 @@ int main(int argc, char *argv[])
     }
     cout << "Sphere mesh:\n"
          << sm << endl;
+
+    //codice cuda qui
+    std::vector<Point> points;
+    createSphereMesh(sm, pointsNumber, points);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     // Sphere mesh rendering setup
     PointCloud pc = PointCloud();

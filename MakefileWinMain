@@ -14,14 +14,14 @@ CCFLAGS  =
 
 # linker flags:
 # --llibs/ibrary 
-LFLAGS = -llibs/glfw3, -llibs/assimp-vc143-mt, -llibs/zlib, -llibs/minizip, -llibs/kubazip, -llibs/bz2, -llibs/Irrlicht, -llibs/poly2tri, -llibs/polyclipping,-llibs/turbojpeg, -llibs/libpng16, -lgdi32, -luser32, -lShell32, -lAdvapi32
+LFLAGS = -llibs/glfw3, -lgdi32, -luser32, -lShell32, -lAdvapi32
 
-SOURCES = include/glad/glad.c src/spheremeshes/capsuloid.cpp src/spheremeshes/point.cpp src/spheremeshes/sphere.cpp src/spheremeshes/spheremesh.cpp src/spheremeshes/spheremeshutils.cpp src/spheremeshes/spheretriangle.cpp src/utils/aabb.cpp src/utils/common.cpp src/utils/pointcloud.cpp src/utils/random.cpp src/rendering/camera.cpp src/rendering/renderablepointcloud.cpp src/rendering/shader.cpp src/$(FILENAME).cpp 
+SOURCES = include/glad/glad.c src/cuda/spheremesh.cu src/spheremeshes/capsuloid.cpp src/spheremeshes/point.cpp src/spheremeshes/sphere.cpp src/spheremeshes/spheremesh.cpp src/spheremeshes/spheremeshutils.cpp src/spheremeshes/spheretriangle.cpp src/utils/aabb.cpp src/utils/common.cpp src/utils/pointcloud.cpp src/utils/random.cpp src/rendering/camera.cpp src/rendering/renderablepointcloud.cpp src/rendering/shader.cpp src/$(FILENAME).cpp 
 TARGET = -o $(FILENAME).exe
 
 .PHONY : all
 all:
-	$(CC) $(CCFLAGS) $(IDIR) $(SOURCES) $(TARGET) $(LFLAGS) 
+	$(CC) -arch=sm_61 $(CCFLAGS) $(IDIR) $(SOURCES) $(TARGET) $(LFLAGS) 
 
 .PHONY : clean
 clean:
