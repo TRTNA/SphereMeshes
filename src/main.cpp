@@ -113,29 +113,13 @@ int main(int argc, char *argv[])
     cout << "Sphere mesh:\n"
          << sm << endl;
 
-    //codice cuda qui
+    //CUDA
     std::vector<DimensionalityPoint> points;
-    createSphereMesh(sm, pointsNumber, points);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    createSphereMeshGPU(sm, pointsNumber, points);
 
     // Sphere mesh rendering setup
     PointCloud pc = PointCloud();
-    pc.repopulate(pointsNumber, sm);
+    pc.setPoints(points);
     std::shared_ptr<PointCloud> pc_ptr = std::make_shared<PointCloud>(pc);
     RenderablePointCloud rpc = RenderablePointCloud(pc_ptr);
 

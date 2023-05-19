@@ -43,7 +43,7 @@ __global__ void testKernel(float *dX)
     dX[blockIdx.x * blockDim.x + threadIdx.x] = 0.0f;
 }
 
-void createSphereMesh(SphereMesh &sphereMesh, uint numberOfPoints, std::vector<DimensionalityPoint> &outPoints)
+void createSphereMeshGPU(SphereMesh &sphereMesh, uint numberOfPoints, std::vector<DimensionalityPoint> &outPoints)
 {
     printf("Starting...\n");
     cudaSetDevice(0);
@@ -114,6 +114,10 @@ void createSphereMesh(SphereMesh &sphereMesh, uint numberOfPoints, std::vector<D
 
     CHECK(cudaEventRecord(events[6]));
 
+    //TODO tbd wrt points number
+    dim3 grid(1);
+    dim3 block(32, 32);
+
     // # 7. Loop di creazione dei punti
     do
     {
@@ -123,8 +127,7 @@ void createSphereMesh(SphereMesh &sphereMesh, uint numberOfPoints, std::vector<D
 
         // # 7.2 Sincronizzazione sul lavoro del kernel pushOutside
         printf("Attesa terminazione kernel...\n");
-        dim3 grid(1);
-        dim3 block(32, 32);
+
         testKernel<<<grid, block>>>(deviceX);
         checkError(cudaGetLastError());
         CHECK(cudaDeviceSynchronize());

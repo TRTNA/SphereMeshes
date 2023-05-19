@@ -2,4 +2,4 @@
 
 #include <spheremeshes/spheremesh.h>
 
-void createSphereMesh(SphereMesh &sphereMesh, uint numberOfPoints, std::vector<DimensionalityPoint>& outPoints);
+void createSphereMeshGPU(SphereMesh &sphereMesh, uint numberOfPoints, std::vector<DimensionalityPoint>& outPoints);
