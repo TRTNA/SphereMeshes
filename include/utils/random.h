@@ -7,6 +7,8 @@ glm::vec3 generatePosition(std::pair<float, float> xRange, std::pair<float, floa
 
 glm::vec3 generatePosition(const AABB& aabb);
 
+float generateFloat(float lowerLim, float upperLim);
+
 
 
 

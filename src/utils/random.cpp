@@ -12,3 +12,7 @@ glm::vec3 generatePosition(std::pair<float, float> xRange, std::pair<float, floa
 glm::vec3 generatePosition(const AABB& aabb) {
     return generatePosition(aabb.getXRange(), aabb.getYRange(), aabb.getZRange());
 }
+
+float generateFloat(float lowerLim, float upperLim) {
+        return lowerLim+ static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(upperLim-lowerLim)));
+}

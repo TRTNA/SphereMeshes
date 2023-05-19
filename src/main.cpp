@@ -78,7 +78,7 @@ bool backFaceCulling = false;
 bool renderBoundingSphere = false;
 
 SphereMesh sm;
-uint pointsNumber = 10000U;
+uint pointsNumber = 1000000U;
 float pointsSize = 5.0f;
 int boundingSpherePointsNumber = pointsNumber;
 
