@@ -4,6 +4,8 @@
 
 #include <utils/random.h>
 
+#include <glm/glm.hpp>
+
 #include <stdio.h>
 
 #include <cmath>
@@ -48,30 +50,27 @@ __device__ float dot(float x1, float y1, float z1, float x2, float y2, float z2)
     return x1 * x2 + y1 * y2 + z1 * z2;
 }
 
-__global__ void pushOutsideSphere(float *dX, float *dY, float *dZ, int *dimensionality, float xC, float yC, float zC, float radius)
+__global__ void pushOutsideSphere(glm::vec3 *positions, glm::vec3 *normals, int *dimensionality, Sphere sphere)
 {
     int tid = blockDim.x * blockIdx.x + threadIdx.x;
-    float CtoPosX = dX[tid] - xC;
-    float CtoPosY = dY[tid] - yC;
-    float CtoPosZ = dZ[tid] - zC;
-    const float CtoPossqrd = dot(CtoPosX, CtoPosY, CtoPosZ, CtoPosX, CtoPosY, CtoPosZ);
+    glm::vec3 pos = positions[tid];
+    glm::vec3 CtoPos = pos - sphere.center;
+    const float CtoPossqrd = glm::dot(CtoPos, CtoPos);
 
     // pos is outside sphere
-    if (CtoPossqrd > radius * radius - 0.0001f)
+    if (CtoPossqrd > sphere.radius * sphere.radius - 0.0001f)
     {
         dimensionality[tid] = -2;
     }
 
     // if we are here, pos is inside the sphere
     dimensionality[tid] = -1;
-    const float length = sqrt(CtoPossqrd);
-    float CtoPosXNorm = CtoPosX / length;
-    float CtoPosYNorm = CtoPosY / length;
-    float CtoPosZNorm = CtoPosZ / length;
-    dX[tid] = xC + radius * CtoPosXNorm;
-    dY[tid] = yC + radius * CtoPosYNorm;
-    dZ[tid] = zC + radius * CtoPosZNorm;
+    CtoPos = glm::normalize(CtoPos);
+    positions[tid] = sphere.center + sphere.radius * CtoPos;
+    normals[tid] = CtoPos;
 }
+
+__global__ void pushOutsideCapsuloid(float *dX, float *dY, float *dZ) {}
 
 void createSphereMeshGPU(SphereMesh &sphereMesh, uint numberOfPoints, std::vector<DimensionalityPoint> &outPoints)
 {
@@ -87,12 +86,13 @@ void createSphereMeshGPU(SphereMesh &sphereMesh, uint numberOfPoints, std::vecto
     // # 1. Inizializzazione memoria host
     CHECK(cudaEventRecord(events[0], 0));
     printf("Inizializzazione memoria host...\n");
-    ulong pointsCoordBytes = numberOfPoints * sizeof(float);
+    ulong coordinatesBytes = numberOfPoints * sizeof(float) * 3;
     ulong dimensionalityBytes = numberOfPoints * sizeof(int);
 
-    float *hostX = (float *)malloc(pointsCoordBytes);
-    float *hostY = (float *)malloc(pointsCoordBytes);
-    float *hostZ = (float *)malloc(pointsCoordBytes);
+    glm::vec3 *hostPositions = (glm::vec3 *)malloc(coordinatesBytes);
+    glm::vec3 *hostNormals = (glm::vec3 *)malloc(coordinatesBytes);
+
+
     int *hostDimensionality = (int *)malloc(dimensionalityBytes);
     for (size_t i = 0; i < numberOfPoints; i++)
     {
@@ -100,40 +100,41 @@ void createSphereMeshGPU(SphereMesh &sphereMesh, uint numberOfPoints, std::vecto
     CHECK(cudaEventRecord(events[1], 0));
     // wait until the stop event completes
     CHECK(cudaEventSynchronize(events[1]));
-    printf("Allocati %lu bytes in memoria host in %f millisecondi...\n", pointsCoordBytes * 3 + dimensionalityBytes, computeTime(events[0], events[1]));
+    printf("Allocati %lu bytes in memoria host in %f millisecondi...\n", coordinatesBytes + dimensionalityBytes, computeTime(events[0], events[1]));
 
     // # 2. TODO inizializzare i punti con valori random dentro la bounding sphere della sphere mesh
     // # on GPU?
-    for(size_t i = 0; i < numberOfPoints; i++) {
-        hostX[i] = generateFloat(-2.0f, 2.0f);
-        hostY[i] = generateFloat(-2.0f, 2.0f);
-        hostZ[i] = generateFloat(-2.0f, 2.0f);
+    for (size_t i = 0; i < numberOfPoints; i++)
+    {
+        hostPositions[i].x = generateFloat(-2.0f, 2.0f);
+        hostPositions[i].y = generateFloat(-2.0f, 2.0f);
+        hostPositions[i].z = generateFloat(-2.0f, 2.0f);
         hostDimensionality[i] = -1;
     }
 
     // # 3. Inizializzazione memoria device
     printf("Inizializzazione memoria device...\n");
-    float *deviceX, *deviceY, *deviceZ;
     int *deviceDimensionality;
+    glm::vec3 *devicePositions, *deviceNormals;
     CHECK(cudaEventRecord(events[2]));
 
-    CHECK(cudaMalloc((void **)&deviceX, pointsCoordBytes));
+    CHECK(cudaMalloc((void **)&devicePositions, coordinatesBytes));
+        CHECK(cudaMalloc((void **)&deviceNormals, coordinatesBytes));
 
-    CHECK(cudaMalloc((void **)&deviceY, pointsCoordBytes));
-    CHECK(cudaMalloc((void **)&deviceZ, pointsCoordBytes));
     CHECK(cudaMalloc((void **)&deviceDimensionality, dimensionalityBytes));
 
     CHECK(cudaEventRecord(events[3]));
     CHECK(cudaEventSynchronize(events[3]));
 
-    printf("Allocati %lu bytes in memoria device in %f millisecondi...\n", pointsCoordBytes * 3 + dimensionalityBytes, computeTime(events[2], events[3]));
+    printf("Allocati %lu bytes in memoria device in %f millisecondi...\n", coordinatesBytes + dimensionalityBytes, computeTime(events[2], events[3]));
 
     // # 4. Copia da memoria host a memoria device
     printf("Copia dati da host a device...\n");
     CHECK(cudaEventRecord(events[4]));
-    CHECK(cudaMemcpy(deviceX, hostX, pointsCoordBytes, cudaMemcpyHostToDevice));
-    CHECK(cudaMemcpy(deviceY, hostY, pointsCoordBytes, cudaMemcpyHostToDevice));
-    CHECK(cudaMemcpy(deviceZ, hostZ, pointsCoordBytes, cudaMemcpyHostToDevice));
+
+    CHECK(cudaMemcpy(devicePositions, hostPositions, coordinatesBytes, cudaMemcpyHostToDevice));
+    CHECK(cudaMemcpy(deviceNormals, hostNormals, coordinatesBytes, cudaMemcpyHostToDevice));
+
     CHECK(cudaMemcpy(deviceDimensionality, hostDimensionality, dimensionalityBytes, cudaMemcpyHostToDevice));
 
     CHECK(cudaEventRecord(events[5]));
@@ -149,10 +150,11 @@ void createSphereMeshGPU(SphereMesh &sphereMesh, uint numberOfPoints, std::vecto
 
     CHECK(cudaEventRecord(events[6]));
 
-    // TODO tbd wrt points number
     int blockSize = 1024;
     dim3 grid((numberOfPoints / blockSize) + 1);
     dim3 block(blockSize);
+
+    Sphere testSphere{glm::vec3(0.0f), 2.0f};
 
     // # 7. Loop di creazione dei punti
     do
@@ -164,7 +166,7 @@ void createSphereMeshGPU(SphereMesh &sphereMesh, uint numberOfPoints, std::vecto
         // # 7.2 Sincronizzazione sul lavoro del kernel pushOutside
         printf("Attesa terminazione kernel...\n");
 
-        pushOutsideSphere<<<grid, block>>>(deviceX, deviceY, deviceZ, deviceDimensionality, 0.0f, 0.0f, 0.0f, 2.0f);
+        pushOutsideSphere<<<grid, block>>>(devicePositions, deviceNormals, deviceDimensionality, testSphere);
         checkError(cudaGetLastError());
         CHECK(cudaDeviceSynchronize());
 
@@ -183,9 +185,10 @@ void createSphereMeshGPU(SphereMesh &sphereMesh, uint numberOfPoints, std::vecto
     // # 8. Copia da memoria device a memoria host (funziona così?)
     printf("Copia dati da device a host...\n");
     CHECK(cudaEventRecord(events[8]));
-    CHECK(cudaMemcpy(hostX, deviceX, pointsCoordBytes, cudaMemcpyDeviceToHost));
-    CHECK(cudaMemcpy(hostY, deviceY, pointsCoordBytes, cudaMemcpyDeviceToHost));
-    CHECK(cudaMemcpy(hostZ, deviceZ, pointsCoordBytes, cudaMemcpyDeviceToHost));
+
+    CHECK(cudaMemcpy(hostPositions, devicePositions, coordinatesBytes, cudaMemcpyDeviceToHost));
+    CHECK(cudaMemcpy(hostNormals, deviceNormals, coordinatesBytes, cudaMemcpyDeviceToHost));
+
     CHECK(cudaMemcpy(hostDimensionality, deviceDimensionality, dimensionalityBytes, cudaMemcpyDeviceToHost));
     CHECK(cudaEventRecord(events[9]));
     CHECK(cudaEventSynchronize(events[9]));
@@ -193,9 +196,10 @@ void createSphereMeshGPU(SphereMesh &sphereMesh, uint numberOfPoints, std::vecto
     printf("Copia dati da device a host TERMINATA in %f millisecondi\n", computeTime(events[8], events[9]));
 
     // # 9. Eliminazione memoria allocata sul device (memcpy è bloccante, sono sicuro che non mi serva più quando arrivo qui)
-    CHECK(cudaFree(deviceX));
-    CHECK(cudaFree(deviceY));
-    CHECK(cudaFree(deviceZ));
+
+    CHECK(cudaFree(devicePositions));
+        CHECK(cudaFree(deviceNormals));
+
     CHECK(cudaFree(deviceDimensionality));
 
     // # 10. Scarto dei punti che non sono stati spinti sulla superficie della sphere mesh (dimensionality != -1)
@@ -205,10 +209,7 @@ void createSphereMeshGPU(SphereMesh &sphereMesh, uint numberOfPoints, std::vecto
     {
         if (hostDimensionality[i] != -1)
             continue;
-        outPoints.emplace_back(
-            hostX[i],
-            hostY[i],
-            hostZ[i]);
+        outPoints.emplace_back(hostPositions[i], hostNormals[i], -1);
     }
 
     printf("Sono stati ottenuti %zu punti sui %zu richiesti\n", outPoints.size(), numberOfPoints);
@@ -218,10 +219,9 @@ void createSphereMeshGPU(SphereMesh &sphereMesh, uint numberOfPoints, std::vecto
     // # per questo punto servirà refactoring profondo del ciclo do/while che andrà inserito in una funzione dedicata (con anche allocazione e distruzione memoria)
 
     // # 12. Eliminazione memoria allocata su host
-    delete hostX;
-    delete hostY;
-    delete hostZ;
-    delete hostDimensionality;
+    delete[] hostPositions;
+    delete[] hostNormals;
+    delete[] hostDimensionality;
 
     CHECK(cudaEventRecord(events[10], 0));
     CHECK(cudaEventSynchronize(events[10]));
