@@ -17,7 +17,6 @@
 #include <rendering/shader.h>
 #include <rendering/camera.h>
 
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
@@ -84,6 +83,10 @@ int boundingSpherePointsNumber = pointsNumber;
 
 Camera camera;
 
+std::vector<uint> subroutineIdxs;
+int activeSubroutineCount = 0;
+glm::mat4 modelMatrix = glm::mat4(1.0f);
+glm::mat3 normalMatrix = glm::mat4(1.0f);
 
 int main(int argc, char *argv[])
 {
@@ -102,7 +105,7 @@ int main(int argc, char *argv[])
     }
 
     // Sphere mesh loading
-    std::string smToLoad = argc > 1 ? argv[1] : "default.sm";
+    std::string smToLoad = argc > 1 ? argv[1] : "caps.sm";
     string readErrorMsg;
     bool read = readFromFile("assets/spheremeshes/" + smToLoad, sm, readErrorMsg);
     if (!read)
@@ -113,7 +116,7 @@ int main(int argc, char *argv[])
     cout << "Sphere mesh:\n"
          << sm << endl;
 
-    //CUDA
+    // CUDA
     std::vector<DimensionalityPoint> points;
     createSphereMeshGPU(sm, pointsNumber, points);
 
@@ -124,11 +127,11 @@ int main(int argc, char *argv[])
     RenderablePointCloud rpc = RenderablePointCloud(pc_ptr);
 
     // Sphere mesh's bounding sphere rendering setup
-/*     SphereMesh boundingSphereFakeSm;
-    PointCloud boundingSphereFakePc = PointCloud();
-    boundingSphereFakePc.repopulate(boundingSpherePointsNumber, sm);
-    std::shared_ptr<PointCloud> boundingSphereFakePc_ptr = std::make_shared<PointCloud>(boundingSphereFakePc);
-    RenderablePointCloud boundingSphereFakeRpc = RenderablePointCloud(boundingSphereFakePc_ptr); */
+    /*     SphereMesh boundingSphereFakeSm;
+        PointCloud boundingSphereFakePc = PointCloud();
+        boundingSphereFakePc.repopulate(boundingSpherePointsNumber, sm);
+        std::shared_ptr<PointCloud> boundingSphereFakePc_ptr = std::make_shared<PointCloud>(boundingSphereFakePc);
+        RenderablePointCloud boundingSphereFakeRpc = RenderablePointCloud(boundingSphereFakePc_ptr); */
 
     // Shader setup
     Shader shader("assets/shaders/default.vert", "assets/shaders/default.frag");
@@ -152,15 +155,10 @@ int main(int argc, char *argv[])
     shader.Use();
     glm::mat4 viewMatrix = camera.getViewMatrix();
     glm::mat4 projectionwMatrix = camera.getProjectionMatrix();
-    glm::mat4 modelMatrix = glm::mat4(1.0f);
     glUniformMatrix4fv(glGetUniformLocation(shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
     glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionwMatrix));
-    glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
-    glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix) * glm::mat3(modelMatrix)));
+    normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix) * glm::mat3(modelMatrix)));
     glUniformMatrix3fv(glGetUniformLocation(shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
-
-    std::vector<uint> subroutineIdxs;
-    int activeSubroutineCount = 0;
 
     subroutineIdxs.push_back(glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "shadingColoring"));
     subroutineIdxs.push_back(glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "flatColoring"));
@@ -168,7 +166,7 @@ int main(int argc, char *argv[])
     subroutineIdxs.push_back(glGetSubroutineIndex(shader.Program, GL_FRAGMENT_SHADER, "diffuseColoring"));
 
     glGetProgramStageiv(shader.Program, GL_FRAGMENT_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &activeSubroutineCount);
-    glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &subroutineIdxs.at(0));
+    glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &subroutineIdxs.at(2));
 
     while (!glfwWindowShouldClose(window))
     {
@@ -187,7 +185,9 @@ int main(int argc, char *argv[])
         glEnable(GL_DEPTH_TEST);
 
         glClearColor(backgroundColor.x, backgroundColor.y, backgroundColor.z, 1.0f);
-
+        glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+        normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix) * glm::mat3(modelMatrix)));
+        glUniformMatrix3fv(glGetUniformLocation(shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
         rpc.draw();
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -237,7 +237,23 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 // If one of the WASD keys is pressed, the camera is moved accordingly (the code is in utils/camera.h)
 void apply_key_commands()
 {
-    /* if (keys[GLFW_KEY_R])
+    if (keys[GLFW_KEY_0])
+    {
+        glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &subroutineIdxs.at(0));
+    }
+    if (keys[GLFW_KEY_1])
+    {
+        glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &subroutineIdxs.at(1));
+    }
+    if (keys[GLFW_KEY_2])
+    {
+        glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &subroutineIdxs.at(2));
+    }
+    if (keys[GLFW_KEY_3])
+    {
+        glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &subroutineIdxs.at(3));
+    }
+    if (keys[GLFW_KEY_R])
     {
         modelMatrix = glm::mat4(1.0f);
         return;
@@ -275,7 +291,7 @@ void apply_key_commands()
     {
         camera.translate(glm::vec3(0.0f, 0.0f, 0.5f * deltaTime));
         return;
-    } */
+    }
 }
 
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
