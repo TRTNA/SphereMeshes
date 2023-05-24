@@ -87,7 +87,7 @@ __global__ void pushOutsideSphere(glm::vec3 *positions, glm::vec3 *normals, int 
 
 
 
-__device__ void pushOutsideCapsuloid(int tid, glm::vec3 *positions, glm::vec3 *normals, int *dimensionalities, Sphere A, Sphere B, float factor, glm::vec3 BminusA)
+__device__ void pushOutsideCapsuloid(int tid, glm::vec3 *positions, glm::vec3 *normals, int *dimensionalities, Sphere& A, Sphere& B, float factor, glm::vec3& BminusA)
 {
     vec3 pos = positions[tid];
 
