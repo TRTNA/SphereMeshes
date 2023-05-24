@@ -219,10 +219,8 @@ void createSphereMeshGPU(SphereMesh &sphereMesh, uint numberOfPoints, std::vecto
     glm::vec3 *hostPositions = (glm::vec3 *)malloc(coordinatesBytes);
     glm::vec3 *hostNormals = (glm::vec3 *)malloc(coordinatesBytes);
 
-    int *lastDimensionalities = (int *)malloc(numberOfPoints * sizeof(int));
     int *tempDimensionalities = (int *)malloc(dimensionalityBytes);
 
-    memset(lastDimensionalities, -1, numberOfPoints * sizeof(int));
     memset(tempDimensionalities, -1, numberOfPoints * sizeof(int));
 
     CHECK(cudaEventRecord(events[1], 0));
@@ -375,7 +373,6 @@ void createSphereMeshGPU(SphereMesh &sphereMesh, uint numberOfPoints, std::vecto
     delete[] hostPositions;
     delete[] hostNormals;
     delete[] tempDimensionalities;
-    delete[] lastDimensionalities;
 
     CHECK(cudaEventRecord(events[10], 0));
     CHECK(cudaEventSynchronize(events[10]));
