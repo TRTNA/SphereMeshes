@@ -116,6 +116,11 @@ int main(int argc, char *argv[])
     cout << "Sphere mesh:\n"
          << sm << endl;
 
+    if (argc > 2)
+    {
+        pointsNumber = (uint)atoi(argv[2]);
+    }
+
     // CUDA
     std::vector<DimensionalityPoint> points;
     createSphereMeshGPU(sm, pointsNumber, points);

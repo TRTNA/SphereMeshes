@@ -11,7 +11,9 @@ void PointCloud::addPoint(const SphereMesh & sphereMesh)
     int dimensionality = -1;
     glm::vec3 pos;
     Point point;
-    while (true) {
+    static const uint maxTries = 5U;
+    uint tries = 0U;
+    while (tries++ < maxTries) {
         pos = getRandomPositionInSphere(sphereMesh.boundingSphere);
         point = sphereMesh.pushOutside(pos, dimensionality);
         //point is inside the sphere mesh and has been pushed on its surface

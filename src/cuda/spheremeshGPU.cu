@@ -15,6 +15,8 @@
 
 #include <array>
 
+#include <curand_kernel.h>
+
 using glm::vec3;
 using std::array;
 
@@ -53,14 +55,32 @@ void checkError(cudaError error)
 
 __global__ void checkDimensionality(int *dimensionalities)
 {
-    const int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    const long tid = blockDim.x * blockIdx.x + threadIdx.x;
     if (dimensionalities[tid] == -1)
         dimensionalities[tid] = -2;
 }
 
-__global__ void pushOutsideSphere(glm::vec3 *positions, glm::vec3 *normals, int *dimensionalities, Sphere sphere)
+__global__ void generateRandomPointsInsideSphere(vec3 sphereCenter, float sphereRadius, glm::vec3 *pointsPositions, curandState_t *states, uint pointsNumber)
 {
-    const int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    const long tid = threadIdx.x + blockDim.x * blockIdx.x;
+    if (tid >= pointsNumber) return;
+    curand_init(tid, 0, 0, &states[tid]);
+
+    // random 3D direction
+    // NOTE: 2 *n - 1 shifts the interval from 0, 1 to -1, 1
+    vec3 direction = glm::normalize(vec3(2.f*curand_uniform(&states[tid]) - 1.f, 2.f*curand_uniform(&states[tid]) - 1.f, 2.f*curand_uniform(&states[tid]) - 1.f));
+
+    // curand_uniform return number in (0,1], multiplied by radius return a value in (0, radius] so inside the sphere
+    float extent = curand_uniform(&states[tid]) * sphereRadius;
+
+    pointsPositions[tid] = vec3(sphereCenter + direction * extent);
+}
+
+__global__ void pushOutsideSphere(glm::vec3 *positions, glm::vec3 *normals, int *dimensionalities, Sphere sphere, uint pointsNumber)
+{
+    const long tid = blockDim.x * blockIdx.x + threadIdx.x;
+    if (tid >= pointsNumber) return;
+
     int dimensionality = dimensionalities[tid];
 
     if (dimensionality == -2)
@@ -85,9 +105,7 @@ __global__ void pushOutsideSphere(glm::vec3 *positions, glm::vec3 *normals, int 
     normals[tid] = CtoPos;
 }
 
-
-
-__device__ void pushOutsideCapsuloid(int tid, glm::vec3 *positions, glm::vec3 *normals, int *dimensionalities, Sphere& A, Sphere& B, float factor, glm::vec3& BminusA)
+__device__ void pushOutsideCapsuloid(int tid, glm::vec3 *positions, glm::vec3 *normals, int *dimensionalities, Sphere &A, Sphere &B, float factor, glm::vec3 &BminusA)
 {
     vec3 pos = positions[tid];
 
@@ -127,18 +145,25 @@ __device__ void pushOutsideCapsuloid(int tid, glm::vec3 *positions, glm::vec3 *n
     normals[tid] = normal;
 }
 
-__global__ void pushOutsideCapsuloidKernel(glm::vec3 *positions, glm::vec3 *normals, int *dimensionalities, Sphere A, Sphere B, float factor, glm::vec3 BminusA)
+__global__ void pushOutsideCapsuloidKernel(glm::vec3 *positions, glm::vec3 *normals, int *dimensionalities, Sphere A, Sphere B, float factor, glm::vec3 BminusA, uint pointsNumber)
 {
-    const int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    const long tid = blockDim.x * blockIdx.x + threadIdx.x;
+    if (tid >= pointsNumber) return;
+
     int dimensionality = dimensionalities[tid];
+
     if (dimensionality == -2)
         return;
+
     pushOutsideCapsuloid(tid, positions, normals, dimensionalities, A, B, factor, BminusA);
 }
 
-__global__ void pushOutsideSphereTriangle(glm::vec3 *positions, glm::vec3 *normals, int *dimensionalities, Sphere s0, Sphere s1, Sphere s2, glm::mat4 upperProjMatrix, glm::mat4 lowerProjMatrix, glm::vec3 planeN)
+__global__ void pushOutsideSphereTriangle(glm::vec3 *positions, glm::vec3 *normals, int *dimensionalities, Sphere s0, Sphere s1, Sphere s2, glm::mat4 upperProjMatrix, glm::mat4 lowerProjMatrix, glm::vec3 planeN, uint pointsNumber)
 {
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const long tid = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if(tid >= pointsNumber) return;
+
     int dimensionality = dimensionalities[tid];
     if (dimensionality == -2)
         return;
@@ -208,7 +233,6 @@ void createSphereMeshGPU(SphereMesh &sphereMesh, uint numberOfPoints, std::vecto
     {
         CHECK(cudaEventCreate(&event));
     }
-    numberOfPoints *= 10;
 
     // # 1. Inizializzazione memoria host
     CHECK(cudaEventRecord(events[0], 0));
@@ -221,26 +245,17 @@ void createSphereMeshGPU(SphereMesh &sphereMesh, uint numberOfPoints, std::vecto
 
     int *tempDimensionalities = (int *)malloc(dimensionalityBytes);
 
-    memset(tempDimensionalities, -1, numberOfPoints * sizeof(int));
+    curandState *devStates;
+    cudaMalloc((void **)&devStates, numberOfPoints * sizeof(curandState));
 
     CHECK(cudaEventRecord(events[1], 0));
     // wait until the stop event completes
     CHECK(cudaEventSynchronize(events[1]));
     printf("Allocati %lu bytes in memoria host in %f millisecondi...\n", coordinatesBytes + dimensionalityBytes, computeTime(events[0], events[1]));
 
-    // # 2. TODO inizializzare i punti con valori random dentro la bounding sphere della sphere mesh
-    // # on GPU?
-    float bsRadius = sphereMesh.boundingSphere.radius;
-    glm::vec3 bseCenter = sphereMesh.boundingSphere.center;
-    for (size_t i = 0; i < numberOfPoints; i++)
-    {
-        hostPositions[i].x = generateFloat(bseCenter.x - bsRadius, bseCenter.x + bsRadius);
-        hostPositions[i].y = generateFloat(bseCenter.y - bsRadius, bseCenter.y + bsRadius);
-        hostPositions[i].z = generateFloat(bseCenter.z - bsRadius, bseCenter.z + bsRadius);
-    }
-
-    // # 3. Inizializzazione memoria device
+    // # 2. Inizializzazione memoria device
     printf("Inizializzazione memoria device...\n");
+
     int *deviceDimensionalities;
     glm::vec3 *devicePositions, *deviceNormals;
     CHECK(cudaEventRecord(events[2]));
@@ -249,74 +264,68 @@ void createSphereMeshGPU(SphereMesh &sphereMesh, uint numberOfPoints, std::vecto
     CHECK(cudaMalloc((void **)&deviceNormals, coordinatesBytes));
 
     CHECK(cudaMalloc((void **)&deviceDimensionalities, dimensionalityBytes));
+    CHECK(cudaMemset(deviceDimensionalities, -1, numberOfPoints * sizeof(int)));
 
     CHECK(cudaEventRecord(events[3]));
     CHECK(cudaEventSynchronize(events[3]));
 
     printf("Allocati %lu bytes in memoria device in %f millisecondi...\n", coordinatesBytes + dimensionalityBytes, computeTime(events[2], events[3]));
 
-    // # 4. Copia da memoria host a memoria device
-    printf("Copia dati da host a device...\n");
-    CHECK(cudaEventRecord(events[4]));
+    // # 3. creazione punti random dentro la bounding sphere della sphere mesh
 
-    CHECK(cudaMemcpy(devicePositions, hostPositions, coordinatesBytes, cudaMemcpyHostToDevice));
-    CHECK(cudaMemcpy(deviceNormals, hostNormals, coordinatesBytes, cudaMemcpyHostToDevice));
-
-    CHECK(cudaMemcpy(deviceDimensionalities, tempDimensionalities, dimensionalityBytes, cudaMemcpyHostToDevice));
-
-    CHECK(cudaEventRecord(events[5]));
-    CHECK(cudaEventSynchronize(events[5]));
-
-    printf("Copia dati da host a device TERMINATA in %f millisecondi\n", computeTime(events[4], events[5]));
-
-    // # 6. Creazione contesto loop
-    const uint maxTries = 1U;
-
-    CHECK(cudaEventRecord(events[6]));
-
+    printf("Generazione posizioni random su GPU...\n");
     int blockSize = 1024;
     dim3 grid((numberOfPoints / blockSize) + 1);
     dim3 block(blockSize);
 
-    // # 7. Loop di creazione dei punti
+    float bsRadius = sphereMesh.boundingSphere.radius;
+    vec3 bsCenter = sphereMesh.boundingSphere.center;
+
+    CHECK(cudaEventRecord(events[4]));
+    generateRandomPointsInsideSphere<<<grid, block>>>(bsCenter, bsRadius, devicePositions, devStates, numberOfPoints);
+    CHECK(cudaDeviceSynchronize());
+    checkError(cudaGetLastError());
+    CHECK(cudaEventRecord(events[5]));
+    CHECK(cudaEventSynchronize(events[5]));
+    printf("Generate %u posizioni in memoria device in %f millisecondi...\n", numberOfPoints, computeTime(events[4], events[5]));
+
+    // # 4. Creazione contesto loop
+    const uint maxTries = 1U;
+
+    CHECK(cudaEventRecord(events[6]));
+
+    const uint singletonStart = 0;
+    const uint edgeStart = singletonStart + sphereMesh.singletons.size();
+    const uint triangleStart = edgeStart + sphereMesh.capsuloids.size();
+    const uint maxUniqueIdx = triangleStart + sphereMesh.sphereTriangles.size();
+
+    // # 5. Loop di creazione dei punti
     for (uint tries = 0; tries < maxTries; tries++)
     {
         printf("Tentativo %u...", tries);
-        // # 7.1 TODO Chiamata al kernel di push outside
-        // # pushOutside<<<grid, block>>>(devicePoints, numberOfPoints);
-
-        // # 7.2 Sincronizzazione sul lavoro del kernel pushOutside
+        // # 5.2 Sincronizzazione sul lavoro del kernel pushOutside
         printf("Attesa terminazione kernel...\n");
-
-        // pushOutsideCapsuloid<<<grid, block>>>(devicePositions, deviceNormals, deviceDimensionalities, testSphere, testSphere2, caps.factor, caps.S0toS1);
-        //  pushOutsideSphere<<<grid, block>>>(devicePositions, deviceNormals, deviceDimensionalities, testSphere);
-        uint singletonStart = 0;
-        uint edgeStart = singletonStart + sphereMesh.singletons.size();
-        uint triangleStart = edgeStart + sphereMesh.capsuloids.size();
-        uint maxUniqueIdx = triangleStart + sphereMesh.sphereTriangles.size();
 
         // Primitives loop
         for (size_t uniqueIdx = 0; uniqueIdx < maxUniqueIdx; uniqueIdx++)
         {
             if (uniqueIdx >= singletonStart && uniqueIdx < edgeStart)
             {
-                pushOutsideSphere<<<grid, block>>>(devicePositions, deviceNormals, deviceDimensionalities, sphereMesh.spheres.at(sphereMesh.singletons.at(uniqueIdx)));
+                pushOutsideSphere<<<grid, block>>>(devicePositions, deviceNormals, deviceDimensionalities, sphereMesh.spheres.at(sphereMesh.singletons.at(uniqueIdx)), numberOfPoints);
             }
             else if (uniqueIdx >= edgeStart && uniqueIdx < triangleStart)
             {
                 Capsuloid &caps = sphereMesh.capsuloids.at(uniqueIdx - edgeStart);
 
-                pushOutsideCapsuloidKernel<<<grid, block>>>(devicePositions, deviceNormals, deviceDimensionalities, sphereMesh.spheres.at(caps.s0), sphereMesh.spheres.at(caps.s1), caps.factor, caps.S0toS1);
+                pushOutsideCapsuloidKernel<<<grid, block>>>(devicePositions, deviceNormals, deviceDimensionalities, sphereMesh.spheres.at(caps.s0), sphereMesh.spheres.at(caps.s1), caps.factor, caps.S0toS1, numberOfPoints);
             }
             else if (uniqueIdx >= triangleStart)
             {
                 SphereTriangle &st = sphereMesh.sphereTriangles.at(uniqueIdx - triangleStart);
-                pushOutsideSphereTriangle<<<grid, block>>>(devicePositions, deviceNormals, deviceDimensionalities, sphereMesh.spheres.at(st.vertices[0]), sphereMesh.spheres.at(st.vertices[1]), sphereMesh.spheres.at(st.vertices[2]), st.upperProjMatrix, st.lowerProjMatrix, st.planeN);
+                pushOutsideSphereTriangle<<<grid, block>>>(devicePositions, deviceNormals, deviceDimensionalities, sphereMesh.spheres.at(st.vertices[0]), sphereMesh.spheres.at(st.vertices[1]), sphereMesh.spheres.at(st.vertices[2]), st.upperProjMatrix, st.lowerProjMatrix, st.planeN, numberOfPoints);
             }
-            checkError(cudaGetLastError());
             CHECK(cudaDeviceSynchronize());
-            // # 7.3 TODO Chiamata al kernel che controlla se sono tutte negative le dimensionality
-            printf("Controllo dimensionalita' punti...\n");
+            checkError(cudaGetLastError());
         }
 
         if (tries == 0)
@@ -324,6 +333,8 @@ void createSphereMeshGPU(SphereMesh &sphereMesh, uint numberOfPoints, std::vecto
             // è il primo tentativo, se un punto è rimasto a -1 allora è esterno, va scartato
             //  chiamata a kernel che setta i punti a -1 su -2 (verrano ignorati negli altri kernel)
             checkDimensionality<<<grid, block>>>(deviceDimensionalities);
+            CHECK(cudaDeviceSynchronize());
+            checkError(cudaGetLastError());
         }
     }
 
@@ -333,27 +344,26 @@ void createSphereMeshGPU(SphereMesh &sphereMesh, uint numberOfPoints, std::vecto
 
     printf("Creazione punti TERMINATA in %f millisecondi\n", computeTime(events[6], events[7]));
 
-    // # 8. Copia da memoria device a memoria host (funziona così?)
+    // # 6. Copia da memoria device a memoria host (funziona così?)
     printf("Copia dati da device a host...\n");
     CHECK(cudaEventRecord(events[8]));
 
     CHECK(cudaMemcpy(hostPositions, devicePositions, coordinatesBytes, cudaMemcpyDeviceToHost));
     CHECK(cudaMemcpy(hostNormals, deviceNormals, coordinatesBytes, cudaMemcpyDeviceToHost));
-
     CHECK(cudaMemcpy(tempDimensionalities, deviceDimensionalities, dimensionalityBytes, cudaMemcpyDeviceToHost));
     CHECK(cudaEventRecord(events[9]));
     CHECK(cudaEventSynchronize(events[9]));
 
     printf("Copia dati da device a host TERMINATA in %f millisecondi\n", computeTime(events[8], events[9]));
 
-    // # 9. Eliminazione memoria allocata sul device (memcpy è bloccante, sono sicuro che non mi serva più quando arrivo qui)
+    // # 7. Eliminazione memoria allocata sul device (memcpy è bloccante, sono sicuro che non mi serva più quando arrivo qui)
 
     CHECK(cudaFree(devicePositions));
     CHECK(cudaFree(deviceNormals));
-
+    CHECK(cudaFree(devStates));
     CHECK(cudaFree(deviceDimensionalities));
 
-    // # 10. Scarto dei punti che non sono stati spinti sulla superficie della sphere mesh (dimensionality != -1)
+    // # 8. Scarto dei punti che non sono stati spinti sulla superficie della sphere mesh (dimensionality != -1)
     // # ovvero punti esterni alla sphere mesh o interni che non sono stati spinti fuori
     outPoints.clear();
     for (size_t i = 0; i < numberOfPoints; i++)
@@ -365,11 +375,11 @@ void createSphereMeshGPU(SphereMesh &sphereMesh, uint numberOfPoints, std::vecto
 
     printf("Sono stati ottenuti %zu punti sui %zu richiesti\n", outPoints.size(), numberOfPoints);
 
-    // # 11. TODO: Controllo di essere arrivato al numero di punti desiderato
+    // # 9. TODO: Controllo di essere arrivato al numero di punti desiderato
     // # se non ci sono arrivato, riavvio creazione punti con un certo numero da definire (metà? Tenendo conto del numero di punti scartati?)
     // # per questo punto servirà refactoring profondo del ciclo do/while che andrà inserito in una funzione dedicata (con anche allocazione e distruzione memoria)
 
-    // # 12. Eliminazione memoria allocata su host
+    // # 10. Eliminazione memoria allocata su host
     delete[] hostPositions;
     delete[] hostNormals;
     delete[] tempDimensionalities;
