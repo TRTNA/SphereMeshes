@@ -23,7 +23,7 @@ typedef unsigned int uint;
     BEWARE: features must updated when data about the spheres are available
 */
 struct SphereTriangle {
-    std::array<uint, 3> vertices;
+    uint s0, s1, s2;
     glm::vec3 S0S1, S0S2;
     glm::mat3 upperProjMatrix;
     glm::mat3 lowerProjMatrix;

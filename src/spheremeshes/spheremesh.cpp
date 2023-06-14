@@ -25,6 +25,7 @@ using std::stringstream;
 using std::vector;
 
 
+
 SphereMesh::SphereMesh(vector<Sphere> &pSpheres, vector<Capsuloid> &pCapsuloids, vector<SphereTriangle> &pSphereTriangles, vector<uint> &pSingletons)
     : spheres(std::move(pSpheres)), capsuloids(std::move(pCapsuloids)), sphereTriangles(std::move(pSphereTriangles)), singletons(std::move(pSingletons))
 {
@@ -51,7 +52,7 @@ void SphereMesh::addCapsuloid(Capsuloid caps)
 
 void SphereMesh::addSphereTriangle(SphereTriangle st)
 {
-    updateSphereTriangleFeatures(st, spheres.at(st.vertices[0]), spheres.at(st.vertices[1]), spheres.at(st.vertices[2]));
+    updateSphereTriangleFeatures(st, spheres.at(st.s0), spheres.at(st.s1), spheres.at(st.s2));
     sphereTriangles.push_back(st);
 }
 
@@ -227,9 +228,9 @@ Point SphereMesh::pushOutsideOneSingleton(const Sphere &sphere, const vec3 &pos,
 
 Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const vec3 &pos, int &dimensionality) const
 {
-    const Sphere &s0 = spheres.at(tri.vertices[0]);
-    const Sphere &s1 = spheres.at(tri.vertices[1]);
-    const Sphere &s2 = spheres.at(tri.vertices[2]);
+    const Sphere &s0 = spheres.at(tri.s0);
+    const Sphere &s1 = spheres.at(tri.s1);
+    const Sphere &s2 = spheres.at(tri.s2);
 
 
     const vec3 q = pos - s0.center;
@@ -239,21 +240,21 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
     if (b < 0.0f)
     {
         // PUSH OUTSIDE CAPSULE V0V1
-        Capsuloid &tempCapsule = Capsuloid(tri.vertices[0], tri.vertices[1]);
+        Capsuloid &tempCapsule = Capsuloid(tri.s0, tri.s1);
         updateCapsuloidFeatures(tempCapsule, s0, s1);
         return pushOutsideOneCapsule(tempCapsule, pos, dimensionality);
     }
     if (c < 0.0f)
     {
         // PUSH OUTSIDE CAPSULE V1V2
-        Capsuloid &tempCapsule = Capsuloid(tri.vertices[1], tri.vertices[2]);
+        Capsuloid &tempCapsule = Capsuloid(tri.s1, tri.s2);
         updateCapsuloidFeatures(tempCapsule, s1, s2);
         return pushOutsideOneCapsule(tempCapsule, pos, dimensionality);
     }
     if (a < 0.0f)
     {
         // PUSH OUTSIDE CAPSULE V0V2
-        Capsuloid &tempCapsule = Capsuloid(tri.vertices[0], tri.vertices[2]);
+        Capsuloid &tempCapsule = Capsuloid(tri.s0, tri.s2);
         updateCapsuloidFeatures(tempCapsule, s0, s2);
         return pushOutsideOneCapsule(tempCapsule, pos, dimensionality);
     }
@@ -297,7 +298,7 @@ void SphereMesh::updateAllSphereTriangleFeatures()
 {
     for (SphereTriangle &st : sphereTriangles)
     {
-        updateSphereTriangleFeatures(st, spheres.at(st.vertices[0]), spheres.at(st.vertices[1]), spheres.at(st.vertices[2]));
+        updateSphereTriangleFeatures(st, spheres.at(st.s0), spheres.at(st.s1), spheres.at(st.s2));
     }
 }
 
