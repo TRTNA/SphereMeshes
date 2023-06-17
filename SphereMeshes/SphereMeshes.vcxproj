@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{a2ff6414-8e40-4661-9bcb-00d44d7e5d5c}</ProjectGuid>
+    <RootNamespace>SphereMeshes</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
+    <SourcePath>$(SourcePath)</SourcePath>
+    <ExternalIncludePath>$(ExternalIncludePath)</ExternalIncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level1</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>C:\Users\taron\Desktop\SM-vs\SphereMeshes\imgui\include\imgui;C:\Users\taron\Desktop\SM-vs\SphereMeshes\glfw\include;C:\Users\taron\Desktop\SM-vs\SphereMeshes\include;C:\Users\taron\Desktop\SM-vs\SphereMeshes\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <SupportJustMyCode>false</SupportJustMyCode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(ProjectDir)libs;C:\Users\taron\Desktop\SM-vs\SphereMeshes\imgui\lib;C:\Users\taron\Desktop\SM-vs\SphereMeshes\glfw\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(ProjectDir)imgui\lib\imgui.lib;$(ProjectDir)glfw\lib\glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="imgui\include\imgui\imgui_impl_glfw.h" />
+    <ClInclude Include="imgui\include\imgui\imgui_impl_opengl3.h" />
+    <ClInclude Include="imgui\include\imgui\imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="include\cloth\cloth.h" />
+    <ClInclude Include="include\glad\glad.h" />
+    <ClInclude Include="include\physics\constraint.h" />
+    <ClInclude Include="include\physics\constraints.h" />
+    <ClInclude Include="include\physics\particle.h" />
+    <ClInclude Include="include\physics\particle_equidistance_constraint.h" />
+    <ClInclude Include="include\physics\physicalobject.h" />
+    <ClInclude Include="include\physics\physicsconstants.h" />
+    <ClInclude Include="include\physics\physicsengine.h" />
+    <ClInclude Include="include\physics\physics_spheremesh.h" />
+    <ClInclude Include="include\physics\plane_constraint.h" />
+    <ClInclude Include="include\physics\spheremesh_constraint.h" />
+    <ClInclude Include="include\rendering\camera.h" />
+    <ClInclude Include="include\rendering\iglrenderable.h" />
+    <ClInclude Include="include\rendering\light.h" />
+    <ClInclude Include="include\rendering\material.h" />
+    <ClInclude Include="include\rendering\renderablecloth.h" />
+    <ClInclude Include="include\rendering\renderablepointcloud.h" />
+    <ClInclude Include="include\rendering\renderer.h" />
+    <ClInclude Include="include\rendering\scene.h" />
+    <ClInclude Include="include\rendering\shader.h" />
+    <ClInclude Include="include\spheremeshes\capsuloid.h" />
+    <ClInclude Include="include\spheremeshes\point.h" />
+    <ClInclude Include="include\spheremeshes\sphere.h" />
+    <ClInclude Include="include\spheremeshes\spheremesh.h" />
+    <ClInclude Include="include\spheremeshes\spheretriangle.h" />
+    <ClInclude Include="include\utils\aabb.h" />
+    <ClInclude Include="include\utils\common.h" />
+    <ClInclude Include="include\utils\plane.h" />
+    <ClInclude Include="include\utils\pointcloud.h" />
+    <ClInclude Include="include\utils\random.h" />
+    <ClInclude Include="include\utils\ray.h" />
+    <ClInclude Include="include\utils\time.h" />
+    <ClInclude Include="include\utils\types.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="imgui\include\imgui\imgui_impl_glfw.cpp" />
+    <ClCompile Include="imgui\include\imgui\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="include\glad\glad.c" />
+    <ClCompile Include="src\cloth\cloth.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\physics\particle.cpp" />
+    <ClCompile Include="src\physics\particle_equidistance_constraint.cpp" />
+    <ClCompile Include="src\physics\physicsengine.cpp" />
+    <ClCompile Include="src\physics\physics_spheremesh.cpp" />
+    <ClCompile Include="src\physics\plane_constraint.cpp" />
+    <ClCompile Include="src\physics\spheremesh_constraint.cpp" />
+    <ClCompile Include="src\rendering\camera.cpp" />
+    <ClCompile Include="src\rendering\light.cpp" />
+    <ClCompile Include="src\rendering\material.cpp" />
+    <ClCompile Include="src\rendering\renderablecloth.cpp" />
+    <ClCompile Include="src\rendering\renderablepointcloud.cpp" />
+    <ClCompile Include="src\rendering\renderer.cpp" />
+    <ClCompile Include="src\rendering\scene.cpp" />
+    <ClCompile Include="src\rendering\shader.cpp" />
+    <ClCompile Include="src\spheremeshes\capsuloid.cpp" />
+    <ClCompile Include="src\spheremeshes\point.cpp" />
+    <ClCompile Include="src\spheremeshes\sphere.cpp" />
+    <ClCompile Include="src\spheremeshes\spheremesh.cpp" />
+    <ClCompile Include="src\spheremeshes\spheremeshutils.cpp" />
+    <ClCompile Include="src\spheremeshes\spheretriangle.cpp" />
+    <ClCompile Include="src\utils\aabb.cpp" />
+    <ClCompile Include="src\utils\common.cpp" />
+    <ClCompile Include="src\utils\plane.cpp" />
+    <ClCompile Include="src\utils\pointcloud.cpp" />
+    <ClCompile Include="src\utils\random.cpp" />
+    <ClCompile Include="src\utils\ray.cpp" />
+    <ClCompile Include="src\utils\time.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="assets\shaders\capsule.vert" />
+    <None Include="assets\shaders\default.frag" />
+    <None Include="assets\shaders\default.vert" />
+    <None Include="assets\shaders\flat.frag" />
+    <None Include="assets\shaders\flat.vert" />
+    <None Include="assets\shaders\pointsplat.frag" />
+    <None Include="assets\spheremeshes\app.sm" />
+    <None Include="assets\spheremeshes\caps.sm" />
+    <None Include="assets\spheremeshes\complicated.sm" />
+    <None Include="assets\spheremeshes\default.sm" />
+    <None Include="assets\spheremeshes\sphere.sm" />
+    <None Include="assets\spheremeshes\tri.sm" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
