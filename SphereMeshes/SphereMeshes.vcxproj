@@ -184,6 +184,7 @@
     <ClCompile Include="src\physics\particle.cpp" />
     <ClCompile Include="src\physics\particle_equidistance_constraint.cpp" />
     <ClCompile Include="src\physics\physicsengine.cpp" />
+    <ClCompile Include="src\physics\physics_spheremesh.cpp" />
     <ClCompile Include="src\physics\plane_constraint.cpp" />
     <ClCompile Include="src\physics\spheremesh_constraint.cpp" />
     <ClCompile Include="src\rendering\camera.cpp" />

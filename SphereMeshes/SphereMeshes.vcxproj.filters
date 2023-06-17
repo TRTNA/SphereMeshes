@@ -143,9 +143,6 @@
     <ClCompile Include="src\physics\particle_equidistance_constraint.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
-    <ClCompile Include="src\physics\physics_spheremesh.cpp">
-      <Filter>File di origine</Filter>
-    </ClCompile>
     <ClCompile Include="src\physics\physicsengine.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
@@ -228,6 +225,9 @@
       <Filter>File di origine</Filter>
     </ClCompile>
     <ClCompile Include="imgui\include\imgui\imgui_impl_opengl3.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\physics_spheremesh.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
   </ItemGroup>
