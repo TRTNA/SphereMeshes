@@ -110,13 +110,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\taron\Desktop\SM-vs\SphereMeshes\imgui\include\imgui;C:\Users\taron\Desktop\SM-vs\SphereMeshes\glfw\include;C:\Users\taron\Desktop\SM-vs\SphereMeshes\include;C:\Users\taron\Desktop\SM-vs\SphereMeshes\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)imgui\include\imgui;$(ProjectDir)glfw\include;$(ProjectDir)include;$(ProjectDir)glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <SupportJustMyCode>false</SupportJustMyCode>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)libs;C:\Users\taron\Desktop\SM-vs\SphereMeshes\imgui\lib;C:\Users\taron\Desktop\SM-vs\SphereMeshes\glfw\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)libs;$(ProjectDir)imgui\lib;$(ProjectDir)glfw\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>$(ProjectDir)imgui\lib\imgui.lib;$(ProjectDir)glfw\lib\glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
