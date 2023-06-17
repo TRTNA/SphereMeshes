@@ -8,11 +8,11 @@
 
 void PointCloud::addPoint(const SphereMesh & sphereMesh)
 {
-    static const uint maxTries = 5;
     int dimensionality = -1;
     glm::vec3 pos;
     Point point;
-    uint tries = 0;
+    static const uint maxTries = 5U;
+    uint tries = 0U;
     while (tries++ < maxTries) {
         pos = getRandomPositionInSphere(sphereMesh.boundingSphere);
         point = sphereMesh.pushOutside(pos, dimensionality);
@@ -22,6 +22,7 @@ void PointCloud::addPoint(const SphereMesh & sphereMesh)
             return;
         }
     }
+  
 }
 
 unsigned int PointCloud::getPointsNumber() const {

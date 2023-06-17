@@ -12,8 +12,7 @@ Renderer::Renderer(Shader* shader) : shader(shader) {
     shader->Use();
 
     /////////FIXME: oscenità da sistemare ma per ora ho solo un tipo di shader
-    materialTypeToSubroutineIdx.emplace(MaterialType::BLINN_PHONG, glGetSubroutineIndex(shader->Program, GL_FRAGMENT_SHADER, "shadedColoring"));
-    materialTypeToSubroutineIdx.emplace(MaterialType::BLINN_PHONG_DOUBLE_FACE, glGetSubroutineIndex(shader->Program, GL_FRAGMENT_SHADER, "doubleSidedShadedColoring"));
+    materialTypeToSubroutineIdx.emplace(MaterialType::BLINN_PHONG, glGetSubroutineIndex(shader->Program, GL_FRAGMENT_SHADER, "shadingColoring"));
     materialTypeToSubroutineIdx.emplace(MaterialType::FLAT, glGetSubroutineIndex(shader->Program, GL_FRAGMENT_SHADER, "flatColoring"));
     materialTypeToSubroutineIdx.emplace(MaterialType::NORMAL, glGetSubroutineIndex(shader->Program, GL_FRAGMENT_SHADER, "normalColoring"));
     materialTypeToSubroutineIdx.emplace(MaterialType::DIMENSIONALITY, glGetSubroutineIndex(shader->Program, GL_FRAGMENT_SHADER, "diffuseColoring"));

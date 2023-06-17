@@ -5,7 +5,6 @@
 enum class MaterialType {
     FLAT,
     BLINN_PHONG,
-    BLINN_PHONG_DOUBLE_FACE,
     DIMENSIONALITY,
     NORMAL
 };

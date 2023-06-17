@@ -1,7 +1,5 @@
 #include <utils/common.h>
 
-#include <spheremeshes/sphere.h>
-
 using std::vector;
 using glm::vec3;
 using glm::vec4;
@@ -44,9 +42,4 @@ void triangulateSquareGrid(uint dim, std::vector<uint>& outIndices) {
 
 uint linearizedIndexSquareGrid(uint dim, uint x, uint y) {
     return x * dim + y;
-}
-
-
-float computeVolume(const Sphere& sphere) {
-    return 4.0f/3.0f * 3.1415926535f * sphere.radius;
 }

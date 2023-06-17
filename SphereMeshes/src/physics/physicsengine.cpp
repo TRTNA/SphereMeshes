@@ -1,7 +1,6 @@
 #include <physics/physicsengine.h>
 #include <cloth/cloth.h>
 #include <spheremeshes/point.h>
-#include <utils/plane.h>
 
 #include <utils/time.h>
 
@@ -51,6 +50,7 @@ void PhysicsEngine::timeStep()
         for (auto &obj : objects)
         {
             obj->enforceConstraints();
+            //FARE QUI PUSH OUTSIDE SPHEREMESH PUò ESSERE UN SINGLETON GLOBALE CONOSCIUTO DA TUTTI
         }
     }
     virtualTime += PHYSICS_TIME_STEP;
@@ -66,7 +66,7 @@ void PhysicsEngine::removeObject(PhysicalObject *objectPtr)
         objects.erase(newPastEnd, objects.end());
 }
 
-CollisionData PhysicsEngine::handleCollision(const Particle *particle, const SphereMesh *sm) const
+CollisionData PhysicsEngine::checkCollision(const Particle *particle, const SphereMesh *sm) const
 {
     int dimensionality = -1;
     Point point = sm->pushOutside(particle->getPos(), dimensionality);
@@ -79,8 +79,3 @@ CollisionData PhysicsEngine::handleCollision(const Particle *particle, const Sph
         return CollisionData();
     }
 }
-
-CollisionData PhysicsEngine::handleCollision(const SphereMesh* sphereMesh, const Plane* plane) const {
-    return CollisionData();
-}
-

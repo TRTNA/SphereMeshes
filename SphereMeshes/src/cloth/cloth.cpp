@@ -22,19 +22,19 @@ Cloth::Cloth(uint dim, float dist) : dim(dim), dimSqrd(dim * dim), dist(dist)
         vec3 startingPos = vec3((float)(i % dim) * dist, 0, (float)(i / dim) * dist);
         particles[i].setPos(startingPos);
         particles[i].setLastPos(startingPos);
-        particles[i].setMass(0.1f);
+        particles[i].setMass(1.0f);
     }
 
     bool mustConnectToRight, mustConnectToBottom;
     for (size_t x = 0; x < dim; x++)
     {
         // do not connect to bottom when last row
-        bool topBorder = x == dim - 1;
+        bool bottomBorder = x == dim - 1;
         for (size_t y = 0; y < dim; y++)
         {
             // do not connect to right when last col
             bool rightBorder = y == dim - 1;
-            if (!rightBorder && !topBorder)
+            if (!rightBorder && !bottomBorder)
             {
                 Particle *p1 =  &particles[linearizedIndexSquareGrid(dim, x, y)];
                 Particle *p1R = &particles[linearizedIndexSquareGrid(dim, x, y + 1)];
@@ -45,13 +45,13 @@ Cloth::Cloth(uint dim, float dist) : dim(dim), dimSqrd(dim * dim), dist(dist)
                 constraints.push_back(new ParticleEquidistanceConstraint(p1,  p1D, dist * glm::sqrt(2.0f)));
                 constraints.push_back(new ParticleEquidistanceConstraint(p1B, p1R, dist * glm::sqrt(2.0f)));
             }
-            else if (rightBorder && !topBorder)
+            else if (rightBorder && !bottomBorder)
             {
                 Particle *p1 = &particles[linearizedIndexSquareGrid(dim, x, y)];
                 Particle *p1B = &particles[linearizedIndexSquareGrid(dim, x + 1, y)];
                 constraints.push_back(new ParticleEquidistanceConstraint(p1, p1B, dist));
             }
-            else if (topBorder && !rightBorder)
+            else if (bottomBorder && !rightBorder)
             {
                 Particle *p1 = &particles[linearizedIndexSquareGrid(dim, x, y)];
                 Particle *p1R = &particles[linearizedIndexSquareGrid(dim, x, y + 1)];
@@ -59,15 +59,17 @@ Cloth::Cloth(uint dim, float dist) : dim(dim), dimSqrd(dim * dim), dist(dist)
             }
             else
             {
-                // bottom-right --> do nothing for now
+                // bottom-rigth --> do nothing for now
             }
         }
     }
     //Pinning
-/*     
-        particles[0].pin();
-        particles[dim - 1].pin();   */
-    
+    /*
+        particles[dimSqrd - dim].displace(glm::vec3(-0.3f, 0.3f, 0.0f));
+        particles[dimSqrd - dim].pin();
+        particles[dimSqrd - 1].displace(glm::vec3(0.3f, 0.3f, 0.0f));
+        particles[dimSqrd - 1].pin();  
+    */
 }
 Cloth::~Cloth()
 {

@@ -79,7 +79,7 @@ void RenderableCloth::updateNormals()
             Particle &p3 = particles[linearizedIndexSquareGrid(dim, i + 1, j)];
             Particle &p4 = particles[linearizedIndexSquareGrid(dim, i + 1, j + 1)];
             
-            glm::vec3 normal = glm::cross(p2.pos - p3.pos, p1.pos - p4.pos);
+            glm::vec3 normal = glm::cross(p4.pos - p1.pos, p2.pos - p3.pos);
             p1.normal += normal;
             p2.normal += normal;
             p3.normal += normal;

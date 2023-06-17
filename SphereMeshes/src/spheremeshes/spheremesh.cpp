@@ -24,6 +24,7 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
+
 SphereMesh::SphereMesh(vector<Sphere> &pSpheres, vector<Capsuloid> &pCapsuloids, vector<SphereTriangle> &pSphereTriangles, vector<uint> &pSingletons)
     : spheres(std::move(pSpheres)), capsuloids(std::move(pCapsuloids)), sphereTriangles(std::move(pSphereTriangles)), singletons(std::move(pSingletons))
 {
@@ -43,7 +44,7 @@ void SphereMesh::addSphere(Sphere sphere)
 }
 
 void SphereMesh::addCapsuloid(Capsuloid caps)
-{
+{   
     updateCapsuloidFeatures(caps, spheres.at(caps.s0), spheres.at(caps.s1));
     capsuloids.push_back(caps);
 }
@@ -63,7 +64,6 @@ void SphereMesh::updateBoundingSphere()
 {
     boundingSphere = computeBoundingSphere(spheres);
 }
-
 
 void SphereMesh::scale(float k)
 {
@@ -161,8 +161,7 @@ Point SphereMesh::pushOutside(const vec3 &pos, int &dimensionality) const
         tries++;
         outsideEverything = tempDimensionality == -1;
     }
-    if (tries == maxPushOutsideTries)
-    {
+    if (tries == maxPushOutsideTries) {
         dimensionality = -1;
         return lastPoint;
     }
@@ -175,7 +174,7 @@ Point SphereMesh::pushOutsideOneCapsule(const Capsuloid &caps, const vec3 &pos, 
     const Sphere &A = spheres.at(caps.s0);
     const Sphere &B = spheres.at(caps.s1);
 
-    const vec3 &BminusA = caps.S0toS1;
+    const vec3& BminusA = caps.S0toS1;
     float k = glm::dot(pos - A.center, BminusA) / caps.sqrdL;
     vec3 fakeC = A.center + k * BminusA;
     float d = length(fakeC - pos);
@@ -232,10 +231,11 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
     const Sphere &s1 = spheres.at(tri.vertices[1]);
     const Sphere &s2 = spheres.at(tri.vertices[2]);
 
+
     const vec3 q = pos - s0.center;
     float d, a, b, c;
     toSphereTriangleReferenceSystem(tri, q, a, b, c, d);
-
+    
     if (b < 0.0f)
     {
         // PUSH OUTSIDE CAPSULE V0V1
@@ -257,14 +257,14 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
         updateCapsuloidFeatures(tempCapsule, s0, s2);
         return pushOutsideOneCapsule(tempCapsule, pos, dimensionality);
     }
-    // FIXME: già controllato e nessuno sarà minore di zero, si potrebbe controllare solo che siano minori di 1.0 incluso e risparmiare tre confronti
-    // PUSH OUTSIDE TRIANGLE
-    if (isInRangeIncl(a, 0.0f, 1.0f) && isInRangeIncl(b, 0.0f, 1.0f) && isInRangeIncl(c, 0.0f, 1.0f))
+    //FIXME: già controllato e nessuno sarà minore di zero, si potrebbe controllare solo che siano minori di 1.0 incluso e risparmiare tre confronti
+    //PUSH OUTSIDE TRIANGLE
+    if(isInRangeIncl(a, 0.0f, 1.0f) && isInRangeIncl(b, 0.0f, 1.0f) && isInRangeIncl(c, 0.0f, 1.0f))
     {
         vec3 C = c * s0.center + a * s1.center + b * s2.center;
         float interpRadius = c * s0.radius + a * s1.radius + b * s2.radius;
         vec3 CtoPos = pos - C;
-        // float distPosC = glm::length(CtoPos);
+        //float distPosC = glm::length(CtoPos);
         if (d > interpRadius - EPSILON)
         {
             return pointOutsideSphereMesh(pos, dimensionality);
@@ -277,10 +277,11 @@ Point SphereMesh::pushOutsideOneSphereTriangle(const SphereTriangle &tri, const 
     return pointOutsideSphereMesh(pos, dimensionality);
 }
 
-void SphereMesh::setMaxPushOutsideTries(uint val)
-{
+void SphereMesh::setMaxPushOutsideTries(uint val) {
     maxPushOutsideTries = val;
 }
+
+
 
 void SphereMesh::updateAllCapsuloidsFeatures()
 {
@@ -299,3 +300,4 @@ void SphereMesh::updateAllSphereTriangleFeatures()
         updateSphereTriangleFeatures(st, spheres.at(st.vertices[0]), spheres.at(st.vertices[1]), spheres.at(st.vertices[2]));
     }
 }
+

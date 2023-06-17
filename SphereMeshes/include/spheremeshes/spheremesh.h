@@ -22,7 +22,6 @@ public:
     std::vector<uint> singletons;
     std::vector<Capsuloid> capsuloids;
     std::vector<SphereTriangle> sphereTriangles;
-
     Sphere boundingSphere;
     SphereMesh() = default;
     SphereMesh(std::vector<Sphere> &pSpheres, std::vector<Capsuloid> &pEdges, std::vector<SphereTriangle> &pTriangles, std::vector<uint> &pSingletons);

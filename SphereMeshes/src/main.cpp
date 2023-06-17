@@ -36,7 +36,6 @@
 #include <physics/physicalobject.h>
 #include <physics/particle.h>
 #include <physics/spheremesh_constraint.h>
-#include <physics/physics_spheremesh.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -84,7 +83,7 @@ GLfloat lastFrame = 0.0f;
 
 const float defaultRotationSpeed = 1.0f;
 
-glm::vec3 lightDir(1.0f, 1.0f, 1.0f);
+glm::vec3 lightDir{1.0f, 1.0f, 1.0f};
 glm::vec3 backgroundColor{0.5f, 0.5f, 0.5f};
 glm::vec3 ambientColor{0.1f, 0.0f, 0.0f};
 glm::vec3 diffuseColor{1.0f, 0.5f, 0.5f};
@@ -97,7 +96,7 @@ bool backFaceCulling = false;
 bool renderBoundingSphere = false;
 
 SphereMesh sm;
-int pointsNumber = 100000;
+int pointsNumber = 1000000;
 float pointsSize = 5.0f;
 int boundingSpherePointsNumber = pointsNumber;
 
@@ -155,7 +154,7 @@ int main(int argc, char *argv[])
     RenderablePointCloud boundingSphereFakeRpc = RenderablePointCloud(boundingSphereFakePc_ptr);
 
     // Cloth setup
-    uint clothParticles = 48U;
+    uint clothParticles = 24U;
     float clothParticlesDist = 0.1f;
     Cloth cloth(clothParticles, clothParticlesDist);
     std::shared_ptr<Cloth> clothPtr = std::make_shared<Cloth>(cloth);
@@ -169,14 +168,14 @@ int main(int argc, char *argv[])
     /*float aspect = (float)SCR_WIDTH / (float)SCR_HEIGHT;
     float oppositeFovY = 90.0f - 45.0f;
     float dist = float(clothParticles + 1U) * clothParticlesDist * glm::tan(oppositeFovY); */
-    glm::vec3 viewPos = glm::vec3(0.0f, 3.0f, 10.0f);
+    glm::vec3 viewPos = glm::vec3(0.0f, 3.0f, 3.0f);
 
     camera = Camera(viewPos, glm::normalize(-viewPos), 0.1f, 100.0f, (float)SCR_WIDTH, (float)SCR_HEIGHT, fovY);
 
     // Materials setup
     Material sphereMeshmat(glm::vec3(0.4f, 1.0f, 0.4f), specColor, shininess, MaterialType::BLINN_PHONG);
     Material boundingSphereMat(boundingSphereColor, glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, MaterialType::FLAT);
-    Material clothMat(diffuseColor, specColor, shininess, MaterialType::BLINN_PHONG_DOUBLE_FACE);
+    Material clothMat(diffuseColor, specColor, shininess, MaterialType::BLINN_PHONG);
 
     // Model matrices setup
     glm::mat4 sphereMeshModelMatrix = glm::mat4(1.0f);
@@ -196,9 +195,7 @@ int main(int argc, char *argv[])
     scene = Scene(&camera, &light);
     sphereMeshSceneIdx = scene.addObject(&rpc, &sphereMeshModelMatrix, &sphereMeshmat);
     boundingSphereSceneIdx = scene.addObject(&boundingSphereFakeRpc, &sphereMeshModelMatrix, &boundingSphereMat);
-    scene.disableObject(boundingSphereSceneIdx);
-    
-    //scene.addObject(&renderableCloth, &clothModelMatrix, &clothMat);
+    scene.addObject(&renderableCloth, &clothModelMatrix, &clothMat);
 
     // Renderer setup
     renderer = Renderer(&shader);
@@ -213,20 +210,13 @@ int main(int argc, char *argv[])
     pickedObjectModelMatrix = &clothModelMatrix;
 
     // physics
-    //engine.addObject(&cloth);
-    PhysicsSphereMesh physSphereMesh(std::make_shared<SphereMesh>(sm));
-    engine.addObject(&physSphereMesh);
-
+    engine.addObject(&cloth);
     float wallTime = glfwGetTime();
     engine.start();
 
-    Plane plane(glm::vec3(0.0f, -2.0, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-/* 
-    SphereMeshPlaneConstraint smPlaneConstr(&physSphereMesh, &plane);
-    physSphereMesh.addConstraint(&smPlaneConstr);
-
+    Plane plane(glm::vec3(0.0f, -3.4f, -2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     ClothSphereMeshCollisionConstraint collisionConstraint(&sm, &cloth);
-    cloth.addConstraint(&collisionConstraint); */
+    cloth.addConstraint(&collisionConstraint);
 
     uint printCount = 0U;
 
@@ -278,10 +268,11 @@ int main(int argc, char *argv[])
             glUniform1i(glGetUniformLocation(shader.Program, "backFaceCulling"), backFaceCulling);
         } */
 
-        const uint maxIter = 5U;
+        uint maxIter = 5U;
         uint iter = 0U;
         while (!engine.isPaused() && wallTime > engine.getVirtualTime())
         {
+
             // phys simulation
             engine.timeStep();
             iter++;
@@ -299,11 +290,8 @@ int main(int argc, char *argv[])
             }
         }
 
-        glm::mat4* smModelMat = scene.getModelMatrixOf(sphereMeshSceneIdx);
-        *smModelMat = physSphereMesh.getModelMatrix();
-
-        //renderableCloth.updateBuffers();
-        //renderableCloth.updateNormals();
+        renderableCloth.updateBuffers();
+        renderableCloth.updateNormals();
 
         // Archball rotation of sphere mesh
         if (cur_mx != last_mx || cur_my != last_my)
@@ -448,12 +436,12 @@ void apply_key_commands()
     }
     if (keys[GLFW_KEY_F])
     {
-        engine.start();
+        engine.pause();
         return;
     }
     if (keys[GLFW_KEY_G])
     {
-        engine.pause();
+        engine.start();
         return;
     }
 

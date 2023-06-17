@@ -3,8 +3,6 @@
 #include <glm/glm.hpp>
 #include <vector>
 
-struct Sphere;
-
 typedef unsigned int uint;
 
 //check if n is in range [min, max] inclusive
@@ -19,5 +17,3 @@ glm::vec3 screenToWorldDir(const glm::vec2& screenPos, float width, float height
 void triangulateSquareGrid(uint dim, std::vector<uint>& outIndices);
 
 uint linearizedIndexSquareGrid(uint dim, uint x, uint y);
-
-float computeVolume(const Sphere& sphere);

@@ -5,8 +5,6 @@
 #include <utils/random.h>
 #include <utils/aabb.h>
 
-typedef unsigned int uint;
-
 Sphere::Sphere(glm::vec3 pCenter, float pRadius) : center(pCenter), radius(pRadius) {}
 
 Sphere::Sphere() : center(glm::vec3(0.0f)), radius(0.0f) {}
@@ -55,12 +53,10 @@ Sphere computeBoundingSphere(const Sphere& s1, const Sphere& s2)
 }
 
 glm::vec3 getRandomPositionInSphere(const Sphere& sphere) {
-    static const uint maxTries = 5;
     Point point;
     const AABB& sphereAABB = computeAABB(sphere);
     //infinite loop but it's okay, high probability of having a point inside the sphere in some iterations
-    uint tries = 0;
-    while (tries++ < maxTries) {
+    while (true) {
         glm::vec3 pointPos = generatePosition(sphereAABB);
         glm::vec3 centerToPos = pointPos - sphere.center;
         //generated position is inside the sphere, so return the Point with position pointPos
@@ -68,8 +64,6 @@ glm::vec3 getRandomPositionInSphere(const Sphere& sphere) {
             return pointPos;
         }
     }
-    //if max tries reached return center of sphere
-    return sphere.center;
 }
 
 Sphere computeBoundingSphere(std::vector<Sphere> spheres) {

@@ -15,8 +15,6 @@ struct CollisionData {
     glm::vec3 point;
 };
 
-class Plane;
-
 class PhysicsEngine
 {
 private:
@@ -33,6 +31,5 @@ public:
     void timeStep();
     void addObject(PhysicalObject *objectPtr);
     void removeObject(PhysicalObject *objectPtr);
-    CollisionData handleCollision(const Particle* particle, const SphereMesh* sphereMesh) const;
-    CollisionData handleCollision(const SphereMesh* sphereMesh, const Plane* plane) const;
+    CollisionData checkCollision(const Particle* particle, const SphereMesh* sphereMesh) const;
 };
