@@ -21,3 +21,8 @@ void triangulateSquareGrid(uint dim, std::vector<uint>& outIndices);
 uint linearizedIndexSquareGrid(uint dim, uint x, uint y);
 
 float computeVolume(const Sphere& sphere);
+
+
+glm::mat3 fromToRotate(glm::vec3 from, glm::vec3 to);
+
+glm::mat3 fromToRotate(glm::vec3 from1, glm::vec3 to1, glm::vec3 from2, glm::vec3 to2);

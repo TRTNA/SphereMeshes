@@ -67,21 +67,6 @@ glm::mat4 PhysicsSphereMesh::getModelMatrix() const
 }
 
 
-glm::mat3 fromToRotate(glm::vec3 from, glm::vec3 to) {
-    glm::vec3 axis = glm::cross(from, to);
-    if (glm::dot(axis, axis) < EPSILON) return glm::mat3(1.0f);
-    float angle = glm::angle(glm::normalize(from), glm::normalize(to));
-    return glm::mat3(glm::rotate(angle, axis));
-}
-
-glm::mat3 fromToRotate(glm::vec3 from1, glm::vec3 to1, glm::vec3 from2, glm::vec3 to2) {
-     glm::mat3 rotMatrixA = fromToRotate(from1, to1);
-     from2 = rotMatrixA * from2;
-     to2 = glm::cross(to1, glm::cross(to2, to1));
-     from2 = glm::cross(to1, glm::cross(from2, to1));
-    glm::mat3 rotMatrixB = glm::rotate(glm::angle(glm::normalize(from2), glm::normalize(to2)), to1);
-    return rotMatrixB * rotMatrixA;
-}
 
 glm::mat4 PhysicsSphereMesh::computeModelMatrix()
 {
