@@ -174,11 +174,13 @@
     <ClInclude Include="include\utils\ray.h" />
     <ClInclude Include="include\utils\time.h" />
     <ClInclude Include="include\utils\types.h" />
+    <ClInclude Include="include\rendering\renderableplane.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui\include\imgui\imgui_impl_glfw.cpp" />
     <ClCompile Include="imgui\include\imgui\imgui_impl_opengl3.cpp" />
     <ClCompile Include="include\glad\glad.c" />
+    <ClCompile Include="src\rendering\renderableplane.cpp" />
     <ClCompile Include="src\cloth\cloth.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\physics\particle.cpp" />

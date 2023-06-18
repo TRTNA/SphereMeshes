@@ -27,6 +27,7 @@
 #include <rendering/material.h>
 #include <rendering/renderer.h>
 #include <rendering/light.h>
+#include <rendering/renderableplane.h>
 
 #include <rendering/renderablecloth.h>
 
@@ -86,8 +87,8 @@ GLfloat lastFrame = 0.0f;
 const float defaultRotationSpeed = 1.0f;
 
 glm::vec3 lightDir(1.0f, 1.0f, 1.0f);
-glm::vec3 backgroundColor{0.5f, 0.5f, 0.5f};
-glm::vec3 ambientColor{0.1f, 0.0f, 0.0f};
+glm::vec3 backgroundColor{0.8f, 0.8f, 0.8f};
+glm::vec3 ambientColor{0.1f, 0.1f, 0.1f};
 glm::vec3 diffuseColor{1.0f, 0.5f, 0.5f};
 glm::vec3 boundingSphereColor{0.0f, 0.0f, 0.5f};
 
@@ -154,6 +155,8 @@ int main(int argc, char *argv[])
     boundingSphereFakePc.repopulate(boundingSpherePointsNumber, sm);
     std::shared_ptr<PointCloud> boundingSphereFakePc_ptr = std::make_shared<PointCloud>(boundingSphereFakePc);
     RenderablePointCloud boundingSphereFakeRpc = RenderablePointCloud(boundingSphereFakePc_ptr);
+
+
 
     // Cloth setup
     uint clothParticles = 48U;
@@ -223,6 +226,13 @@ int main(int argc, char *argv[])
     PhysSphereMeshPlaneConstraint planeConstr = PhysSphereMeshPlaneConstraint(&plane, &physSphereMesh);
     physSphereMesh.addConstraint(&planeConstr);
     engine.start();
+
+    //Renderable plane
+    RenderablePlane rendPlane = RenderablePlane(plane, 20.0f);
+    Material rendPlaneMat(glm::vec3(0.7f, 0.0f, 0.2f), glm::vec3(1.0f), 1.2f, MaterialType::BLINN_PHONG);
+    glm::mat4 rendPlaneModelMat(1.0f);
+    rendPlaneModelMat = glm::translate(rendPlaneModelMat, glm::vec3(10.f, 0.0f, 5.0f));
+    scene.addObject(&rendPlane, &rendPlaneModelMat, &rendPlaneMat);
 
 /* 
     SphereMeshPlaneConstraint smPlaneConstr(&physSphereMesh, &plane);

@@ -132,6 +132,9 @@
     <ClInclude Include="imgui\include\imgui\imgui_impl_opengl3_loader.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
+    <ClInclude Include="include\rendering\renderableplane.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\cloth\cloth.cpp">
@@ -228,6 +231,9 @@
       <Filter>File di origine</Filter>
     </ClCompile>
     <ClCompile Include="src\physics\physics_spheremesh.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rendering\renderableplane.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
   </ItemGroup>
