@@ -2,6 +2,8 @@
 #include <glm/geometric.hpp>
 #include <glm/gtc/epsilon.hpp>
 
+#include <utils/types.h>
+
 using glm::vec3;
 
 Plane::Plane(glm::vec3 origin, glm::vec3 normal) : origin(origin), normal(normal)
@@ -36,5 +38,5 @@ bool Plane::contains(glm::vec3 point) const
 bool Plane::isPerpendicular(glm::vec3 vec) const
 {
     vec3 cross = glm::cross(vec, normal);
-    return glm::all(glm::epsilonEqual(cross, glm::vec3(0.0f), 0.0001f));
+    return glm::all(glm::epsilonEqual(cross, glm::vec3(0.0f), EPSILON));
 }

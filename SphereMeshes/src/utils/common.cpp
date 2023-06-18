@@ -1,10 +1,9 @@
 #include <utils/common.h>
+#include <utils/types.h>
 
 #include <spheremeshes/sphere.h>
 #include <physics/physicsconstants.h>
 #include <glm/gtx/vector_angle.hpp>
-
-#include <spheremeshes/spheremesh.h>
 
 using std::vector;
 using glm::vec3;
