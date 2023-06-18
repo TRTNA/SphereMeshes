@@ -37,6 +37,7 @@
 #include <physics/particle.h>
 #include <physics/spheremesh_constraint.h>
 #include <physics/physics_spheremesh.h>
+#include <physics/plane_constraint.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -218,9 +219,11 @@ int main(int argc, char *argv[])
     engine.addObject(&physSphereMesh);
 
     float wallTime = glfwGetTime();
+    Plane plane(glm::vec3(0.0f, -2.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    PhysSphereMeshPlaneConstraint planeConstr = PhysSphereMeshPlaneConstraint(&plane, &physSphereMesh);
+    physSphereMesh.addConstraint(&planeConstr);
     engine.start();
 
-    Plane plane(glm::vec3(0.0f, -2.0, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 /* 
     SphereMeshPlaneConstraint smPlaneConstr(&physSphereMesh, &plane);
     physSphereMesh.addConstraint(&smPlaneConstr);

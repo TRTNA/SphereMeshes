@@ -7,6 +7,8 @@
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtx/vector_angle.hpp>
 
+#include <physics/plane_constraint.h>
+
 PhysicsSphereMesh::PhysicsSphereMesh(std::shared_ptr<SphereMesh> sphereMesh) : sphereMesh(sphereMesh)
 {
     setup();
@@ -21,16 +23,16 @@ void PhysicsSphereMesh::addForce(const glm::vec3 &forceVec)
 }
 void PhysicsSphereMesh::enforceConstraints()
 {
-/*     for (auto &c : constraints)
+     for (auto &c : constraints)
     {
         c->enforce();
-    } */
-
-    for (auto& p : particles) {
-        if (p.pos.y - 0.5f  < -2.0f) {
-            p.pos.y = -1.5f;
-        }   
     }
+
+    //for (auto& p : particles) {
+    //    if (p.pos.y - 0.5f  < -2.0f) {
+    //        p.pos.y = -1.5f;
+    //    }   
+    //}
 
     modelMatrix = computeModelMatrix();
     for (int i = 0; i < localSpaceVectors.size(); i++)
@@ -139,6 +141,7 @@ void PhysicsSphereMesh::setup()
         pb += m * center;
         M += m;
         particles.emplace_back(center, glm::vec3(0.0f), m);
+        radii.emplace_back(sphereMesh->spheres[idx].radius);
     }
     for (const auto &caps : sphereMesh->capsuloids)
     {
@@ -147,12 +150,15 @@ void PhysicsSphereMesh::setup()
         pb += m1 * center1;
         M += m1;
         particles.emplace_back(center1, glm::vec3(0.0f), m1);
+        radii.emplace_back(sphereMesh->spheres[caps.s0].radius);
 
         float m2 = computeVolume(sphereMesh->spheres[caps.s1]);
         glm::vec3 center2 = sphereMesh->spheres[caps.s1].center;
         pb += m2 * sphereMesh->spheres[caps.s1].center;
         M += m2;
         particles.emplace_back(center2, glm::vec3(0.0f), m2);
+        radii.emplace_back(sphereMesh->spheres[caps.s1].radius);
+
     }
 
     for (const auto &st : sphereMesh->sphereTriangles)
@@ -162,18 +168,24 @@ void PhysicsSphereMesh::setup()
         pb += m1 * sphereMesh->spheres[st.vertices[0]].center;
         M += m1;
         particles.emplace_back(center1, glm::vec3(0.0f), m1);
+        radii.emplace_back(sphereMesh->spheres[st.vertices[0]].radius);
+
 
         float m2 = computeVolume(sphereMesh->spheres[st.vertices[1]]);
         glm::vec3 center2 = sphereMesh->spheres[st.vertices[1]].center;
         pb += m2 * sphereMesh->spheres[st.vertices[1]].center;
         M += m2;
         particles.emplace_back(center2, glm::vec3(0.0f), m2);
+        radii.emplace_back(sphereMesh->spheres[st.vertices[1]].radius);
+
 
         float m3 = computeVolume(sphereMesh->spheres[st.vertices[2]]);
         glm::vec3 center3 = sphereMesh->spheres[st.vertices[2]].center;
         pb += m3 * sphereMesh->spheres[st.vertices[2]].center;
         M += m3;
         particles.emplace_back(center3, glm::vec3(0.0f), m3);
+        radii.emplace_back(sphereMesh->spheres[st.vertices[2]].radius);
+
     }
     localSpaceBarycenter = pb / M;
     totalMass = M;

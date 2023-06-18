@@ -24,6 +24,7 @@ private:
 public:
     PhysicsSphereMesh(std::shared_ptr<SphereMesh> sphereMesh);
     std::vector<Particle> particles;
+    std::vector<float> radii;
     void addConstraint(Constraint* constraint);
     glm::mat4 getModelMatrix() const;
     virtual void addForce(const glm::vec3 &forceVec) override;

@@ -1,9 +1,14 @@
 #pragma once
 
 #include <physics/constraint.h>
-#include <physics/particle.h>
-#include <cloth/cloth.h>
-#include <utils/plane.h>
+
+#include <vector>
+
+class Particle;
+class Plane;
+class Cloth;
+class Sphere;
+class PhysicsSphereMesh;
 
 typedef unsigned int uint;
 
@@ -27,5 +32,23 @@ private:
 
 public:
     ClothPlaneConstraint(Plane *plane, Cloth *cloth);
+    void enforce() override;
+};
+
+class SpherePlaneConstraint : public Constraint {
+private:
+    Plane* plane;
+    Particle* particle;
+    float radius;
+public:
+    SpherePlaneConstraint(Plane* plane, Particle* particle, float radius);
+    void enforce() override;
+};
+
+class PhysSphereMeshPlaneConstraint : public Constraint {
+private:
+    std::vector<SpherePlaneConstraint> constraints;
+public:
+    PhysSphereMeshPlaneConstraint(Plane* plane, PhysicsSphereMesh* physSphereMesh);
     void enforce() override;
 };
