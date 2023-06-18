@@ -86,27 +86,25 @@ glm::mat4 PhysicsSphereMesh::computeModelMatrix()
         rotMatrix += (glm::outerProduct(localSpaceVec, worldSpaceVec) * particles.at(i).getMass());
     }
 
+
     rotMatrix /= totalMass;
     rotMatrix = glm::transpose(rotMatrix);
 
-
     // orthonormalization of matrix
     //più la ripeti più diventa precisa
-
-    rotMatrix = (rotMatrix + glm::inverseTranspose(rotMatrix)) / 2.0f;
+    const int orthoNormIter = 5;
+    for (int i = 0; i < orthoNormIter; i++) {
         rotMatrix = (rotMatrix + glm::inverseTranspose(rotMatrix)) / 2.0f;
-    rotMatrix = (rotMatrix + glm::inverseTranspose(rotMatrix)) / 2.0f;
+    }
+  
 
-/*     rotMatrix[0] = glm::normalize(glm::cross(rotMatrix[1], rotMatrix[2]));
-    rotMatrix[1] = glm::normalize(glm::cross(rotMatrix[2], rotMatrix[0]));
-    rotMatrix[2] = glm::normalize(glm::cross(rotMatrix[0], rotMatrix[1])); */
-   // rotMatrix = glm::mat3(1.0f);
+    //rotMatrix[0] = glm::normalize(glm::cross(rotMatrix[1], rotMatrix[2]));
+    //rotMatrix[1] = glm::normalize(glm::cross(rotMatrix[2], rotMatrix[0]));
+    //rotMatrix[2] = glm::normalize(glm::cross(rotMatrix[0], rotMatrix[1]));
+    //rotMatrix /= glm::determinant(rotMatrix);
+
     glm::vec3 translation = worldSpaceBarycenter;
-   /*  rotMatrix = glm::transpose(rotMatrix);
 
-    rotMatrix = fromToRotate(localSpaceVectors.at(1), particles.at(1).pos - worldSpaceBarycenter, 
-                             localSpaceVectors.at(0), particles.at(0).pos - worldSpaceBarycenter);
- */
     glm::mat4 result = glm::mat4(rotMatrix);
     
     result[3] = glm::vec4(translation, 1.0f);
