@@ -46,11 +46,11 @@ SpherePlaneConstraint::SpherePlaneConstraint(Plane* plane, Particle* particle, f
 void SpherePlaneConstraint::enforce() {
     vec3 planeToCenter = particle->getPos() - plane->getOrigin();
     float dist = glm::dot(planeToCenter, plane->getNormal());
-    if (glm::abs(dist) < radius) {
+    if (dist < radius) {
         //sphere is below the plane
         //needs displacement
-        float displ = dist < 0.0f ? radius + dist : radius - dist;
-        vec3 displacementVector = plane->getNormal() * (displ + 0.01f * displ);
+        float displ = radius - dist;
+        vec3 displacementVector = displ * plane->getNormal();
         particle->displace(displacementVector);
     }
 }

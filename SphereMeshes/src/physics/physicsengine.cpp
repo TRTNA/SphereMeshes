@@ -50,7 +50,6 @@ void PhysicsEngine::timeStep()
         for (auto &obj : objects)
         {
             obj->enforceConstraints();
-            //FARE QUI PUSH OUTSIDE SPHEREMESH PUò ESSERE UN SINGLETON GLOBALE CONOSCIUTO DA TUTTI
         }
     }
     virtualTime += PHYSICS_TIME_STEP;

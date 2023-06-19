@@ -8,10 +8,22 @@
 #include <glm/gtx/vector_angle.hpp>
 
 #include <physics/plane_constraint.h>
+#include <utils/common.h>
 
 PhysicsSphereMesh::PhysicsSphereMesh(std::shared_ptr<SphereMesh> sphereMesh) : sphereMesh(sphereMesh)
 {
+    if (sphereMesh->spheres.size() == 1) {
+        type = PhysicsSphereMeshType::ONE_SPHERE;
+    }
+    else if (sphereMesh->spheres.size() == 2 && (sphereMesh->capsuloids.size() == 1 || sphereMesh->singletons.size() == 2)) {
+        type = PhysicsSphereMeshType::TWO_SPHERES;
+        twoSpheresDist = glm::length(sphereMesh->spheres.at(0).center - sphereMesh->spheres.at(1).center);
+    }
+    else {
+        type = PhysicsSphereMeshType::GENERIC;
+    }
     setup();
+
 }
 
 void PhysicsSphereMesh::addForce(const glm::vec3 &forceVec)
@@ -28,18 +40,48 @@ void PhysicsSphereMesh::enforceConstraints()
         c->enforce();
     }
 
-    //for (auto& p : particles) {
-    //    if (p.pos.y - 0.5f  < -2.0f) {
-    //        p.pos.y = -1.5f;
-    //    }   
-    //}
+     if (type == PhysicsSphereMeshType::ONE_SPHERE) {
+         modelMatrix = glm::mat4(1.0f);
+         modelMatrix[3] = glm::vec4(particles.at(0).getPos() - sphereMesh->spheres.at(0).center, 1.0f);
+     }
+     else if (type == PhysicsSphereMeshType::TWO_SPHERES) {
+         twoSphereEnforce();
 
+     }
+     else {
+         nSpheresEnforce();
+     }
+}
+
+void PhysicsSphereMesh::twoSphereEnforce() {
+    Particle& p1 = particles.at(0);
+    Particle& p2 = particles.at(1);
+    glm::vec3 v = p2.getPos() - p1.getPos();
+    float currDist = glm::length(v);
+    v /= currDist;
+    float delta = currDist - twoSpheresDist;
+    float t = p1.getMass() / (p1.getMass() + p2.getMass());
+    glm::vec3 displacementVector1 = (1-t) * delta * v;
+    glm::vec3 displacementVector2 = t * delta * -v;
+    p1.displace(displacementVector1);
+    p2.displace(displacementVector2);
+    //update matrix for two spheres
+    //from to
+    modelMatrix = fromToRotate(sphereMesh->spheres.at(1).center - sphereMesh->spheres.at(0).center, p2.getPos() - p1.getPos());
+    //TODO SERVE ESPRIMERE LA SPHEREMESH CON COORDINATE RISPETTO AL BARICENTRO
+    glm::vec3 localSpaceBarycenter = sphereMesh->spheres.at(0).center * p1.getMass() + sphereMesh->spheres.at(1).center * p2.getMass();
+    localSpaceBarycenter /= (p1.getMass() + p2.getMass());
+    modelMatrix[3] = glm::vec4(computeWorldSpaceBarycenter() + localSpaceBarycenter, 1.0f);
+}
+
+void PhysicsSphereMesh::nSpheresEnforce()
+{
     modelMatrix = computeModelMatrix();
     for (int i = 0; i < localSpaceVectors.size(); i++)
     {
         glm::vec3 l = localSpaceVectors.at(i);
         l = glm::vec3(modelMatrix * glm::vec4(l, 1.0f));
-        auto &p = particles.at(i);
+        auto& p = particles.at(i);
         p.pos = l;
     }
 }
@@ -70,13 +112,7 @@ glm::mat4 PhysicsSphereMesh::getModelMatrix() const
 
 glm::mat4 PhysicsSphereMesh::computeModelMatrix()
 {
-    glm::vec3 pb(0.0f);
-    for (const auto &p : particles)
-    {
-        pb += (p.getPos() * p.getMass());
-    }
-    glm::vec3 worldSpaceBarycenter = pb / totalMass;
-
+    glm::vec3 worldSpaceBarycenter = computeWorldSpaceBarycenter();
     
     glm::mat3 rotMatrix = glm::mat3(0.0f);
     for (int i = 0; i < particles.size(); i++)
@@ -109,6 +145,16 @@ glm::mat4 PhysicsSphereMesh::computeModelMatrix()
     
     result[3] = glm::vec4(translation, 1.0f);
     return result;
+}
+
+glm::vec3 PhysicsSphereMesh::computeWorldSpaceBarycenter() const
+{
+    glm::vec3 pb(0.0f);
+    for (const auto& p : particles)
+    {
+        pb += (p.getPos() * p.getMass());
+    }
+    return pb / totalMass;
 }
 
 void PhysicsSphereMesh::setup()

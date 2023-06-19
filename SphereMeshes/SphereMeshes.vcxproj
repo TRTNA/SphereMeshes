@@ -167,6 +167,7 @@
     <ClInclude Include="include\spheremeshes\spheremesh.h" />
     <ClInclude Include="include\spheremeshes\spheretriangle.h" />
     <ClInclude Include="include\utils\aabb.h" />
+    <ClInclude Include="include\utils\arrow_line.h" />
     <ClInclude Include="include\utils\common.h" />
     <ClInclude Include="include\utils\plane.h" />
     <ClInclude Include="include\utils\pointcloud.h" />
@@ -204,6 +205,7 @@
     <ClCompile Include="src\spheremeshes\spheremeshutils.cpp" />
     <ClCompile Include="src\spheremeshes\spheretriangle.cpp" />
     <ClCompile Include="src\utils\aabb.cpp" />
+    <ClCompile Include="src\utils\arrow_line.cpp" />
     <ClCompile Include="src\utils\common.cpp" />
     <ClCompile Include="src\utils\plane.cpp" />
     <ClCompile Include="src\utils\pointcloud.cpp" />

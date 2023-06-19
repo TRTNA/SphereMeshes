@@ -32,6 +32,7 @@
 #include <rendering/renderablecloth.h>
 
 #include <cloth/cloth.h>
+#include <utils/arrow_line.h>
 
 #include <physics/physicsengine.h>
 #include <physics/physicalobject.h>
@@ -234,7 +235,22 @@ int main(int argc, char *argv[])
     glm::mat4 rendPlaneModelMat(1.0f);
     rendPlaneModelMat = glm::translate(rendPlaneModelMat, glm::vec3(10.f, 0.0f, 5.0f));
     scene.addObject(&rendPlane, &rendPlaneModelMat, &rendPlaneMat);
- 
+
+    //axis //TODO sistemare rendering
+    Material xAxisMaterial(glm::vec3(1.0f, 0.0f, 0.0f), specColor, shininess, MaterialType::FLAT);
+    ArrowLine xAxis(glm::vec3(1.0f, 0.0f, 0.0f));
+
+    ArrowLine yAxis(glm::vec3(0.0f, 1.0f, 0.0f));
+    Material yAxisMaterial(glm::vec3(0.0f, 1.0f, 0.0f), specColor, shininess, MaterialType::FLAT);
+
+    ArrowLine zAxis(glm::vec3(0.0f, 0.0f, 1.0f));
+    Material zAxisMaterial(glm::vec3(0.0f, 0.0f, 1.0f), specColor, shininess, MaterialType::FLAT);
+
+    glm::mat4 identity(1.0f);
+    scene.addObject(&xAxis, &identity, &xAxisMaterial);
+    scene.addObject(&yAxis, &identity, &yAxisMaterial);
+    scene.addObject(&zAxis, &identity, &zAxisMaterial);
+
 /* 
     SphereMeshPlaneConstraint smPlaneConstr(&physSphereMesh, &plane);
     physSphereMesh.addConstraint(&smPlaneConstr);
