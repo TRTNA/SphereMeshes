@@ -19,6 +19,7 @@ class Camera {
         Camera(glm::vec3 pos, glm::vec3 forward, float near, float far, float width, float height, float fovY);
 
         void translate(glm::vec3 t);
+        void rotateAroundY(float angleDeg);
 
         void setPos(glm::vec3 newPos);
         void setForward(glm::vec3 forward);

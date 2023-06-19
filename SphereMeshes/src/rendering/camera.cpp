@@ -3,8 +3,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-using glm::mat4;
-using glm::vec3;
+using namespace glm;
 
 Camera::Camera(glm::vec3 pos, glm::vec3 forward, float near, float far, float width, float height, float fovY) 
 : pos(pos), forward(forward), up(vec3(0.0f, 1.0f, 0.0f)), near(near), far(far), width(width), height(height), fovY(fovY) 
@@ -30,6 +29,16 @@ void Camera::translate(glm::vec3 t)
     pos += t;
     updateViewMatrix();
 }
+
+
+void Camera::rotateAroundY(float angleDeg) {
+    mat4 rot(1.0f);
+    rot = glm::rotate(rot, angleDeg, glm::vec3(0.0f, 1.0f, 0.0f));
+    pos = vec3(rot * vec4(pos, 1.0f));
+    forward = -pos;
+    updateViewMatrix();
+}
+
 void Camera::setPos(glm::vec3 newPos)
 {
     pos = newPos;

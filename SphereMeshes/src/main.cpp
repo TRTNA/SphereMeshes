@@ -441,22 +441,22 @@ void apply_key_commands()
     }
     if (keys[GLFW_KEY_A])
     {
-        modelMatrix = glm::rotate(modelMatrix, -defaultRotationSpeed * deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
+        camera.rotateAroundY(-glm::radians(30.0f * deltaTime));
         return;
     }
     if (keys[GLFW_KEY_S])
     {
-        modelMatrix = glm::rotate(modelMatrix, -defaultRotationSpeed * deltaTime, glm::vec3(1.0f, 0.0f, 0.0f));
+        camera.translate(-glm::normalize(camera.getForward()) * 1.5f * deltaTime);
         return;
     }
     if (keys[GLFW_KEY_D])
     {
-        modelMatrix = glm::rotate(modelMatrix, defaultRotationSpeed * deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
+        camera.rotateAroundY(glm::radians(30.0f * deltaTime));
         return;
     }
     if (keys[GLFW_KEY_W])
     {
-        modelMatrix = glm::rotate(modelMatrix, defaultRotationSpeed * deltaTime, glm::vec3(1.0f, 0.0f, 0.0f));
+        camera.translate(glm::normalize(camera.getForward()) * 1.5f * deltaTime);       
         return;
     }
     if (keys[GLFW_KEY_F])
