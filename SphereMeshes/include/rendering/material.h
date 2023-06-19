@@ -12,9 +12,10 @@ enum class MaterialType {
 
 struct Material {
     Material();
-    Material(glm::vec3 diffuseColor, glm::vec3 specularColor, float shininess, MaterialType type);
+    Material(glm::vec3 diffuseColor, glm::vec3 specularColor, float shininess, MaterialType type, bool shadowing = false);
     glm::vec3 diffuseColor;
     glm::vec3 specularColor;
     float shininess;
+    bool shadowing;
     MaterialType type;
 };

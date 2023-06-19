@@ -8,6 +8,10 @@
 #include <glm/gtx/string_cast.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 
+
+#include <utils/plane.h>
+
+
 Renderer::Renderer(Shader* shader) : shader(shader) {
     shader->Use();
 
@@ -66,9 +70,33 @@ void Renderer::renderScene(Scene* scene) {
         glUniformMatrix3fv(glGetUniformLocation(shader->Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
         renderablePtr->draw();
+
+        // SECOND PASS FOR SHADOWING
+        if (shadowing && mat->shadowing) {
+            glm::mat4 shadowProjMatrix = glm::mat4(1.0f);
+            shadowProjMatrix[1][1] = 0.0f;
+            shadowProjMatrix[3][1] = shadowPlane.getOrigin().y + 0.01f;
+            shadowProjMatrix = shadowProjMatrix * modelMatrix;
+            glUniformMatrix4fv(glGetUniformLocation(shader->Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(shadowProjMatrix));
+            glUniform3fv(glGetUniformLocation(shader->Program, "diffuseColor"), 1, shadowPlaneColor);
+            glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &materialTypeToSubroutineIdx.at(MaterialType::FLAT));
+            renderablePtr->draw();
+
+        }
     }
 }
 
+void Renderer::enableShadowing(Plane plane, glm::vec3 planeColor) {
+    shadowing = true;
+    shadowPlane = plane;
+    for (int i = 0; i < 3; i++) {
+        shadowPlaneColor[i] = planeColor[i] * 0.25f;
+    }
+}
+
+void Renderer::disableShadowing() {
+    shadowing = false;
+}
 
 void Renderer::setBackfaceCulling(bool state) {
     backfaceCulling = state;

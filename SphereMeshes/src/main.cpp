@@ -87,7 +87,7 @@ GLfloat lastFrame = 0.0f;
 
 const float defaultRotationSpeed = 1.0f;
 
-glm::vec3 lightDir(1.0f, 1.0f, 1.0f);
+glm::vec3 lightDir(0.0f, 1.0f, 0.0f);
 glm::vec3 backgroundColor{0.8f, 0.8f, 0.8f};
 glm::vec3 ambientColor{0.1f, 0.1f, 0.1f};
 glm::vec3 diffuseColor{1.0f, 0.5f, 0.5f};
@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
     camera = Camera(viewPos, glm::normalize(-viewPos), 0.1f, 100.0f, (float)SCR_WIDTH, (float)SCR_HEIGHT, fovY);
 
     // Materials setup
-    Material sphereMeshmat(glm::vec3(0.4f, 1.0f, 0.4f), specColor, shininess, MaterialType::BLINN_PHONG);
+    Material sphereMeshmat(glm::vec3(0.4f, 1.0f, 0.4f), specColor, shininess, MaterialType::BLINN_PHONG, true);
     
     Material boundingSphereMat(boundingSphereColor, glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, MaterialType::FLAT);
     Material clothMat(diffuseColor, specColor, shininess, MaterialType::BLINN_PHONG);
@@ -212,6 +212,7 @@ int main(int argc, char *argv[])
     renderer.setAmbientColor(ambientColor);
     renderer.setBackfaceCulling(backFaceCulling);
 
+
     // Other openGL params
     glPointSize(pointsSize);
 
@@ -224,10 +225,13 @@ int main(int argc, char *argv[])
     engine.addObject(&physSphereMesh);
 
     float wallTime = glfwGetTime();
+    engine.start();
+
+
+
     Plane plane(glm::vec3(0.0f, -2.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     PhysSphereMeshPlaneConstraint planeConstr = PhysSphereMeshPlaneConstraint(&plane, &physSphereMesh);
     physSphereMesh.addConstraint(&planeConstr);
-    engine.start();
 
     //Renderable plane
     RenderablePlane rendPlane = RenderablePlane(plane, 20.0f);
@@ -236,7 +240,9 @@ int main(int argc, char *argv[])
     rendPlaneModelMat = glm::translate(rendPlaneModelMat, glm::vec3(10.f, 0.0f, 5.0f));
     scene.addObject(&rendPlane, &rendPlaneModelMat, &rendPlaneMat);
 
-    //axis //TODO sistemare rendering
+    renderer.enableShadowing(plane, rendPlaneMat.diffuseColor);
+
+    //axis
     Material xAxisMaterial(glm::vec3(1.0f, 0.0f, 0.0f), specColor, shininess, MaterialType::FLAT);
     ArrowLine xAxis(glm::vec3(1.0f, 0.0f, 0.0f));
 
