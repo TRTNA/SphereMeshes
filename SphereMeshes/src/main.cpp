@@ -179,6 +179,7 @@ int main(int argc, char *argv[])
 
     // Materials setup
     Material sphereMeshmat(glm::vec3(0.4f, 1.0f, 0.4f), specColor, shininess, MaterialType::BLINN_PHONG);
+    
     Material boundingSphereMat(boundingSphereColor, glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, MaterialType::FLAT);
     Material clothMat(diffuseColor, specColor, shininess, MaterialType::BLINN_PHONG);
 
@@ -229,11 +230,11 @@ int main(int argc, char *argv[])
 
     //Renderable plane
     RenderablePlane rendPlane = RenderablePlane(plane, 20.0f);
-    Material rendPlaneMat(glm::vec3(0.7f, 0.0f, 0.2f), glm::vec3(1.0f), 1.2f, MaterialType::BLINN_PHONG);
+    Material rendPlaneMat(glm::vec3(0.9f, 0.0f, 0.2f), glm::vec3(1.0f), 6.0f, MaterialType::BLINN_PHONG);
     glm::mat4 rendPlaneModelMat(1.0f);
     rendPlaneModelMat = glm::translate(rendPlaneModelMat, glm::vec3(10.f, 0.0f, 5.0f));
     scene.addObject(&rendPlane, &rendPlaneModelMat, &rendPlaneMat);
-
+ 
 /* 
     SphereMeshPlaneConstraint smPlaneConstr(&physSphereMesh, &plane);
     physSphereMesh.addConstraint(&smPlaneConstr);
@@ -459,26 +460,14 @@ void apply_key_commands()
         camera.translate(glm::normalize(camera.getForward()) * 1.5f * deltaTime);       
         return;
     }
-    if (keys[GLFW_KEY_F])
+    if (keys[GLFW_KEY_Q])
     {
         engine.start();
         return;
     }
-    if (keys[GLFW_KEY_G])
+    if (keys[GLFW_KEY_E])
     {
         engine.pause();
-        return;
-    }
-
-    if (keys[GLFW_KEY_Z] && keys[GLFW_KEY_I])
-    {
-        camera.translate(glm::vec3(0.0f, 0.0f, -0.5f * deltaTime));
-        return;
-    }
-
-    if (keys[GLFW_KEY_Z] && keys[GLFW_KEY_O])
-    {
-        camera.translate(glm::vec3(0.0f, 0.0f, 0.5f * deltaTime));
         return;
     }
 }

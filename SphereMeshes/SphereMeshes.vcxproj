@@ -212,12 +212,10 @@
     <ClCompile Include="src\utils\time.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="assets\shaders\capsule.vert" />
     <None Include="assets\shaders\default.frag" />
     <None Include="assets\shaders\default.vert" />
     <None Include="assets\shaders\flat.frag" />
     <None Include="assets\shaders\flat.vert" />
-    <None Include="assets\shaders\pointsplat.frag" />
     <None Include="assets\spheremeshes\app.sm" />
     <None Include="assets\spheremeshes\caps.sm" />
     <None Include="assets\spheremeshes\complicated.sm" />

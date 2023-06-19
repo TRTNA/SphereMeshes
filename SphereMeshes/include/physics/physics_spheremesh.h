@@ -13,7 +13,6 @@ class PhysicsSphereMesh : public PhysicalObject
 private:
     std::shared_ptr<SphereMesh> sphereMesh;
     std::vector<glm::vec3> localSpaceVectors;
-    glm::vec3 localSpaceBarycenter;
     std::vector<Constraint*> constraints;
     float totalMass;
 

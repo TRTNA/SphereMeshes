@@ -94,7 +94,7 @@ glm::mat4 PhysicsSphereMesh::computeModelMatrix()
     //più la ripeti più diventa precisa
     const int orthoNormIter = 5;
     for (int i = 0; i < orthoNormIter; i++) {
-        rotMatrix = (rotMatrix + glm::inverseTranspose(rotMatrix)) / 2.0f;
+        rotMatrix = (rotMatrix + glm::inverseTranspose(rotMatrix)) * 0.5f;
     }
   
 
@@ -170,7 +170,7 @@ void PhysicsSphereMesh::setup()
         radii.emplace_back(sphereMesh->spheres[st.vertices[2]].radius);
 
     }
-    localSpaceBarycenter = pb / M;
+    glm::vec3 localSpaceBarycenter = pb / M;
     totalMass = M;
 
     for (auto &p : particles)
@@ -179,5 +179,4 @@ void PhysicsSphereMesh::setup()
         // REMOVE
         // p.pinned = true;
     }
-    localSpaceBarycenter = glm::vec3(0.0f);
 }
