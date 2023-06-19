@@ -129,6 +129,8 @@ glm::mat4 PhysicsSphereMesh::computeModelMatrix()
     // orthonormalization of matrix
     //più la ripeti più diventa precisa
     const int orthoNormIter = 5;
+    float det = glm::determinant(rotMatrix);
+
     for (int i = 0; i < orthoNormIter; i++) {
         rotMatrix = (rotMatrix + glm::inverseTranspose(rotMatrix)) * 0.5f;
     }
@@ -174,45 +176,45 @@ void PhysicsSphereMesh::setup()
     }
     for (const auto &caps : sphereMesh->capsuloids)
     {
-        float m1 = computeVolume(sphereMesh->spheres[caps.s0]);
-        glm::vec3 center1 = sphereMesh->spheres[caps.s0].center;
+        float m0 = computeVolume(sphereMesh->spheres[caps.s0]);
+        glm::vec3 center0 = sphereMesh->spheres[caps.s0].center;
+        pb += m0 * center0;
+        M += m0;
+        particles.emplace_back(center0, glm::vec3(0.0f), m0);
+        radii.emplace_back(sphereMesh->spheres[caps.s0].radius);
+
+        float m1 = computeVolume(sphereMesh->spheres[caps.s1]);
+        glm::vec3 center1 = sphereMesh->spheres[caps.s1].center;
         pb += m1 * center1;
         M += m1;
         particles.emplace_back(center1, glm::vec3(0.0f), m1);
-        radii.emplace_back(sphereMesh->spheres[caps.s0].radius);
-
-        float m2 = computeVolume(sphereMesh->spheres[caps.s1]);
-        glm::vec3 center2 = sphereMesh->spheres[caps.s1].center;
-        pb += m2 * sphereMesh->spheres[caps.s1].center;
-        M += m2;
-        particles.emplace_back(center2, glm::vec3(0.0f), m2);
         radii.emplace_back(sphereMesh->spheres[caps.s1].radius);
 
     }
 
     for (const auto &st : sphereMesh->sphereTriangles)
     {
-        float m1 = computeVolume(sphereMesh->spheres[st.vertices[0]]);
-        glm::vec3 center1 = sphereMesh->spheres[st.vertices[0]].center;
-        pb += m1 * sphereMesh->spheres[st.vertices[0]].center;
-        M += m1;
-        particles.emplace_back(center1, glm::vec3(0.0f), m1);
+        float m0 = computeVolume(sphereMesh->spheres[st.vertices[0]]);
+        glm::vec3 center0 = sphereMesh->spheres[st.vertices[0]].center;
+        pb += m0 * center0;
+        M += m0;
+        particles.emplace_back(center0, glm::vec3(0.0f), m0);
         radii.emplace_back(sphereMesh->spheres[st.vertices[0]].radius);
 
 
-        float m2 = computeVolume(sphereMesh->spheres[st.vertices[1]]);
-        glm::vec3 center2 = sphereMesh->spheres[st.vertices[1]].center;
-        pb += m2 * sphereMesh->spheres[st.vertices[1]].center;
-        M += m2;
-        particles.emplace_back(center2, glm::vec3(0.0f), m2);
+        float m1 = computeVolume(sphereMesh->spheres[st.vertices[1]]);
+        glm::vec3 center1 = sphereMesh->spheres[st.vertices[1]].center;
+        pb += m1 * center1;
+        M += m1;
+        particles.emplace_back(center1, glm::vec3(0.0f), m1);
         radii.emplace_back(sphereMesh->spheres[st.vertices[1]].radius);
 
 
-        float m3 = computeVolume(sphereMesh->spheres[st.vertices[2]]);
-        glm::vec3 center3 = sphereMesh->spheres[st.vertices[2]].center;
-        pb += m3 * sphereMesh->spheres[st.vertices[2]].center;
-        M += m3;
-        particles.emplace_back(center3, glm::vec3(0.0f), m3);
+        float m2 = computeVolume(sphereMesh->spheres[st.vertices[2]]);
+        glm::vec3 center2 = sphereMesh->spheres[st.vertices[2]].center;
+        pb += m2 * center2;
+        M += m2;
+        particles.emplace_back(center2, glm::vec3(0.0f), m2);
         radii.emplace_back(sphereMesh->spheres[st.vertices[2]].radius);
 
     }
@@ -222,7 +224,7 @@ void PhysicsSphereMesh::setup()
     for (auto &p : particles)
     {
         localSpaceVectors.emplace_back(p.getPos() - localSpaceBarycenter);
-        // REMOVE
-        // p.pinned = true;
+        //REMOVE
+        //p.pinned = true;
     }
 }
