@@ -34,9 +34,11 @@ public:
     void setMaxPushOutsideTries(uint val);
     Point pushOutside(const glm::vec3 &pos, int &dimensionality) const;
     std::string toString() const;
-
+    glm::vec3 localSpaceBarycenter = glm::vec3(0.0f, 0.0f, 0.0f);
 private:
     uint maxPushOutsideTries = 10U;
+
+    void adjustWithLocalBarycenter();
     Point pushOutsideOneCapsule(const Capsuloid &caps, const glm::vec3 &pos, int &dimensionality) const;
     Point pushOutsideOneSphereTriangle(const SphereTriangle &tri, const glm::vec3 &pos, int &dimensionality) const;
     Point pushOutsideOneSingleton(const Sphere &sphere, const glm::vec3 &pos, int &dimensionality) const;

@@ -33,6 +33,7 @@ SphereMesh::SphereMesh(vector<Sphere> &pSpheres, vector<Capsuloid> &pCapsuloids,
     clog << "- Capsuloids:\t" << capsuloids.size() << "\n";
     clog << "- Triangles:\t" << sphereTriangles.size() << "\n";
     clog << "- Singletons:\t" << singletons.size() << "\n";
+    adjustWithLocalBarycenter();
     updateAllCapsuloidsFeatures();
     updateAllSphereTriangleFeatures();
     updateBoundingSphere();
@@ -167,6 +168,59 @@ Point SphereMesh::pushOutside(const vec3 &pos, int &dimensionality) const
     }
     dimensionality = lastDimensionality;
     return lastPoint;
+}
+
+void SphereMesh::adjustWithLocalBarycenter()
+{
+    float M = 0.0f;
+    glm::vec3 pb(0.0f);
+    for (const auto& idx : singletons)
+    {
+        float m = computeVolume(spheres[idx]);
+        glm::vec3 center = spheres[idx].center;
+        pb += m * center;
+        M += m;
+    }
+    for (const auto& caps : capsuloids)
+    {
+        float m0 = computeVolume(spheres[caps.s0]);
+        glm::vec3 center0 = spheres[caps.s0].center;
+        pb += m0 * center0;
+        M += m0;
+
+        float m1 = computeVolume(spheres[caps.s1]);
+        glm::vec3 center1 = spheres[caps.s1].center;
+        pb += m1 * center1;
+        M += m1;
+
+    }
+
+    for (const auto& st : sphereTriangles)
+    {
+        float m0 = computeVolume(spheres[st.vertices[0]]);
+        glm::vec3 center0 = spheres[st.vertices[0]].center;
+        pb += m0 * center0;
+        M += m0;
+
+
+        float m1 = computeVolume(spheres[st.vertices[1]]);
+        glm::vec3 center1 = spheres[st.vertices[1]].center;
+        pb += m1 * center1;
+        M += m1;
+
+
+        float m2 = computeVolume(spheres[st.vertices[2]]);
+        glm::vec3 center2 = spheres[st.vertices[2]].center;
+        pb += m2 * center2;
+        M += m2;
+
+    }
+    localSpaceBarycenter = pb / M;
+
+    for (auto& s : spheres)
+    {
+        s.center = s.center - localSpaceBarycenter;
+    }
 }
 
 Point SphereMesh::pushOutsideOneCapsule(const Capsuloid &caps, const vec3 &pos, int &dimensionality) const

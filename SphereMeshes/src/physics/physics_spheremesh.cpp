@@ -22,7 +22,10 @@ PhysicsSphereMesh::PhysicsSphereMesh(std::shared_ptr<SphereMesh> sphereMesh) : s
     else {
         type = PhysicsSphereMeshType::GENERIC;
     }
-    setup();
+    for (const auto& s : sphereMesh->spheres) {
+        particles.emplace_back(glm::vec3(s.center), glm::vec3(0.0f), computeVolume(s));
+        radii.emplace_back(s.radius);
+    }
 
 }
 
@@ -42,7 +45,7 @@ void PhysicsSphereMesh::enforceConstraints()
 
      if (type == PhysicsSphereMeshType::ONE_SPHERE) {
          modelMatrix = glm::mat4(1.0f);
-         modelMatrix[3] = glm::vec4(particles.at(0).getPos() - sphereMesh->spheres.at(0).center, 1.0f);
+         modelMatrix[3] = glm::vec4(particles.at(0).getPos(), 1.0f);
      }
      else if (type == PhysicsSphereMeshType::TWO_SPHERES) {
          twoSphereEnforce();
@@ -69,17 +72,15 @@ void PhysicsSphereMesh::twoSphereEnforce() {
     //from to
     modelMatrix = fromToRotate(sphereMesh->spheres.at(1).center - sphereMesh->spheres.at(0).center, p2.getPos() - p1.getPos());
     //TODO SERVE ESPRIMERE LA SPHEREMESH CON COORDINATE RISPETTO AL BARICENTRO
-    glm::vec3 localSpaceBarycenter = sphereMesh->spheres.at(0).center * p1.getMass() + sphereMesh->spheres.at(1).center * p2.getMass();
-    localSpaceBarycenter /= (p1.getMass() + p2.getMass());
-    modelMatrix[3] = glm::vec4(computeWorldSpaceBarycenter() + localSpaceBarycenter, 1.0f);
+    modelMatrix[3] = glm::vec4(computeWorldSpaceBarycenter() + sphereMesh->localSpaceBarycenter, 1.0f);
 }
 
 void PhysicsSphereMesh::nSpheresEnforce()
 {
     modelMatrix = computeModelMatrix();
-    for (int i = 0; i < localSpaceVectors.size(); i++)
+    for (int i = 0; i < sphereMesh->spheres.size(); i++)
     {
-        glm::vec3 l = localSpaceVectors.at(i);
+        glm::vec3 l = sphereMesh->spheres.at(i).center;
         l = glm::vec3(modelMatrix * glm::vec4(l, 1.0f));
         auto& p = particles.at(i);
         p.pos = l;
@@ -117,7 +118,7 @@ glm::mat4 PhysicsSphereMesh::computeModelMatrix()
     glm::mat3 rotMatrix = glm::mat3(0.0f);
     for (int i = 0; i < particles.size(); i++)
     {
-        const glm::vec3& localSpaceVec = localSpaceVectors.at(i);
+        const glm::vec3& localSpaceVec = sphereMesh->spheres.at(i).center;
         const glm::vec3 worldSpaceVec = particles.at(i).pos - worldSpaceBarycenter;
         rotMatrix += (glm::outerProduct(localSpaceVec, worldSpaceVec) * particles.at(i).getMass());
     }
@@ -157,74 +158,4 @@ glm::vec3 PhysicsSphereMesh::computeWorldSpaceBarycenter() const
         pb += (p.getPos() * p.getMass());
     }
     return pb / totalMass;
-}
-
-void PhysicsSphereMesh::setup()
-{
-    particles.clear();
-    // somma pesata dei vettori posizione in spazio oggetto
-    float M = 0.0f;
-    glm::vec3 pb(0.0f);
-    for (const auto &idx : sphereMesh->singletons)
-    {
-        float m = computeVolume(sphereMesh->spheres[idx]);
-        glm::vec3 center = sphereMesh->spheres[idx].center;
-        pb += m * center;
-        M += m;
-        particles.emplace_back(center, glm::vec3(0.0f), m);
-        radii.emplace_back(sphereMesh->spheres[idx].radius);
-    }
-    for (const auto &caps : sphereMesh->capsuloids)
-    {
-        float m0 = computeVolume(sphereMesh->spheres[caps.s0]);
-        glm::vec3 center0 = sphereMesh->spheres[caps.s0].center;
-        pb += m0 * center0;
-        M += m0;
-        particles.emplace_back(center0, glm::vec3(0.0f), m0);
-        radii.emplace_back(sphereMesh->spheres[caps.s0].radius);
-
-        float m1 = computeVolume(sphereMesh->spheres[caps.s1]);
-        glm::vec3 center1 = sphereMesh->spheres[caps.s1].center;
-        pb += m1 * center1;
-        M += m1;
-        particles.emplace_back(center1, glm::vec3(0.0f), m1);
-        radii.emplace_back(sphereMesh->spheres[caps.s1].radius);
-
-    }
-
-    for (const auto &st : sphereMesh->sphereTriangles)
-    {
-        float m0 = computeVolume(sphereMesh->spheres[st.vertices[0]]);
-        glm::vec3 center0 = sphereMesh->spheres[st.vertices[0]].center;
-        pb += m0 * center0;
-        M += m0;
-        particles.emplace_back(center0, glm::vec3(0.0f), m0);
-        radii.emplace_back(sphereMesh->spheres[st.vertices[0]].radius);
-
-
-        float m1 = computeVolume(sphereMesh->spheres[st.vertices[1]]);
-        glm::vec3 center1 = sphereMesh->spheres[st.vertices[1]].center;
-        pb += m1 * center1;
-        M += m1;
-        particles.emplace_back(center1, glm::vec3(0.0f), m1);
-        radii.emplace_back(sphereMesh->spheres[st.vertices[1]].radius);
-
-
-        float m2 = computeVolume(sphereMesh->spheres[st.vertices[2]]);
-        glm::vec3 center2 = sphereMesh->spheres[st.vertices[2]].center;
-        pb += m2 * center2;
-        M += m2;
-        particles.emplace_back(center2, glm::vec3(0.0f), m2);
-        radii.emplace_back(sphereMesh->spheres[st.vertices[2]].radius);
-
-    }
-    glm::vec3 localSpaceBarycenter = pb / M;
-    totalMass = M;
-
-    for (auto &p : particles)
-    {
-        localSpaceVectors.emplace_back(p.getPos() - localSpaceBarycenter);
-        //REMOVE
-        //p.pinned = true;
-    }
 }
