@@ -39,27 +39,7 @@ SphereMesh::SphereMesh(vector<Sphere> &pSpheres, vector<Capsuloid> &pCapsuloids,
     updateBoundingSphere();
 }
 
-void SphereMesh::addSphere(Sphere sphere)
-{
-    spheres.emplace_back(sphere.center, sphere.radius);
-}
 
-void SphereMesh::addCapsuloid(Capsuloid caps)
-{   
-    updateCapsuloidFeatures(caps, spheres.at(caps.s0), spheres.at(caps.s1));
-    capsuloids.push_back(caps);
-}
-
-void SphereMesh::addSphereTriangle(SphereTriangle st)
-{
-    updateSphereTriangleFeatures(st, spheres.at(st.vertices[0]), spheres.at(st.vertices[1]), spheres.at(st.vertices[2]));
-    sphereTriangles.push_back(st);
-}
-
-void SphereMesh::addSingleton(uint sphereIdx)
-{
-    singletons.push_back(sphereIdx);
-}
 
 void SphereMesh::updateBoundingSphere()
 {

@@ -10,7 +10,7 @@
 #include <physics/plane_constraint.h>
 #include <utils/common.h>
 
-PhysicsSphereMesh::PhysicsSphereMesh(std::shared_ptr<SphereMesh> sphereMesh) : sphereMesh(sphereMesh)
+PhysicsSphereMesh::PhysicsSphereMesh(std::shared_ptr<SphereMesh> sphereMesh, glm::vec3 translation) : sphereMesh(sphereMesh), totalMass(0.0f), modelMatrix(1.0f)
 {
     if (sphereMesh->spheres.size() == 1) {
         type = PhysicsSphereMeshType::ONE_SPHERE;
@@ -22,9 +22,13 @@ PhysicsSphereMesh::PhysicsSphereMesh(std::shared_ptr<SphereMesh> sphereMesh) : s
     else {
         type = PhysicsSphereMeshType::GENERIC;
     }
+
+
     for (const auto& s : sphereMesh->spheres) {
-        particles.emplace_back(glm::vec3(s.center), glm::vec3(0.0f), computeVolume(s));
+        float mass = computeVolume(s);
+        particles.emplace_back(s.center + translation, glm::vec3(0.0f), mass);
         radii.emplace_back(s.radius);
+        totalMass += mass;
     }
 
 }
@@ -39,9 +43,9 @@ void PhysicsSphereMesh::addForce(const glm::vec3 &forceVec)
 void PhysicsSphereMesh::enforceConstraints()
 {
      for (auto &c : constraints)
-    {
+     {
         c->enforce();
-    }
+     }
 
      if (type == PhysicsSphereMeshType::ONE_SPHERE) {
          modelMatrix = glm::mat4(1.0f);
@@ -49,7 +53,6 @@ void PhysicsSphereMesh::enforceConstraints()
      }
      else if (type == PhysicsSphereMeshType::TWO_SPHERES) {
          twoSphereEnforce();
-
      }
      else {
          nSpheresEnforce();
@@ -71,8 +74,7 @@ void PhysicsSphereMesh::twoSphereEnforce() {
     //update matrix for two spheres
     //from to
     modelMatrix = fromToRotate(sphereMesh->spheres.at(1).center - sphereMesh->spheres.at(0).center, p2.getPos() - p1.getPos());
-    //TODO SERVE ESPRIMERE LA SPHEREMESH CON COORDINATE RISPETTO AL BARICENTRO
-    modelMatrix[3] = glm::vec4(computeWorldSpaceBarycenter() + sphereMesh->localSpaceBarycenter, 1.0f);
+    modelMatrix[3] = glm::vec4(computeWorldSpaceBarycentre(), 1.0f);
 }
 
 void PhysicsSphereMesh::nSpheresEnforce()
@@ -80,10 +82,10 @@ void PhysicsSphereMesh::nSpheresEnforce()
     modelMatrix = computeModelMatrix();
     for (int i = 0; i < sphereMesh->spheres.size(); i++)
     {
-        glm::vec3 l = sphereMesh->spheres.at(i).center;
-        l = glm::vec3(modelMatrix * glm::vec4(l, 1.0f));
+        glm::vec3 localSpaceVector = sphereMesh->spheres.at(i).center;
+        glm::vec3 newWorldSpaceVector = glm::vec3(modelMatrix * glm::vec4(localSpaceVector, 1.0f));
         auto& p = particles.at(i);
-        p.pos = l;
+        p.pos = newWorldSpaceVector;
     }
 }
 
@@ -109,17 +111,15 @@ glm::mat4 PhysicsSphereMesh::getModelMatrix() const
     return modelMatrix;
 }
 
-
-
 glm::mat4 PhysicsSphereMesh::computeModelMatrix()
 {
-    glm::vec3 worldSpaceBarycenter = computeWorldSpaceBarycenter();
+    glm::vec3 worldSpaceBarycentre = computeWorldSpaceBarycentre();
     
     glm::mat3 rotMatrix = glm::mat3(0.0f);
     for (int i = 0; i < particles.size(); i++)
     {
         const glm::vec3& localSpaceVec = sphereMesh->spheres.at(i).center;
-        const glm::vec3 worldSpaceVec = particles.at(i).pos - worldSpaceBarycenter;
+        const glm::vec3 worldSpaceVec = particles.at(i).pos - worldSpaceBarycentre;
         rotMatrix += (glm::outerProduct(localSpaceVec, worldSpaceVec) * particles.at(i).getMass());
     }
 
@@ -135,14 +135,14 @@ glm::mat4 PhysicsSphereMesh::computeModelMatrix()
     for (int i = 0; i < orthoNormIter; i++) {
         rotMatrix = (rotMatrix + glm::inverseTranspose(rotMatrix)) * 0.5f;
     }
-  
+ 
 
     //rotMatrix[0] = glm::normalize(glm::cross(rotMatrix[1], rotMatrix[2]));
     //rotMatrix[1] = glm::normalize(glm::cross(rotMatrix[2], rotMatrix[0]));
     //rotMatrix[2] = glm::normalize(glm::cross(rotMatrix[0], rotMatrix[1]));
     //rotMatrix /= glm::determinant(rotMatrix);
 
-    glm::vec3 translation = worldSpaceBarycenter;
+    glm::vec3 translation = worldSpaceBarycentre;
 
     glm::mat4 result = glm::mat4(rotMatrix);
     
@@ -150,7 +150,7 @@ glm::mat4 PhysicsSphereMesh::computeModelMatrix()
     return result;
 }
 
-glm::vec3 PhysicsSphereMesh::computeWorldSpaceBarycenter() const
+glm::vec3 PhysicsSphereMesh::computeWorldSpaceBarycentre() const
 {
     glm::vec3 pb(0.0f);
     for (const auto& p : particles)
