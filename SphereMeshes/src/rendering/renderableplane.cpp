@@ -24,13 +24,13 @@ RenderablePlane::RenderablePlane(Plane plane, float dim)
     glm::vec3 v = glm::normalize(glm::cross(plane.getNormal(), u));
 
     glm::vec3 vertices[8] = {
-        plane.getOrigin(),
+        plane.getOrigin() + glm::normalize(u + v) * (float)glm::sqrt(2.0) * (dim * 0.5f),
         plane.getNormal(),
-        plane.getOrigin() + u * dim,
+        plane.getOrigin() + glm::normalize(u - v) * (float)glm::sqrt(2.0) * (dim * 0.5f),
         plane.getNormal(),
-        plane.getOrigin() + v * dim,
+        plane.getOrigin() + glm::normalize(-u + v) * (float)glm::sqrt(2.0) * (dim * 0.5f),
         plane.getNormal(),
-        plane.getOrigin() + glm::normalize(u + v) * (float)glm::sqrt(2.0) * dim,
+        plane.getOrigin() + glm::normalize(-u - v) * (float)glm::sqrt(2.0) * (dim*0.5f),
         plane.getNormal()
     };
 

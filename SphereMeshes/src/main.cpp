@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
 
 
 
-    Plane plane(glm::vec3(0.0f, -2.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    Plane plane(glm::vec3(0.0f, -2.0f, 0.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f));
     PhysSphereMeshPlaneConstraint planeConstr = PhysSphereMeshPlaneConstraint(&plane, &physSphereMesh);
     physSphereMesh.addConstraint(&planeConstr);
 
@@ -236,7 +236,6 @@ int main(int argc, char *argv[])
     RenderablePlane rendPlane = RenderablePlane(plane, 20.0f);
     Material rendPlaneMat(glm::vec3(0.9f, 0.0f, 0.2f), glm::vec3(1.0f), 6.0f, MaterialType::BLINN_PHONG);
     glm::mat4 rendPlaneModelMat(1.0f);
-    rendPlaneModelMat = glm::translate(rendPlaneModelMat, glm::vec3(10.f, 0.0f, 5.0f));
     scene.addObject(&rendPlane, &rendPlaneModelMat, &rendPlaneMat);
 
     renderer.enableShadowing(plane, rendPlaneMat.diffuseColor);
