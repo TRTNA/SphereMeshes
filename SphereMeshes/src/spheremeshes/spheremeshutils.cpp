@@ -67,6 +67,10 @@ bool readFromFile(const std::string &path, SphereMesh &out, std::string &errorMs
         return false;
     }
 
+    vector<Sphere> spheres;
+    vector<Capsuloid> capsuloids;
+    vector<SphereTriangle> sphereTriangles;
+    vector<uint> singletons;
     try
     {
         uint spheresNo = 0;
@@ -75,7 +79,7 @@ bool readFromFile(const std::string &path, SphereMesh &out, std::string &errorMs
         {
             Sphere sphere;
             file >> sphere;
-            out.addSphere(sphere);
+            spheres.push_back(sphere);
         }
 
         uint singletonsNo = 0;
@@ -84,7 +88,7 @@ bool readFromFile(const std::string &path, SphereMesh &out, std::string &errorMs
         {
             uint sphereIdx;
             file >> sphereIdx;
-            out.addSingleton(sphereIdx);
+            singletons.push_back(sphereIdx);
         }
 
         uint capsNo = 0;
@@ -93,7 +97,7 @@ bool readFromFile(const std::string &path, SphereMesh &out, std::string &errorMs
         {
             Capsuloid caps;
             file >> caps;
-            out.addCapsuloid(caps);
+            capsuloids.push_back(caps);
         }
 
         uint sphereTrianglesNo = 0;
@@ -102,7 +106,7 @@ bool readFromFile(const std::string &path, SphereMesh &out, std::string &errorMs
         {
             SphereTriangle sphereTriangle;
             file >> sphereTriangle;
-            out.addSphereTriangle(sphereTriangle);
+            sphereTriangles.push_back(sphereTriangle);
         }
     }
     catch (const std::ios::failure &ex)
@@ -111,8 +115,7 @@ bool readFromFile(const std::string &path, SphereMesh &out, std::string &errorMs
         file.close();
         return false;
     }
-
-    out.updateBoundingSphere();
+    out = SphereMesh(spheres, capsuloids, sphereTriangles, singletons);
     file.close();
     return true;
 }

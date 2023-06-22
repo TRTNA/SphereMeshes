@@ -33,32 +33,13 @@ SphereMesh::SphereMesh(vector<Sphere> &pSpheres, vector<Capsuloid> &pCapsuloids,
     clog << "- Capsuloids:\t" << capsuloids.size() << "\n";
     clog << "- Triangles:\t" << sphereTriangles.size() << "\n";
     clog << "- Singletons:\t" << singletons.size() << "\n";
+    adjustWithLocalBarycenter();
     updateAllCapsuloidsFeatures();
     updateAllSphereTriangleFeatures();
     updateBoundingSphere();
 }
 
-void SphereMesh::addSphere(Sphere sphere)
-{
-    spheres.emplace_back(sphere.center, sphere.radius);
-}
 
-void SphereMesh::addCapsuloid(Capsuloid caps)
-{   
-    updateCapsuloidFeatures(caps, spheres.at(caps.s0), spheres.at(caps.s1));
-    capsuloids.push_back(caps);
-}
-
-void SphereMesh::addSphereTriangle(SphereTriangle st)
-{
-    updateSphereTriangleFeatures(st, spheres.at(st.vertices[0]), spheres.at(st.vertices[1]), spheres.at(st.vertices[2]));
-    sphereTriangles.push_back(st);
-}
-
-void SphereMesh::addSingleton(uint sphereIdx)
-{
-    singletons.push_back(sphereIdx);
-}
 
 void SphereMesh::updateBoundingSphere()
 {
@@ -167,6 +148,24 @@ Point SphereMesh::pushOutside(const vec3 &pos, int &dimensionality) const
     }
     dimensionality = lastDimensionality;
     return lastPoint;
+}
+
+void SphereMesh::adjustWithLocalBarycenter()
+{
+    float M = 0.0f;
+    glm::vec3 pb(0.0f);
+    for (const auto& s : spheres)
+    {
+        float mass = computeVolume(s);
+        pb += s.center * mass;
+        M += mass;
+    }
+    localSpaceBarycenter = pb / M;
+
+    for (auto& s : spheres)
+    {
+        s.center = s.center - localSpaceBarycenter;
+    }
 }
 
 Point SphereMesh::pushOutsideOneCapsule(const Capsuloid &caps, const vec3 &pos, int &dimensionality) const

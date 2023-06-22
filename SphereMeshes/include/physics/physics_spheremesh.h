@@ -18,7 +18,6 @@ class PhysicsSphereMesh : public PhysicalObject
 {
 private:
     std::shared_ptr<SphereMesh> sphereMesh;
-    std::vector<glm::vec3> localSpaceVectors;
     std::vector<Constraint*> constraints;
     float totalMass;
     PhysicsSphereMeshType type;
@@ -26,14 +25,13 @@ private:
     float twoSpheresDist = 0.0f;
 
     glm::mat4 modelMatrix;
-    void setup();
     glm::mat4 computeModelMatrix();
-    glm::vec3 computeWorldSpaceBarycenter() const;
+    glm::vec3 computeWorldSpaceBarycentre() const;
     void nSpheresEnforce();
     void twoSphereEnforce();
 
 public:
-    PhysicsSphereMesh(std::shared_ptr<SphereMesh> sphereMesh);
+    PhysicsSphereMesh(std::shared_ptr<SphereMesh> sphereMesh, glm::vec3 translation = glm::vec3(0.0f));
     std::vector<Particle> particles;
     std::vector<float> radii;
     void addConstraint(Constraint* constraint);

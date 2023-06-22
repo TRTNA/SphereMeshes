@@ -159,12 +159,12 @@ int main(int argc, char *argv[])
 
 
 
-    // Cloth setup
-    uint clothParticles = 48U;
-    float clothParticlesDist = 0.1f;
-    Cloth cloth(clothParticles, clothParticlesDist);
-    std::shared_ptr<Cloth> clothPtr = std::make_shared<Cloth>(cloth);
-    RenderableCloth renderableCloth(clothPtr);
+    //// Cloth setup
+    //uint clothParticles = 48U;
+    //float clothParticlesDist = 0.1f;
+    //Cloth cloth(clothParticles, clothParticlesDist);
+    //std::shared_ptr<Cloth> clothPtr = std::make_shared<Cloth>(cloth);
+    //RenderableCloth renderableCloth(clothPtr);
 
     // Shader setup
     Shader shader("assets/shaders/default.vert", "assets/shaders/default.frag");
@@ -186,14 +186,13 @@ int main(int argc, char *argv[])
 
     // Model matrices setup
     glm::mat4 sphereMeshModelMatrix = glm::mat4(1.0f);
-    // for now sphere mesh is expressed in world space
 
-    glm::mat4 clothModelMatrix = glm::mat4(1.0f);
+   /* glm::mat4 clothModelMatrix = glm::mat4(1.0f);
     clothModelMatrix = glm::translate(clothModelMatrix, glm::vec3(-1.0f, 1.0f, -1.0f));
     cloth.transform(clothModelMatrix);
     renderableCloth.updateNormals();
     renderableCloth.updateBuffers();
-    clothModelMatrix = glm::mat4(1.0f);
+    clothModelMatrix = glm::mat4(1.0f);*/
 
     // Point light
     Light light(glm::normalize(lightDir));
@@ -216,12 +215,12 @@ int main(int argc, char *argv[])
     // Other openGL params
     glPointSize(pointsSize);
 
-    // Picking setup
-    pickedObjectModelMatrix = &clothModelMatrix;
+    //// Picking setup
+    //pickedObjectModelMatrix = &clothModelMatrix;
 
     // physics
     //engine.addObject(&cloth);
-    PhysicsSphereMesh physSphereMesh(std::make_shared<SphereMesh>(sm));
+    PhysicsSphereMesh physSphereMesh(std::make_shared<SphereMesh>(sm), glm::vec3(0.0f, -0.5f, 0.0f));
     engine.addObject(&physSphereMesh);
 
     float wallTime = glfwGetTime();
@@ -257,12 +256,8 @@ int main(int argc, char *argv[])
     scene.addObject(&yAxis, &identity, &yAxisMaterial);
     scene.addObject(&zAxis, &identity, &zAxisMaterial);
 
-/* 
-    SphereMeshPlaneConstraint smPlaneConstr(&physSphereMesh, &plane);
-    physSphereMesh.addConstraint(&smPlaneConstr);
-
-    ClothSphereMeshCollisionConstraint collisionConstraint(&sm, &cloth);
-    cloth.addConstraint(&collisionConstraint); */
+    //ClothSphereMeshCollisionConstraint collisionConstraint(&sm, &cloth);
+    //cloth.addConstraint(&collisionConstraint);
 
     uint printCount = 0U;
 
@@ -401,7 +396,7 @@ int main(int argc, char *argv[])
             glPointSize(pointsSize);
         } */
         ImGui::End();
-
+        printf("%s\n", glm::to_string(physSphereMesh.particles[0].pos).c_str());
         renderer.renderScene(&scene);
 
         ImGui::Render();
