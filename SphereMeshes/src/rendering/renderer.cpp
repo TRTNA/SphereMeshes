@@ -11,6 +11,8 @@
 
 #include <utils/plane.h>
 
+using std::vector;
+
 
 Renderer::Renderer(Shader* shader) : shader(shader) {
     shader->Use();
@@ -73,29 +75,31 @@ void Renderer::renderScene(Scene* scene) {
 
         // SECOND PASS: SHADOWING
         if (shadowing && mat->shadowing) {
-            glm::mat4 shadowProjMatrix = glm::mat4(1.0f);
-            glm::vec3 N = shadowPlane.getNormal();
-            glm::vec3 V = shadowPlane.getOrigin();
-            glm::vec3 D = glm::vec3(0.0f, 1.0f, 0.0f);
-            float NdotD = glm::dot(N, D);
-            shadowProjMatrix[0][1] = -N.x / NdotD;
-            shadowProjMatrix[1][1] = (1.0f - N.y) / NdotD;
-            shadowProjMatrix[2][1] = -N.z / NdotD;
-            shadowProjMatrix[3][1] = (glm::dot(V, N) / NdotD) + 0.1f;
-            
-            shadowProjMatrix = shadowProjMatrix * modelMatrix;
-            glUniformMatrix4fv(glGetUniformLocation(shader->Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(shadowProjMatrix));
             glUniform3fv(glGetUniformLocation(shader->Program, "diffuseColor"), 1, shadowPlaneColor);
-            glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &materialTypeToSubroutineIdx.at(MaterialType::FLAT));
-            renderablePtr->draw();
+            for (const auto& shadowPlane : shadowPlanes) {
+                glm::mat4 shadowProjMatrix = glm::mat4(1.0f);
+                glm::vec3 N = shadowPlane.getNormal();
+                glm::vec3 V = shadowPlane.getOrigin();
+                glm::vec3 D = glm::vec3(0.0f, 1.0f, 0.0f);
+                float NdotD = glm::dot(N, D);
+                shadowProjMatrix[0][1] = -N.x / NdotD;
+                shadowProjMatrix[1][1] = (1.0f - N.y) / NdotD;
+                shadowProjMatrix[2][1] = -N.z / NdotD;
+                shadowProjMatrix[3][1] = (glm::dot(V, N) / NdotD) + 0.01f;
+
+                shadowProjMatrix = shadowProjMatrix * modelMatrix;
+                glUniformMatrix4fv(glGetUniformLocation(shader->Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(shadowProjMatrix));
+                glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &materialTypeToSubroutineIdx.at(MaterialType::FLAT));
+                renderablePtr->draw();
+            }
 
         }
     }
 }
 
-void Renderer::enableShadowing(Plane plane, glm::vec3 planeColor) {
+void Renderer::enableShadowing(vector<Plane> planes, glm::vec3 planeColor) {
     shadowing = true;
-    shadowPlane = plane;
+    shadowPlanes = planes;
     for (int i = 0; i < 3; i++) {
         shadowPlaneColor[i] = planeColor[i] * 0.25f;
     }

@@ -5,6 +5,7 @@
 #include <utils/plane.h>
 
 #include <unordered_map>
+#include <vector>
 
 class Scene;
 class Plane;
@@ -16,7 +17,7 @@ class Renderer {
     private:
         bool backfaceCulling = false;
         bool shadowing = false;
-        Plane shadowPlane = Plane(glm::vec3(0.0f), glm::vec3(0.0f));
+        std::vector<Plane> shadowPlanes;
         float shadowPlaneColor[3] = { 0.f, 0.f, 0.f };
         glm::vec3 ambientColor = glm::vec3(0.0f);
         glm::vec3 backgroundColor = glm::vec3(0.0f);
@@ -31,7 +32,7 @@ class Renderer {
         void setAmbientColor(glm::vec3 ambientColor);
         void setBackgroundColor(glm::vec3 backgroundColor);
         void setShader(Shader* shader);
-        void enableShadowing(Plane plane, glm::vec3 planeColor);
+        void enableShadowing(std::vector<Plane> planes, glm::vec3 planeColor);
         void disableShadowing();
 
 };

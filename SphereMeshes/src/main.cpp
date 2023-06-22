@@ -220,23 +220,32 @@ int main(int argc, char *argv[])
 
     // physics
     //engine.addObject(&cloth);
-    PhysicsSphereMesh physSphereMesh(std::make_shared<SphereMesh>(sm), glm::vec3(0.0f, -0.5f, 0.0f));
+    PhysicsSphereMesh physSphereMesh(std::make_shared<SphereMesh>(sm), glm::vec3(0.0f, 15.0f, 0.0f));
     engine.addObject(&physSphereMesh);
 
     float wallTime = glfwGetTime();
     engine.start();
 
-    Plane plane(glm::vec3(0.0f, -7.0f, 0.0f), glm::normalize(glm::vec3(0.2f, 1.0f, 0.0f)));
-    PhysSphereMeshPlaneConstraint planeConstr = PhysSphereMeshPlaneConstraint(&plane, &physSphereMesh);
-    physSphereMesh.addConstraint(&planeConstr);
+    Plane plane1(glm::vec3(-6.0f, 0.0f, 0.0f), glm::normalize(glm::vec3(0.2f, 1.0f, 0.0f)));
+    Plane plane2(glm::vec3(1.0f, 0.0f, 0.0f), glm::normalize(glm::vec3(-0.5f, 1.0f, 0.0f)));
+
+    PhysSphereMeshPlaneConstraint planeConstr1 = PhysSphereMeshPlaneConstraint(&plane1, &physSphereMesh);
+    physSphereMesh.addConstraint(&planeConstr1);
+    PhysSphereMeshPlaneConstraint planeConstr2 = PhysSphereMeshPlaneConstraint(&plane2, &physSphereMesh);
+    physSphereMesh.addConstraint(&planeConstr2);
 
     //Renderable plane
-    RenderablePlane rendPlane = RenderablePlane(plane, 40.0f);
+    RenderablePlane rendPlane1 = RenderablePlane(plane1, 20.0f);
     Material rendPlaneMat(glm::vec3(0.9f, 0.0f, 0.2f), glm::vec3(1.0f), 6.0f, MaterialType::BLINN_PHONG);
     glm::mat4 rendPlaneModelMat(1.0f);
-    scene.addObject(&rendPlane, &rendPlaneModelMat, &rendPlaneMat);
+    RenderablePlane rendPlane2 = RenderablePlane(plane2, 20.0f);
 
-    renderer.enableShadowing(plane, rendPlaneMat.diffuseColor);
+    scene.addObject(&rendPlane1, &rendPlaneModelMat, &rendPlaneMat);
+    scene.addObject(&rendPlane2, &rendPlaneModelMat, &rendPlaneMat);
+
+
+    std::vector<Plane> shadowPlanes{plane1, plane2};
+    renderer.enableShadowing(shadowPlanes, rendPlaneMat.diffuseColor);
 
     //axis
     Material xAxisMaterial(glm::vec3(1.0f, 0.0f, 0.0f), specColor, shininess, MaterialType::FLAT);
