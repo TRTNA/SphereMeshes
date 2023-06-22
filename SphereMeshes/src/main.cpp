@@ -220,7 +220,7 @@ int main(int argc, char *argv[])
 
     // physics
     //engine.addObject(&cloth);
-    PhysicsSphereMesh physSphereMesh(std::make_shared<SphereMesh>(sm), glm::vec3(0.0f, 3.0f, 0.0f));
+    PhysicsSphereMesh physSphereMesh(std::make_shared<SphereMesh>(sm), glm::vec3(0.0f, -0.5f, 0.0f));
     engine.addObject(&physSphereMesh);
 
     float wallTime = glfwGetTime();
