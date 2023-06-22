@@ -226,14 +226,12 @@ int main(int argc, char *argv[])
     float wallTime = glfwGetTime();
     engine.start();
 
-
-
-    Plane plane(glm::vec3(0.0f, -2.0f, 0.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f));
+    Plane plane(glm::vec3(0.0f, -7.0f, 0.0f), glm::normalize(glm::vec3(0.2f, 1.0f, 0.0f)));
     PhysSphereMeshPlaneConstraint planeConstr = PhysSphereMeshPlaneConstraint(&plane, &physSphereMesh);
     physSphereMesh.addConstraint(&planeConstr);
 
     //Renderable plane
-    RenderablePlane rendPlane = RenderablePlane(plane, 20.0f);
+    RenderablePlane rendPlane = RenderablePlane(plane, 40.0f);
     Material rendPlaneMat(glm::vec3(0.9f, 0.0f, 0.2f), glm::vec3(1.0f), 6.0f, MaterialType::BLINN_PHONG);
     glm::mat4 rendPlaneModelMat(1.0f);
     scene.addObject(&rendPlane, &rendPlaneModelMat, &rendPlaneMat);
@@ -395,7 +393,6 @@ int main(int argc, char *argv[])
             glPointSize(pointsSize);
         } */
         ImGui::End();
-        printf("%s\n", glm::to_string(physSphereMesh.particles[0].pos).c_str());
         renderer.renderScene(&scene);
 
         ImGui::Render();

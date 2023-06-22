@@ -71,11 +71,18 @@ void Renderer::renderScene(Scene* scene) {
 
         renderablePtr->draw();
 
-        // SECOND PASS FOR SHADOWING
+        // SECOND PASS: SHADOWING
         if (shadowing && mat->shadowing) {
             glm::mat4 shadowProjMatrix = glm::mat4(1.0f);
-            shadowProjMatrix[1][1] = 0.0f;
-            shadowProjMatrix[3][1] = shadowPlane.getOrigin().y + 0.01f;
+            glm::vec3 N = shadowPlane.getNormal();
+            glm::vec3 V = shadowPlane.getOrigin();
+            glm::vec3 D = glm::vec3(0.0f, 1.0f, 0.0f);
+            float NdotD = glm::dot(N, D);
+            shadowProjMatrix[0][1] = -N.x / NdotD;
+            shadowProjMatrix[1][1] = (1.0f - N.y) / NdotD;
+            shadowProjMatrix[2][1] = -N.z / NdotD;
+            shadowProjMatrix[3][1] = (glm::dot(V, N) / NdotD) + 0.1f;
+            
             shadowProjMatrix = shadowProjMatrix * modelMatrix;
             glUniformMatrix4fv(glGetUniformLocation(shader->Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(shadowProjMatrix));
             glUniform3fv(glGetUniformLocation(shader->Program, "diffuseColor"), 1, shadowPlaneColor);
