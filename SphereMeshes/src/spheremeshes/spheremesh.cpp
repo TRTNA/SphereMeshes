@@ -50,8 +50,13 @@ void SphereMesh::scale(float k)
 {
     for (auto &s : spheres)
     {
+        //restore sphere absolute position in local space
+        s.center += localSpaceBarycenter;
         s.scale(k);
     }
+
+    //readjust with local barycentre
+    adjustWithLocalBarycenter();
     boundingSphere.scale(k);
     updateAllCapsuloidsFeatures();
     updateAllSphereTriangleFeatures();

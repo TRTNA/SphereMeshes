@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
     }
     cout << "Sphere mesh:\n"
          << sm << endl;
-
+    
     // Sphere mesh rendering setup
     PointCloud pc = PointCloud();
     pc.repopulate(pointsNumber, sm);
