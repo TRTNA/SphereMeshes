@@ -81,11 +81,10 @@ void Renderer::renderScene(Scene* scene) {
                 glm::vec3 N = shadowPlane.getNormal();
                 glm::vec3 V = shadowPlane.getOrigin();
                 glm::vec3 D = glm::vec3(0.0f, 1.0f, 0.0f);
-                float NdotD = glm::dot(N, D);
-                shadowProjMatrix[0][1] = -N.x / NdotD;
-                shadowProjMatrix[1][1] = (1.0f - N.y) / NdotD;
-                shadowProjMatrix[2][1] = -N.z / NdotD;
-                shadowProjMatrix[3][1] = (glm::dot(V, N) / NdotD) + 0.01f;
+                shadowProjMatrix[0][1] = -N.x / N.y;
+                shadowProjMatrix[1][1] = -N.y / N.y + 1.0f;
+                shadowProjMatrix[2][1] = -N.z / N.y;
+                shadowProjMatrix[3][1] = (glm::dot(V, N) / N.y) + 0.01f;
 
                 shadowProjMatrix = shadowProjMatrix * modelMatrix;
                 glUniformMatrix4fv(glGetUniformLocation(shader->Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(shadowProjMatrix));
@@ -101,7 +100,7 @@ void Renderer::enableShadowing(vector<Plane> planes, glm::vec3 planeColor) {
     shadowing = true;
     shadowPlanes = planes;
     for (int i = 0; i < 3; i++) {
-        shadowPlaneColor[i] = planeColor[i] * 0.25f;
+        shadowPlaneColor[i] = planeColor[i] * 0.90f;
     }
 }
 

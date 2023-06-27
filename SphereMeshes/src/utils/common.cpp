@@ -49,9 +49,13 @@ uint linearizedIndexSquareGrid(uint dim, uint x, uint y) {
     return x * dim + y;
 }
 
+float computeMass(const Sphere& sphere) {
+    return computeVolume(sphere) * 10.0f;
+}
+
 
 float computeVolume(const Sphere& sphere) {
-    return 4.0f/3.0f * 3.1415926535f * sphere.radius;
+    return 4.0f/3.0f * 3.1415926535f * sphere.radius * sphere.radius * sphere.radius;
 }
 
 glm::mat3 fromToRotate(glm::vec3 from, glm::vec3 to) {

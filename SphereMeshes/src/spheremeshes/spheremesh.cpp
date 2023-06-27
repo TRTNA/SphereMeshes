@@ -161,7 +161,7 @@ void SphereMesh::adjustWithLocalBarycenter()
     glm::vec3 pb(0.0f);
     for (const auto& s : spheres)
     {
-        float mass = computeVolume(s);
+        float mass = computeMass(s);
         pb += s.center * mass;
         M += mass;
     }

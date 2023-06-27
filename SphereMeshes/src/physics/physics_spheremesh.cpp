@@ -25,7 +25,7 @@ PhysicsSphereMesh::PhysicsSphereMesh(std::shared_ptr<SphereMesh> sphereMesh, glm
 
 
     for (const auto& s : sphereMesh->spheres) {
-        float mass = computeVolume(s);
+        float mass = computeMass(s);
         particles.emplace_back(s.center + translation, glm::vec3(0.0f), mass);
         radii.emplace_back(s.radius);
         totalMass += mass;
@@ -121,6 +121,13 @@ glm::mat4 PhysicsSphereMesh::computeModelMatrix()
         const glm::vec3& localSpaceVec = sphereMesh->spheres.at(i).center;
         const glm::vec3 worldSpaceVec = particles.at(i).pos - worldSpaceBarycentre;
         rotMatrix += (glm::outerProduct(localSpaceVec, worldSpaceVec) * particles.at(i).getMass());
+    }
+
+    if (particles.size() == 3) {
+        glm::vec3 worldN = glm::cross(particles.at(0).pos - worldSpaceBarycentre, particles.at(1).pos - worldSpaceBarycentre);
+        glm::vec3 localN = glm::cross(sphereMesh->spheres.at(0).center, sphereMesh->spheres.at(1).center);
+        rotMatrix += (glm::outerProduct(localN, worldN));
+
     }
 
 
