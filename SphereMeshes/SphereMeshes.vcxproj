@@ -147,6 +147,7 @@
     <ClInclude Include="include\physics\particle.h" />
     <ClInclude Include="include\physics\particle_equidistance_constraint.h" />
     <ClInclude Include="include\physics\physicalobject.h" />
+    <ClInclude Include="include\physics\physics.h" />
     <ClInclude Include="include\physics\physicsconstants.h" />
     <ClInclude Include="include\physics\physicsengine.h" />
     <ClInclude Include="include\physics\physics_spheremesh.h" />
@@ -159,12 +160,14 @@
     <ClInclude Include="include\rendering\renderablecloth.h" />
     <ClInclude Include="include\rendering\renderablepointcloud.h" />
     <ClInclude Include="include\rendering\renderer.h" />
+    <ClInclude Include="include\rendering\rendering.h" />
     <ClInclude Include="include\rendering\scene.h" />
     <ClInclude Include="include\rendering\shader.h" />
     <ClInclude Include="include\spheremeshes\capsuloid.h" />
     <ClInclude Include="include\spheremeshes\point.h" />
     <ClInclude Include="include\spheremeshes\sphere.h" />
     <ClInclude Include="include\spheremeshes\spheremesh.h" />
+    <ClInclude Include="include\spheremeshes\spheremeshes.h" />
     <ClInclude Include="include\spheremeshes\spheretriangle.h" />
     <ClInclude Include="include\utils\aabb.h" />
     <ClInclude Include="include\utils\arrow_line.h" />
@@ -176,6 +179,7 @@
     <ClInclude Include="include\utils\time.h" />
     <ClInclude Include="include\utils\types.h" />
     <ClInclude Include="include\rendering\renderableplane.h" />
+    <ClInclude Include="include\utils\utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui\include\imgui\imgui_impl_glfw.cpp" />

@@ -23,6 +23,8 @@ PhysicsSphereMesh::PhysicsSphereMesh(std::shared_ptr<SphereMesh> sphereMesh, glm
         type = PhysicsSphereMeshType::GENERIC;
     }
 
+    modelMatrix = glm::translate(modelMatrix, translation);
+
 
     for (const auto& s : sphereMesh->spheres) {
         float mass = computeMass(s);
@@ -39,6 +41,18 @@ void PhysicsSphereMesh::addForce(const glm::vec3 &forceVec)
     {
         p.addForce(forceVec);
     }
+}
+void PhysicsSphereMesh::reset(glm::vec3 position)
+{
+    modelMatrix = glm::mat4(1.0f);
+    modelMatrix = glm::translate(position);
+
+    particles.clear();
+
+    for (const auto& s : sphereMesh->spheres) {
+        particles.emplace_back(s.center + position, glm::vec3(0.0f), computeMass(s));
+    }
+
 }
 void PhysicsSphereMesh::enforceConstraints()
 {
@@ -57,6 +71,15 @@ void PhysicsSphereMesh::enforceConstraints()
      else {
          nSpheresEnforce();
      }
+}
+
+void PhysicsSphereMesh::addImpulse(const glm::vec3& impulse)
+{
+    for (auto& p : particles) {
+        glm::vec3 v = p.getPos() - p.getLastPos();
+        v += impulse / p.getMass();
+        p.setPos(p.getLastPos() + v);
+    }
 }
 
 void PhysicsSphereMesh::twoSphereEnforce() {

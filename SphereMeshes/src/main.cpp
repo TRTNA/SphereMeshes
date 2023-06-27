@@ -10,36 +10,10 @@
 #include <memory>
 #include <string>
 
-#include <spheremeshes/spheremesh.h>
-#include <spheremeshes/capsuloid.h>
-#include <spheremeshes/spheretriangle.h>
-#include <spheremeshes/point.h>
-
-#include <utils/ray.h>
-#include <utils/common.h>
-#include <utils/pointcloud.h>
-#include <utils/plane.h>
-
-#include <rendering/renderablepointcloud.h>
-#include <rendering/shader.h>
-#include <rendering/camera.h>
-#include <rendering/scene.h>
-#include <rendering/material.h>
-#include <rendering/renderer.h>
-#include <rendering/light.h>
-#include <rendering/renderableplane.h>
-
-#include <rendering/renderablecloth.h>
-
-#include <cloth/cloth.h>
-#include <utils/arrow_line.h>
-
-#include <physics/physicsengine.h>
-#include <physics/physicalobject.h>
-#include <physics/particle.h>
-#include <physics/spheremesh_constraint.h>
-#include <physics/physics_spheremesh.h>
-#include <physics/plane_constraint.h>
+#include <spheremeshes/spheremeshes.h>
+#include <utils/utils.h>
+#include <rendering/rendering.h>
+#include <physics/physics.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -107,8 +81,11 @@ int boundingSpherePointsNumber = pointsNumber;
 
 //Physics data
 PhysicsEngine engine;
+PhysicsSphereMesh* physSphereMesh;
 const Plane plane1(glm::vec3(-6.0f, 0.0f, 0.0f), glm::normalize(glm::vec3(0.2f, 1.0f, 0.0f)));
 const Plane plane2(glm::vec3(1.0f, 0.0f, 0.0f), glm::normalize(glm::vec3(-0.5f, 1.0f, 0.0f)));
+
+vec3 physSphereMeshStartingPos{0.0f, 10.0f, 0.0f};
 
 int main(int argc, char* argv[])
 {
@@ -159,15 +136,15 @@ int main(int argc, char* argv[])
 	cout << "Started physics engine...\n";
 
 	//Physics sphere mesh setup
-	PhysicsSphereMesh physSphereMesh(std::make_shared<SphereMesh>(sm), glm::vec3(0.0f, 15.0f, 0.0f));
+	physSphereMesh = new PhysicsSphereMesh(std::make_shared<SphereMesh>(sm), physSphereMeshStartingPos);
 
 	//Physics sphere mesh - plane constraints
-	PhysSphereMeshPlaneConstraint planeConstr1 = PhysSphereMeshPlaneConstraint(&plane1, &physSphereMesh);
-	physSphereMesh.addConstraint(&planeConstr1);
-	PhysSphereMeshPlaneConstraint planeConstr2 = PhysSphereMeshPlaneConstraint(&plane2, &physSphereMesh);
-	physSphereMesh.addConstraint(&planeConstr2);
+	PhysSphereMeshPlaneConstraint planeConstr1 = PhysSphereMeshPlaneConstraint(&plane1, physSphereMesh);
+	physSphereMesh->addConstraint(&planeConstr1);
+	PhysSphereMeshPlaneConstraint planeConstr2 = PhysSphereMeshPlaneConstraint(&plane2, physSphereMesh);
+	physSphereMesh->addConstraint(&planeConstr2);
 
-	engine.addObject(&physSphereMesh);
+	engine.addObject(physSphereMesh);
 
 	/*
 	* ---------------------------------------------------------
@@ -181,7 +158,7 @@ int main(int argc, char* argv[])
 
 	// Camera setup
 	float fovY = 45.0f;
-	glm::vec3 viewPos = glm::vec3(0.0f, 3.0f, sm.boundingSphere.radius*4.0f);
+	glm::vec3 viewPos = glm::vec3(0.0f, 4.0f, sm.boundingSphere.radius*5.0f);
 	camera = Camera(viewPos, glm::normalize(-viewPos), 0.1f, 100.0f, (float)SCR_WIDTH, (float)SCR_HEIGHT, fovY);
 
 	// Light setup
@@ -225,7 +202,7 @@ int main(int argc, char* argv[])
 
 	Material sphereMeshmat(sphereMeshColor, specColor, shininess, MaterialType::BLINN_PHONG, true);
 
-	glm::mat4 sphereMeshModelMatrix = glm::mat4(1.0f);
+	glm::mat4 sphereMeshModelMatrix = physSphereMesh->getModelMatrix();
 
 	uint sphereMeshSceneIdx = scene.addObject(&rpc, &sphereMeshModelMatrix, &sphereMeshmat);
 
@@ -283,13 +260,20 @@ int main(int argc, char* argv[])
 		}
 		//Updating model matrix for static sphere mesh with the model matrix computed by the physics sphere mesh (dynamic)
 		glm::mat4* smModelMat = scene.getModelMatrixOf(sphereMeshSceneIdx);
-		*smModelMat = physSphereMesh.getModelMatrix();
+		*smModelMat = physSphereMesh->getModelMatrix();
 
 		//GUI setup
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 		ImGui::Begin("Controls");
+		if (ImGui::Button("Restart physics sim")) {
+			physSphereMesh->reset(physSphereMeshStartingPos);
+		}
+		float smPos[3] = { physSphereMeshStartingPos.x, physSphereMeshStartingPos.y, physSphereMeshStartingPos.z };
+		if (ImGui::SliderFloat3("Sphere mesh starting pos", smPos, -10.0f, 10.0f)) 
+			physSphereMeshStartingPos = glm::vec3(smPos[0], smPos[1], smPos[2]);
+		
 		ImGui::End();
 
 
@@ -377,18 +361,13 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 	static double mouse_x = 0.0;
 	static double mouse_y = 0.0;
 	glfwGetCursorPos(window, &mouse_x, &mouse_y);
-	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && keys[GLFW_KEY_LEFT_ALT])
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 	{
-		archball = true;
 		last_mx = cur_mx = mouse_x;
 		last_my = cur_my = mouse_y;
 	}
-	else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE || !keys[GLFW_KEY_LEFT_ALT])
-	{
-		archball = false;
-	}
 
-	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
 	{
 		Camera const* sceneCam = scene.getCamera();
 		vec3 rayDir = screenToWorldDir(glm::vec2(mouse_x, mouse_y), SCR_WIDTH, SCR_HEIGHT, sceneCam->getViewMatrix(), sceneCam->getProjectionMatrix());
@@ -396,7 +375,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		Point null;
 		if (intersects(r, sm.boundingSphere, null))
 		{
-			printf("Interseca!\n");
+			physSphereMesh->addImpulse(glm::vec3(0.0f, 3.0f, 0.0f));
 		}
 	}
 }
@@ -429,6 +408,7 @@ GLFWwindow* glfwSetup(std::string windowTitle, float width, float height)
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
 	glfwSetCursorPosCallback(window, cursor_position_callback);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	glfwSwapInterval(1);
 
 	return window;
 }

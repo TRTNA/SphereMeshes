@@ -26,7 +26,6 @@ private:
 
     glm::mat4 modelMatrix;
     glm::mat4 computeModelMatrix();
-    glm::vec3 computeWorldSpaceBarycentre() const;
     void nSpheresEnforce();
     void twoSphereEnforce();
 
@@ -36,10 +35,13 @@ public:
     std::vector<float> radii;
     void addConstraint(Constraint* constraint);
     glm::mat4 getModelMatrix() const;
+    void reset(glm::vec3 position);
     virtual void addForce(const glm::vec3 &forceVec) override;
+    void addImpulse(const glm::vec3& impulse);
     virtual void enforceConstraints() override;
-
     virtual float getMass() const override;
     virtual void timeStep() override;
+    glm::vec3 computeWorldSpaceBarycentre() const;
+
 };
 
