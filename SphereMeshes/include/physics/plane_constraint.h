@@ -37,11 +37,11 @@ public:
 
 class SpherePlaneConstraint : public Constraint {
 private:
-    Plane* plane;
+    const Plane* plane;
     Particle* particle;
     float radius;
 public:
-    SpherePlaneConstraint(Plane* plane, Particle* particle, float radius);
+    SpherePlaneConstraint(const Plane* plane, Particle* particle, float radius);
     void enforce() override;
 };
 
@@ -49,6 +49,6 @@ class PhysSphereMeshPlaneConstraint : public Constraint {
 private:
     std::vector<SpherePlaneConstraint> constraints;
 public:
-    PhysSphereMeshPlaneConstraint(Plane* plane, PhysicsSphereMesh* physSphereMesh);
+    PhysSphereMeshPlaneConstraint(const Plane* plane, PhysicsSphereMesh* physSphereMesh);
     void enforce() override;
 };

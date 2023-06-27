@@ -41,7 +41,7 @@ void ClothPlaneConstraint::enforce() {
 }   
 
 
-SpherePlaneConstraint::SpherePlaneConstraint(Plane* plane, Particle* particle, float radius) : plane(plane), particle(particle), radius(radius) {}
+SpherePlaneConstraint::SpherePlaneConstraint(const Plane* plane, Particle* particle, float radius) : plane(plane), particle(particle), radius(radius) {}
 
 void SpherePlaneConstraint::enforce() {
     vec3 planeToCenter = particle->getPos() - plane->getOrigin();
@@ -55,7 +55,7 @@ void SpherePlaneConstraint::enforce() {
     }
 }
 
-PhysSphereMeshPlaneConstraint::PhysSphereMeshPlaneConstraint(Plane* plane, PhysicsSphereMesh* physSphereMesh) {
+PhysSphereMeshPlaneConstraint::PhysSphereMeshPlaneConstraint(const Plane* plane, PhysicsSphereMesh* physSphereMesh) {
     for (int i = 0; i < physSphereMesh->particles.size(); i++) {
         constraints.emplace_back(plane, &physSphereMesh->particles.at(i), physSphereMesh->radii.at(i));
     }

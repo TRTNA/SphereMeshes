@@ -57,511 +57,389 @@ using std::endl;
 using std::string;
 using std::vector;
 
-GLFWwindow *glfwSetup(std::string windowTitle, float width, float height);
-void imGuiSetup(GLFWwindow *window);
-void framebuffer_size_callback(GLFWwindow *window, int width, int height);
-void processInput(GLFWwindow *window);
+GLFWwindow* glfwSetup(std::string windowTitle, float width, float height);
+void imGuiSetup(GLFWwindow* window);
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void processInput(GLFWwindow* window);
 // callback functions for keyboard and mouse events
-void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
-void mouse_callback(GLFWwindow *window, double xpos, double ypos);
-void mouse_button_callback(GLFWwindow *window, int button, int action, int mods);
-void cursor_position_callback(GLFWwindow *window, double xpos, double ypos);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
 glm::vec3 get_arcball_vector(int x, int y);
-// if one of the WASD keys is pressed, we call the corresponding method of the Camera class
 void apply_key_commands();
 
-// settings
+// Screen data
 const unsigned int SCR_WIDTH = 1280;
 const unsigned int SCR_HEIGHT = 720;
 
-// we initialize an array of booleans for each keyboard key
+// I/O data
 bool keys[1024];
-
-// Mouse events
 double last_mx = 0.0, last_my = 0.0, cur_mx = 0.0, cur_my = 0.0;
 bool archball = false;
 
-// parameters for time calculation (for animations)
-GLfloat deltaTime = 0.0f;
-GLfloat lastFrame = 0.0f;
+// Time data
+float deltaTime = 0.0f;
 
-const float defaultRotationSpeed = 1.0f;
+//Rendering data
+Camera camera;
+Scene scene;
+Renderer renderer;
+const glm::vec3 lightDir(0.0f, 1.0f, 0.0f);
+const glm::vec3 backgroundColor{0.8f, 0.8f, 0.8f};
+const glm::vec3 ambientColor{0.1f, 0.1f, 0.1f};
+const glm::vec3 specColor{1.0f, 1.0f, 1.0f};
 
-glm::vec3 lightDir(0.0f, 1.0f, 0.0f);
-glm::vec3 backgroundColor{0.8f, 0.8f, 0.8f};
-glm::vec3 ambientColor{0.1f, 0.1f, 0.1f};
-glm::vec3 diffuseColor{1.0f, 0.5f, 0.5f};
-glm::vec3 boundingSphereColor{0.0f, 0.0f, 0.5f};
+const glm::vec3 sphereMeshColor{0.4f, 1.0f, 0.4f};
+const glm::vec3 planeColor{0.9f, 0.0f, 0.2f};
+const glm::vec3 boundingSphereColor{0.0f, 0.0f, 0.5f};
 
-glm::vec3 specColor{1.0f, 1.0f, 1.0f};
-float shininess = 16.0f;
+const float shininess = 16.0f;
+const float pointsSize = 5.0f;
 
 bool backFaceCulling = false;
 bool renderBoundingSphere = false;
 
+//Sphere mesh data
 SphereMesh sm;
 int pointsNumber = 100000;
-float pointsSize = 5.0f;
 int boundingSpherePointsNumber = pointsNumber;
 
-Camera camera;
-Scene scene;
-Renderer renderer;
+//Physics data
 PhysicsEngine engine;
+const Plane plane1(glm::vec3(-6.0f, 0.0f, 0.0f), glm::normalize(glm::vec3(0.2f, 1.0f, 0.0f)));
+const Plane plane2(glm::vec3(1.0f, 0.0f, 0.0f), glm::normalize(glm::vec3(-0.5f, 1.0f, 0.0f)));
 
-uint sphereMeshSceneIdx = 0U;
-uint boundingSphereSceneIdx = 0U;
-
-glm::mat4 *pickedObjectModelMatrix;
-
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
-    // Context creation
-    GLFWwindow *window = glfwSetup("SphereMeshes", SCR_WIDTH, SCR_HEIGHT);
-    if (window == nullptr)
-    {
-        std::cerr << "Failed to initialize GLFW" << std::endl;
-        return -1;
-    }
+	/*
+	* ---------------------------------------------------------
+	*   CONTEXT
+	* ---------------------------------------------------------
+	*/
+	GLFWwindow* window = glfwSetup("SphereMeshes", SCR_WIDTH, SCR_HEIGHT);
+	if (window == nullptr)
+	{
+		std::cerr << "Failed to initialize GLFW" << std::endl;
+		return -1;
+	}
 
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cerr << "Failed to initialize GLAD" << std::endl;
-        return -1;
-    }
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+	{
+		std::cerr << "Failed to initialize GLAD" << std::endl;
+		return -1;
+	}
 
-    imGuiSetup(window);
+	imGuiSetup(window);
 
-    // Sphere mesh loading
-    std::string smToLoad = argc > 1 ? argv[1] : "caps.sm";
-    string readErrorMsg;
-    bool read = readFromFile("assets/spheremeshes/" + smToLoad, sm, readErrorMsg);
-    if (!read)
-    {
-        std::cerr << readErrorMsg << std::endl;
-        return 1;
-    }
-    cout << "Sphere mesh:\n"
-         << sm << endl;
-    
-    // Sphere mesh rendering setup
-    PointCloud pc = PointCloud();
-    pc.repopulate(pointsNumber, sm);
-    std::shared_ptr<PointCloud> pc_ptr = std::make_shared<PointCloud>(pc);
-    RenderablePointCloud rpc = RenderablePointCloud(pc_ptr);
+	/*
+	* ---------------------------------------------------------
+	*   SPHERE MESH LOADING
+	* ---------------------------------------------------------
+	*/    std::string smToLoad = argc > 1 ? argv[1] : "caps.sm";
+	string readErrorMsg;
+	bool read = readFromFile("assets/spheremeshes/" + smToLoad, sm, readErrorMsg);
+	if (!read)
+	{
+		std::cerr << readErrorMsg << std::endl;
+		return 1;
+	}
+	cout << "Loaded a sphere mesh:\n"
+		<< sm << endl;
 
-    // Sphere mesh's bounding sphere rendering setup
-    SphereMesh boundingSphereFakeSm;
-    PointCloud boundingSphereFakePc = PointCloud();
-    boundingSphereFakePc.repopulate(boundingSpherePointsNumber, sm);
-    std::shared_ptr<PointCloud> boundingSphereFakePc_ptr = std::make_shared<PointCloud>(boundingSphereFakePc);
-    RenderablePointCloud boundingSphereFakeRpc = RenderablePointCloud(boundingSphereFakePc_ptr);
+	/*
+	* ---------------------------------------------------------
+	*   PHYSICS
+	* ---------------------------------------------------------
+	*/
 
+	// Physics engine setup
+	engine = PhysicsEngine();
+	engine.start();
+	cout << "Started physics engine...\n";
 
+	//Physics sphere mesh setup
+	PhysicsSphereMesh physSphereMesh(std::make_shared<SphereMesh>(sm), glm::vec3(0.0f, 15.0f, 0.0f));
 
-    //// Cloth setup
-    //uint clothParticles = 48U;
-    //float clothParticlesDist = 0.1f;
-    //Cloth cloth(clothParticles, clothParticlesDist);
-    //std::shared_ptr<Cloth> clothPtr = std::make_shared<Cloth>(cloth);
-    //RenderableCloth renderableCloth(clothPtr);
+	//Physics sphere mesh - plane constraints
+	PhysSphereMeshPlaneConstraint planeConstr1 = PhysSphereMeshPlaneConstraint(&plane1, &physSphereMesh);
+	physSphereMesh.addConstraint(&planeConstr1);
+	PhysSphereMeshPlaneConstraint planeConstr2 = PhysSphereMeshPlaneConstraint(&plane2, &physSphereMesh);
+	physSphereMesh.addConstraint(&planeConstr2);
 
-    // Shader setup
-    Shader shader("assets/shaders/default.vert", "assets/shaders/default.frag");
+	engine.addObject(&physSphereMesh);
 
-    // Camera setup
-    float fovY = 45.0f;
-    /*float aspect = (float)SCR_WIDTH / (float)SCR_HEIGHT;
-    float oppositeFovY = 90.0f - 45.0f;
-    float dist = float(clothParticles + 1U) * clothParticlesDist * glm::tan(oppositeFovY); */
-    glm::vec3 viewPos = glm::vec3(0.0f, 3.0f, 10.0f);
+	/*
+	* ---------------------------------------------------------
+	*   RENDERING
+	* ---------------------------------------------------------
+	*/
+	cout << "Setting up rendering and scene...\n";
 
-    camera = Camera(viewPos, glm::normalize(-viewPos), 0.1f, 100.0f, (float)SCR_WIDTH, (float)SCR_HEIGHT, fovY);
+	// Shader setup
+	Shader shader("assets/shaders/default.vert", "assets/shaders/default.frag");
 
-    // Materials setup
-    Material sphereMeshmat(glm::vec3(0.4f, 1.0f, 0.4f), specColor, shininess, MaterialType::BLINN_PHONG, true);
-    
-    Material boundingSphereMat(boundingSphereColor, glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, MaterialType::FLAT);
-    Material clothMat(diffuseColor, specColor, shininess, MaterialType::BLINN_PHONG);
+	// Camera setup
+	float fovY = 45.0f;
+	glm::vec3 viewPos = glm::vec3(0.0f, 3.0f, sm.boundingSphere.radius*4.0f);
+	camera = Camera(viewPos, glm::normalize(-viewPos), 0.1f, 100.0f, (float)SCR_WIDTH, (float)SCR_HEIGHT, fovY);
 
-    // Model matrices setup
-    glm::mat4 sphereMeshModelMatrix = glm::mat4(1.0f);
+	// Light setup
+	Light light(glm::normalize(lightDir));
 
-   /* glm::mat4 clothModelMatrix = glm::mat4(1.0f);
-    clothModelMatrix = glm::translate(clothModelMatrix, glm::vec3(-1.0f, 1.0f, -1.0f));
-    cloth.transform(clothModelMatrix);
-    renderableCloth.updateNormals();
-    renderableCloth.updateBuffers();
-    clothModelMatrix = glm::mat4(1.0f);*/
+	// Scene setup
+	scene = Scene(&camera, &light);
 
-    // Point light
-    Light light(glm::normalize(lightDir));
+	// Renderer setup
+	renderer = Renderer(&shader);
+	renderer.setBackgroundColor(backgroundColor);
+	renderer.setAmbientColor(ambientColor);
+	renderer.setBackfaceCulling(backFaceCulling);
 
-    // Scene setup
-    scene = Scene(&camera, &light);
-    sphereMeshSceneIdx = scene.addObject(&rpc, &sphereMeshModelMatrix, &sphereMeshmat);
-    boundingSphereSceneIdx = scene.addObject(&boundingSphereFakeRpc, &sphereMeshModelMatrix, &boundingSphereMat);
-    scene.disableObject(boundingSphereSceneIdx);
-    
-    //scene.addObject(&renderableCloth, &clothModelMatrix, &clothMat);
+	std::vector<Plane> shadowPlanes{plane1, plane2};
+	renderer.enableShadowing(shadowPlanes, planeColor);
 
-    // Renderer setup
-    renderer = Renderer(&shader);
-    renderer.setBackgroundColor(backgroundColor);
-    renderer.setAmbientColor(ambientColor);
-    renderer.setBackfaceCulling(backFaceCulling);
+	// Other openGL params
+	glPointSize(pointsSize);
 
+	// World axis setup
+	Material xAxisMaterial(glm::vec3(1.0f, 0.0f, 0.0f), specColor, shininess, MaterialType::FLAT);
+	ArrowLine xAxis(glm::vec3(1.0f, 0.0f, 0.0f));
 
-    // Other openGL params
-    glPointSize(pointsSize);
+	ArrowLine yAxis(glm::vec3(0.0f, 1.0f, 0.0f));
+	Material yAxisMaterial(glm::vec3(0.0f, 1.0f, 0.0f), specColor, shininess, MaterialType::FLAT);
 
-    //// Picking setup
-    //pickedObjectModelMatrix = &clothModelMatrix;
+	ArrowLine zAxis(glm::vec3(0.0f, 0.0f, 1.0f));
+	Material zAxisMaterial(glm::vec3(0.0f, 0.0f, 1.0f), specColor, shininess, MaterialType::FLAT);
 
-    // physics
-    //engine.addObject(&cloth);
-    PhysicsSphereMesh physSphereMesh(std::make_shared<SphereMesh>(sm), glm::vec3(0.0f, 15.0f, 0.0f));
-    engine.addObject(&physSphereMesh);
+	glm::mat4 identity(1.0f);
+	scene.addObject(&xAxis, &identity, &xAxisMaterial);
+	scene.addObject(&yAxis, &identity, &yAxisMaterial);
+	scene.addObject(&zAxis, &identity, &zAxisMaterial);
 
-    float wallTime = glfwGetTime();
-    engine.start();
+	// Sphere mesh setup
+	PointCloud pc = PointCloud();
+	pc.repopulate(pointsNumber, sm);
+	std::shared_ptr<PointCloud> pc_ptr = std::make_shared<PointCloud>(pc);
+	RenderablePointCloud rpc = RenderablePointCloud(pc_ptr);
 
-    Plane plane1(glm::vec3(-6.0f, 0.0f, 0.0f), glm::normalize(glm::vec3(0.2f, 1.0f, 0.0f)));
-    Plane plane2(glm::vec3(1.0f, 0.0f, 0.0f), glm::normalize(glm::vec3(-0.5f, 1.0f, 0.0f)));
+	Material sphereMeshmat(sphereMeshColor, specColor, shininess, MaterialType::BLINN_PHONG, true);
 
-    PhysSphereMeshPlaneConstraint planeConstr1 = PhysSphereMeshPlaneConstraint(&plane1, &physSphereMesh);
-    physSphereMesh.addConstraint(&planeConstr1);
-    PhysSphereMeshPlaneConstraint planeConstr2 = PhysSphereMeshPlaneConstraint(&plane2, &physSphereMesh);
-    physSphereMesh.addConstraint(&planeConstr2);
+	glm::mat4 sphereMeshModelMatrix = glm::mat4(1.0f);
 
-    //Renderable plane
-    RenderablePlane rendPlane1 = RenderablePlane(plane1, 20.0f);
-    Material rendPlaneMat(glm::vec3(0.9f, 0.0f, 0.2f), glm::vec3(1.0f), 6.0f, MaterialType::BLINN_PHONG);
-    glm::mat4 rendPlaneModelMat(1.0f);
-    RenderablePlane rendPlane2 = RenderablePlane(plane2, 20.0f);
-
-    scene.addObject(&rendPlane1, &rendPlaneModelMat, &rendPlaneMat);
-    scene.addObject(&rendPlane2, &rendPlaneModelMat, &rendPlaneMat);
+	uint sphereMeshSceneIdx = scene.addObject(&rpc, &sphereMeshModelMatrix, &sphereMeshmat);
 
 
-    std::vector<Plane> shadowPlanes{plane1, plane2};
-    renderer.enableShadowing(shadowPlanes, rendPlaneMat.diffuseColor);
+	// Sphere mesh's bounding sphere setup
+	SphereMesh boundingSphereFakeSm;
+	PointCloud boundingSphereFakePc = PointCloud();
+	boundingSphereFakePc.repopulate(boundingSpherePointsNumber, sm);
+	std::shared_ptr<PointCloud> boundingSphereFakePc_ptr = std::make_shared<PointCloud>(boundingSphereFakePc);
+	RenderablePointCloud boundingSphereFakeRpc = RenderablePointCloud(boundingSphereFakePc_ptr);
+	Material boundingSphereMat(boundingSphereColor, glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, MaterialType::FLAT);
+	//boundingSphereSceneIdx = scene.addObject(&boundingSphereFakeRpc, &sphereMeshModelMatrix, &boundingSphereMat);
 
-    //axis
-    Material xAxisMaterial(glm::vec3(1.0f, 0.0f, 0.0f), specColor, shininess, MaterialType::FLAT);
-    ArrowLine xAxis(glm::vec3(1.0f, 0.0f, 0.0f));
 
-    ArrowLine yAxis(glm::vec3(0.0f, 1.0f, 0.0f));
-    Material yAxisMaterial(glm::vec3(0.0f, 1.0f, 0.0f), specColor, shininess, MaterialType::FLAT);
+	//Renderable plane setup
+	RenderablePlane rendPlane1 = RenderablePlane(plane1, 20.0f);
+	RenderablePlane rendPlane2 = RenderablePlane(plane2, 20.0f);
 
-    ArrowLine zAxis(glm::vec3(0.0f, 0.0f, 1.0f));
-    Material zAxisMaterial(glm::vec3(0.0f, 0.0f, 1.0f), specColor, shininess, MaterialType::FLAT);
+	Material rendPlaneMat(planeColor, glm::vec3(1.0f), 6.0f, MaterialType::BLINN_PHONG);
+	glm::mat4 rendPlaneModelMat(1.0f);
 
-    glm::mat4 identity(1.0f);
-    scene.addObject(&xAxis, &identity, &xAxisMaterial);
-    scene.addObject(&yAxis, &identity, &yAxisMaterial);
-    scene.addObject(&zAxis, &identity, &zAxisMaterial);
+	scene.addObject(&rendPlane1, &rendPlaneModelMat, &rendPlaneMat);
+	scene.addObject(&rendPlane2, &rendPlaneModelMat, &rendPlaneMat);
 
-    //ClothSphereMeshCollisionConstraint collisionConstraint(&sm, &cloth);
-    //cloth.addConstraint(&collisionConstraint);
+	float wallTime = 0.0f;
 
-    uint printCount = 0U;
 
-    while (!glfwWindowShouldClose(window))
-    {
-        glfwPollEvents();
+	/*
+	* ---------------------------------------------------------
+	*   MAIN LOOP
+	* ---------------------------------------------------------
+	*/
+	while (!glfwWindowShouldClose(window))
+	{
+		//Time
+		float currentFrame = glfwGetTime();
+		deltaTime = currentFrame - wallTime;
+		wallTime = currentFrame;
 
-        GLfloat currentFrame = glfwGetTime();
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
+		//I/O
+		glfwPollEvents();
+		apply_key_commands();
 
-        wallTime = currentFrame;
+		//Physics
+		const uint maxIter = 5U;
+		uint iter = 0U;
+		while (!engine.isPaused() && wallTime > engine.getVirtualTime())
+		{
+			engine.timeStep();
+			if (iter++ > maxIter)
+			{
+				engine.synchronizeWithWallTime(wallTime);
+				break;
+			}
+		}
+		//Updating model matrix for static sphere mesh with the model matrix computed by the physics sphere mesh (dynamic)
+		glm::mat4* smModelMat = scene.getModelMatrixOf(sphereMeshSceneIdx);
+		*smModelMat = physSphereMesh.getModelMatrix();
 
-        //printf("Rendering cycle | wallTime = %f | virtualTime = %f\n", wallTime, engine.getVirtualTime());
+		//GUI setup
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+		ImGui::Begin("Controls");
+		ImGui::End();
 
-        apply_key_commands();
 
-        /*
-        ImGui::Text("Shading:");
-        ImGui::RadioButton("Phong", &activeSubroutineIdx, 0);
-        ImGui::SameLine();
-        ImGui::RadioButton("Dimensionality", &activeSubroutineIdx, 1);
-        ImGui::SameLine();
-        ImGui::RadioButton("Normal", &activeSubroutineIdx, 2);
-        ImGui::Text("Lighting:");
-        if (ImGui::SliderFloat3("Light position", lightPos, -100.0f, 100.0f))
-        {
-            glUniform3fv(glGetUniformLocation(shader.Program, "vLightPos"), 1, glm::value_ptr(glm::vec3(viewMatrix * glm::vec4(lightPos[0], lightPos[1], lightPos[2], 1.0))));
-        }
-        if (ImGui::SliderFloat3("Diffuse color", diffuseColor, 0.0f, 1.0f))
-        {
-            glUniform3fv(glGetUniformLocation(shader.Program, "diffuseColor"), 1, diffuseColor);
-        }
-        if (ImGui::SliderFloat3("Specular color", specColor, 0.0f, 1.0f))
-        {
-            glUniform3fv(glGetUniformLocation(shader.Program, "specColor"), 1, specColor);
-        }
-        if (ImGui::SliderFloat3("Ambient color", ambientColor, 0.0f, 1.0f))
-        {
-            glUniform3fv(glGetUniformLocation(shader.Program, "ambientColor"), 1, ambientColor);
-        }
-        if (ImGui::SliderFloat("Shininess", &shininess, 0.0f, 100.0f))
-        {
-            glUniform1f(glGetUniformLocation(shader.Program, "shininess"), shininess);
-        }
-        ImGui::Text("Optimization:");
-        if (ImGui::Checkbox("Backface culling ", &backFaceCulling))
-        {
-            glUniform1i(glGetUniformLocation(shader.Program, "backFaceCulling"), backFaceCulling);
-        } */
+		//Rendering
+		renderer.renderScene(&scene);
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-        const uint maxIter = 5U;
-        uint iter = 0U;
-        while (!engine.isPaused() && wallTime > engine.getVirtualTime())
-        {
-            // phys simulation
-            engine.timeStep();
-            iter++;
+		glfwSwapBuffers(window);
+	}
 
-            if (iter > maxIter)
-            {
-                
-                if (printCount++ > 100) {
-                    printf("Physics engine is lagging behind!\n");
-                    printCount = 0U;
-                    
-                }
-                engine.synchronizeWithWallTime(wallTime);
-                break;
-            }
-        }
 
-        glm::mat4* smModelMat = scene.getModelMatrixOf(sphereMeshSceneIdx);
-        *smModelMat = physSphereMesh.getModelMatrix();
-
-        //renderableCloth.updateBuffers();
-        //renderableCloth.updateNormals();
-
-        // Archball rotation of sphere mesh
-        if (cur_mx != last_mx || cur_my != last_my)
-        {
-            glm::vec3 va = get_arcball_vector(last_mx, last_my);
-            glm::vec3 vb = get_arcball_vector(cur_mx, cur_my);
-            float angle = glm::acos(glm::min(1.0f, glm::dot(va, vb)));
-            glm::vec3 axis_in_camera_coord = glm::cross(va, vb);
-            glm::mat3 camera2object = glm::inverse(glm::mat3(scene.getCamera()->getViewMatrix()) * glm::mat3(*pickedObjectModelMatrix));
-            glm::vec3 axis_in_object_coord = camera2object * axis_in_camera_coord;
-            *pickedObjectModelMatrix = glm::rotate(*pickedObjectModelMatrix, glm::degrees(angle * deltaTime), axis_in_object_coord);
-            last_mx = cur_mx;
-            last_my = cur_my;
-        }
-
-        /* if (renderBoundingSphere)
-        {
-            scene.enableObject(boundingSphereSceneIdx);
-        } else {
-            scene.disableObject(boundingSphereSceneIdx);
-        }
- */
-
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-
-        // render your GUI
-        ImGui::Begin("Controls");
-        /*ImGui::Text("Sphere mesh:");
-        if (ImGui::Checkbox("Render bounding sphere", &renderBoundingSphere))
-        {
-            boundingSphereFakeSm.singletons.clear();
-            sm.updateBoundingSphere();
-            boundingSphereFakeSm.addSphere(sm.boundingSphere);
-            boundingSphereFakeSm.addSingleton(0U);
-            boundingSphereFakeSm.updateBoundingSphere();
-            boundingSphereFakePc_ptr->clear();
-            boundingSphereFakePc_ptr->repopulate(boundingSpherePointsNumber, boundingSphereFakeSm);
-            boundingSphereFakeRpc.updateBuffers();
-        }
-        if (renderBoundingSphere)
-        {
-            if (ImGui::SliderInt("Bounding sphere points number", &boundingSpherePointsNumber, 100, 1000000))
-            {
-                boundingSphereFakePc_ptr->repopulate(boundingSpherePointsNumber, boundingSphereFakeSm);
-                boundingSphereFakeRpc.updateBuffers();
-            }
-        }
-
-        ImGui::Text("Pointcloud:");
-        if (ImGui::SliderInt("Points number", &pointsNumber, 100, 1000000))
-        {
-            pc_ptr->repopulate(pointsNumber, sm);
-            rpc.updateBuffers();
-        }
-        if (ImGui::SliderFloat("Points size", &pointsSize, 0.1f, 10.0f))
-        {
-            glPointSize(pointsSize);
-        } */
-        ImGui::End();
-        renderer.renderScene(&scene);
-
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-        // -------------------------------------------------------------------------------
-        glfwSwapBuffers(window);
-    }
-
-    // optional: de-allocate all resources once they've outlived their purpose:
-    // ------------------------------------------------------------------------
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
-    shader.Delete();
-
-    // glfw: terminate, clearing all previously allocated GLFW resources.
-    // ------------------------------------------------------------------
-    glfwTerminate();
-    return 0;
+	/*
+	* ---------------------------------------------------------
+	*   CONTEXT CLEANING
+	* ---------------------------------------------------------
+	*/
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+	
+	glfwTerminate();
+	return 0;
 }
 
-// glfw: whenever the window size changed (by OS or user resize) this callback function executes
-// ---------------------------------------------------------------------------------------------
-void framebuffer_size_callback(GLFWwindow *window, int width, int height)
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
-    // make sure the viewport matches the new window dimensions; note that width and
-    // height will be significantly larger than specified on retina displays.
-    glViewport(0, 0, width, height);
+	// make sure the viewport matches the new window dimensions; note that width and
+	// height will be significantly larger than specified on retina displays.
+	glViewport(0, 0, width, height);
 }
 
-//////////////////////////////////////////
-// callback for keyboard events
-void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode)
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
-    // if ESC is pressed, we close the application
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GL_TRUE);
+	// if ESC is pressed, we close the application
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, GL_TRUE);
 
-    // we keep trace of the pressed keys
-    // with this method, we can manage 2 keys pressed at the same time:
-    // many I/O managers often consider only 1 key pressed at the time (the first pressed, until it is released)
-    // using a boolean array, we can then check and manage all the keys pressed at the same time
-    if (action == GLFW_PRESS)
-        keys[key] = true;
-    else if (action == GLFW_RELEASE)
-        keys[key] = false;
+	// we keep trace of the pressed keys
+	// with this method, we can manage 2 keys pressed at the same time:
+	// many I/O managers often consider only 1 key pressed at the time (the first pressed, until it is released)
+	// using a boolean array, we can then check and manage all the keys pressed at the same time
+	if (action == GLFW_PRESS)
+		keys[key] = true;
+	else if (action == GLFW_RELEASE)
+		keys[key] = false;
 }
 
-//////////////////////////////////////////
-// If one of the WASD keys is pressed, the camera is moved accordingly (the code is in utils/camera.h)
 void apply_key_commands()
 {
-    glm::mat4 &modelMatrix = *scene.getModelMatrixOf(sphereMeshSceneIdx);
-    if (keys[GLFW_KEY_R])
-    {
-        modelMatrix = glm::mat4(1.0f);
-        return;
-    }
-    if (keys[GLFW_KEY_A])
-    {
-        camera.rotateAroundY(-glm::radians(30.0f * deltaTime));
-        return;
-    }
-    if (keys[GLFW_KEY_S])
-    {
-        camera.translate(-glm::normalize(camera.getForward()) * 1.5f * deltaTime);
-        return;
-    }
-    if (keys[GLFW_KEY_D])
-    {
-        camera.rotateAroundY(glm::radians(30.0f * deltaTime));
-        return;
-    }
-    if (keys[GLFW_KEY_W])
-    {
-        camera.translate(glm::normalize(camera.getForward()) * 1.5f * deltaTime);       
-        return;
-    }
-    if (keys[GLFW_KEY_Q])
-    {
-        engine.start();
-        return;
-    }
-    if (keys[GLFW_KEY_E])
-    {
-        engine.pause();
-        return;
-    }
+	if (keys[GLFW_KEY_A])
+	{
+		camera.rotateAroundY(-glm::radians(30.0f * deltaTime));
+		return;
+	}
+	if (keys[GLFW_KEY_S])
+	{
+		camera.translate(-glm::normalize(camera.getForward()) * 1.5f * deltaTime);
+		return;
+	}
+	if (keys[GLFW_KEY_D])
+	{
+		camera.rotateAroundY(glm::radians(30.0f * deltaTime));
+		return;
+	}
+	if (keys[GLFW_KEY_W])
+	{
+		camera.translate(glm::normalize(camera.getForward()) * 1.5f * deltaTime);
+		return;
+	}
+	if (keys[GLFW_KEY_Q])
+	{
+		engine.start();
+		return;
+	}
+	if (keys[GLFW_KEY_E])
+	{
+		engine.pause();
+		return;
+	}
 }
 
-void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
-    static double mouse_x = 0.0;
-    static double mouse_y = 0.0;
-    glfwGetCursorPos(window, &mouse_x, &mouse_y);
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && keys[GLFW_KEY_LEFT_ALT])
-    {
-        archball = true;
-        last_mx = cur_mx = mouse_x;
-        last_my = cur_my = mouse_y;
-    }
-    else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE || !keys[GLFW_KEY_LEFT_ALT])
-    {
-        archball = false;
-    }
+	static double mouse_x = 0.0;
+	static double mouse_y = 0.0;
+	glfwGetCursorPos(window, &mouse_x, &mouse_y);
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && keys[GLFW_KEY_LEFT_ALT])
+	{
+		archball = true;
+		last_mx = cur_mx = mouse_x;
+		last_my = cur_my = mouse_y;
+	}
+	else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE || !keys[GLFW_KEY_LEFT_ALT])
+	{
+		archball = false;
+	}
 
-    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
-    {
-        Camera const *sceneCam = scene.getCamera();
-        vec3 rayDir = screenToWorldDir(glm::vec2(mouse_x, mouse_y), SCR_WIDTH, SCR_HEIGHT, sceneCam->getViewMatrix(), sceneCam->getProjectionMatrix());
-        Ray r = Ray(camera.getPos(), rayDir);
-        Point null;
-        if (intersects(r, sm.boundingSphere, null))
-        {
-            printf("Interseca!\n");
-        }
-    }
+	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+	{
+		Camera const* sceneCam = scene.getCamera();
+		vec3 rayDir = screenToWorldDir(glm::vec2(mouse_x, mouse_y), SCR_WIDTH, SCR_HEIGHT, sceneCam->getViewMatrix(), sceneCam->getProjectionMatrix());
+		Ray r = Ray(camera.getPos(), rayDir);
+		Point null;
+		if (intersects(r, sm.boundingSphere, null))
+		{
+			printf("Interseca!\n");
+		}
+	}
 }
 
-GLFWwindow *glfwSetup(std::string windowTitle, float width, float height)
+GLFWwindow* glfwSetup(std::string windowTitle, float width, float height)
 {
-    // glfw: initialize and configure
-    // ------------------------------
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_VERSION_MAJOR);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_VERSION_MINOR);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	// glfw: initialize and configure
+	// ------------------------------
+	glfwInit();
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_VERSION_MAJOR);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_VERSION_MINOR);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 #ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    // glfw window creation
-    // --------------------
-    GLFWwindow *window = glfwCreateWindow(width, height, windowTitle.c_str(), NULL, NULL);
-    if (window == NULL)
-    {
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return nullptr;
-    }
-    glfwMakeContextCurrent(window);
-    // we put in relation the window and the callbacks
-    glfwSetKeyCallback(window, key_callback);
-    glfwSetMouseButtonCallback(window, mouse_button_callback);
-    glfwSetCursorPosCallback(window, cursor_position_callback);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	// glfw window creation
+	// --------------------
+	GLFWwindow* window = glfwCreateWindow(width, height, windowTitle.c_str(), NULL, NULL);
+	if (window == NULL)
+	{
+		std::cout << "Failed to create GLFW window" << std::endl;
+		glfwTerminate();
+		return nullptr;
+	}
+	glfwMakeContextCurrent(window);
+	// we put in relation the window and the callbacks
+	glfwSetKeyCallback(window, key_callback);
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
+	glfwSetCursorPosCallback(window, cursor_position_callback);
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-    return window;
+	return window;
 }
 
-void cursor_position_callback(GLFWwindow *window, double xpos, double ypos)
+void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 {
-    if (archball)
-    {
-        cur_mx = xpos;
-        cur_my = ypos;
-    }
+	if (archball)
+	{
+		cur_mx = xpos;
+		cur_my = ypos;
+	}
 }
 
 /**
@@ -572,24 +450,24 @@ void cursor_position_callback(GLFWwindow *window, double xpos, double ypos)
  */
 glm::vec3 get_arcball_vector(int x, int y)
 {
-    glm::vec3 P = glm::vec3(1.0 * x / SCR_WIDTH * 2 - 1.0,
-                            1.0 * y / SCR_HEIGHT * 2 - 1.0,
-                            0);
-    P.y = -P.y;
-    float OP_squared = P.x * P.x + P.y * P.y;
-    if (OP_squared <= 1 * 1)
-        P.z = sqrt(1 * 1 - OP_squared); // Pythagoras
-    else
-        P = glm::normalize(P); // nearest point
-    return P;
+	glm::vec3 P = glm::vec3(1.0 * x / SCR_WIDTH * 2 - 1.0,
+		1.0 * y / SCR_HEIGHT * 2 - 1.0,
+		0);
+	P.y = -P.y;
+	float OP_squared = P.x * P.x + P.y * P.y;
+	if (OP_squared <= 1 * 1)
+		P.z = sqrt(1 * 1 - OP_squared); // Pythagoras
+	else
+		P = glm::normalize(P); // nearest point
+	return P;
 }
 
-void imGuiSetup(GLFWwindow *window)
+void imGuiSetup(GLFWwindow* window)
 {
-    // ImGui SETUP
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGui::StyleColorsDark();
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 410");
+	// ImGui SETUP
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGui::StyleColorsDark();
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
+	ImGui_ImplOpenGL3_Init("#version 410");
 }
