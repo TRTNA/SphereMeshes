@@ -14,12 +14,15 @@ using glm::vec3;
 using std::string;
 using std::vector;
 
-Cloth::Cloth(uint dim, float dist) : dim(dim), dimSqrd(dim * dim), dist(dist)
+Cloth::Cloth(uint dim, float dist, const glm::vec3& translation) : dim(dim), dimSqrd(dim * dim), dist(dist)
 {
     particles = new Particle[dimSqrd];
+    float side = (dim - 1) * dist;
+    float halfSide = side * 0.5f;
     for (size_t i = 0; i < dimSqrd; i++)
     {
-        vec3 startingPos = vec3((float)(i % dim) * dist, 0, (float)(i / dim) * dist);
+        vec3 startingPos = vec3((float)(i % dim) * dist - halfSide, 0, (float)(i / dim) * dist - halfSide);
+        startingPos += translation;
         particles[i].setPos(startingPos);
         particles[i].setLastPos(startingPos);
         particles[i].setMass(1.0f);

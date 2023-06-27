@@ -19,7 +19,7 @@ class Cloth : public PhysicalObject {
         uint dimSqrd;
         float dist;
     public:
-        Cloth(uint dim, float dist);
+        Cloth(uint dim, float dist, const glm::vec3& translation = glm::vec3(0.0f));
         ~Cloth();
         void transform(const glm::mat4& matrix);
         std::string toString() const;

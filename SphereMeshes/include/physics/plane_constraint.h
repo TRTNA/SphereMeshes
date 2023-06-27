@@ -15,23 +15,23 @@ typedef unsigned int uint;
 class ParticlePlaneConstraint : public Constraint
 {
 private:
-    Plane *plane;
+    const Plane *plane;
     Particle *particle;
 
 public:
-    ParticlePlaneConstraint(Plane *plane, Particle *particle);
+    ParticlePlaneConstraint(const Plane *plane, Particle *particle);
     void enforce() override;
 };
 
 class ClothPlaneConstraint : public Constraint
 {
 private:
-    Plane *plane;
+    const Plane *plane;
     Cloth *cloth;
     std::vector<ParticlePlaneConstraint> constraints;
 
 public:
-    ClothPlaneConstraint(Plane *plane, Cloth *cloth);
+    ClothPlaneConstraint(const Plane *plane, Cloth *cloth);
     void enforce() override;
 };
 

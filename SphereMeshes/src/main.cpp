@@ -66,6 +66,7 @@ const glm::vec3 specColor{1.0f, 1.0f, 1.0f};
 
 const glm::vec3 sphereMeshColor{0.4f, 1.0f, 0.4f};
 const glm::vec3 planeColor{0.9f, 0.0f, 0.2f};
+const glm::vec3 clothColor{0.3f, 0.3f, 1.0f};
 const glm::vec3 boundingSphereColor{0.0f, 0.0f, 0.5f};
 
 const float shininess = 16.0f;
@@ -81,11 +82,7 @@ int boundingSpherePointsNumber = pointsNumber;
 
 //Physics data
 PhysicsEngine engine;
-PhysicsSphereMesh* physSphereMesh;
-const Plane plane1(glm::vec3(-6.0f, 0.0f, 0.0f), glm::normalize(glm::vec3(0.2f, 1.0f, 0.0f)));
-const Plane plane2(glm::vec3(1.0f, 0.0f, 0.0f), glm::normalize(glm::vec3(-0.5f, 1.0f, 0.0f)));
-
-vec3 physSphereMeshStartingPos{0.0f, 10.0f, 0.0f};
+const Plane plane1(glm::vec3(0.0f, -4.0f, 0.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)));
 
 int main(int argc, char* argv[])
 {
@@ -135,16 +132,15 @@ int main(int argc, char* argv[])
 	engine.start();
 	cout << "Started physics engine...\n";
 
-	//Physics sphere mesh setup
-	physSphereMesh = new PhysicsSphereMesh(std::make_shared<SphereMesh>(sm), physSphereMeshStartingPos);
-
-	//Physics sphere mesh - plane constraints
-	PhysSphereMeshPlaneConstraint planeConstr1 = PhysSphereMeshPlaneConstraint(&plane1, physSphereMesh);
-	physSphereMesh->addConstraint(&planeConstr1);
-	PhysSphereMeshPlaneConstraint planeConstr2 = PhysSphereMeshPlaneConstraint(&plane2, physSphereMesh);
-	physSphereMesh->addConstraint(&planeConstr2);
-
-	engine.addObject(physSphereMesh);
+	// Cloth setup
+	int clothSidePart = 16;
+	float clothPartDist = 0.5f;
+	Cloth cloth(16, 0.5f, glm::vec3(0.0f, 4.0f, 0.0f));
+	ClothSphereMeshCollisionConstraint clothSmCollConstr(&sm, &cloth);
+	ClothPlaneConstraint clothPlaneConst(&plane1, &cloth);
+	cloth.addConstraint(&clothSmCollConstr);
+	cloth.addConstraint(&clothPlaneConst);
+	engine.addObject(&cloth);
 
 	/*
 	* ---------------------------------------------------------
@@ -158,7 +154,7 @@ int main(int argc, char* argv[])
 
 	// Camera setup
 	float fovY = 45.0f;
-	glm::vec3 viewPos = glm::vec3(0.0f, 4.0f, sm.boundingSphere.radius*5.0f);
+	glm::vec3 viewPos = glm::vec3(0.0f, 3.0f, sm.boundingSphere.radius*3.0f);
 	camera = Camera(viewPos, glm::normalize(-viewPos), 0.1f, 100.0f, (float)SCR_WIDTH, (float)SCR_HEIGHT, fovY);
 
 	// Light setup
@@ -173,7 +169,7 @@ int main(int argc, char* argv[])
 	renderer.setAmbientColor(ambientColor);
 	renderer.setBackfaceCulling(backFaceCulling);
 
-	std::vector<Plane> shadowPlanes{plane1, plane2};
+	std::vector<Plane> shadowPlanes{plane1};
 	renderer.enableShadowing(shadowPlanes, planeColor);
 
 	// Other openGL params
@@ -202,7 +198,7 @@ int main(int argc, char* argv[])
 
 	Material sphereMeshmat(sphereMeshColor, specColor, shininess, MaterialType::BLINN_PHONG, true);
 
-	glm::mat4 sphereMeshModelMatrix = physSphereMesh->getModelMatrix();
+	glm::mat4 sphereMeshModelMatrix = glm::mat4(1.0f);
 
 	uint sphereMeshSceneIdx = scene.addObject(&rpc, &sphereMeshModelMatrix, &sphereMeshmat);
 
@@ -213,20 +209,21 @@ int main(int argc, char* argv[])
 	boundingSphereFakePc.repopulate(boundingSpherePointsNumber, sm);
 	std::shared_ptr<PointCloud> boundingSphereFakePc_ptr = std::make_shared<PointCloud>(boundingSphereFakePc);
 	RenderablePointCloud boundingSphereFakeRpc = RenderablePointCloud(boundingSphereFakePc_ptr);
-	Material boundingSphereMat(boundingSphereColor, glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, MaterialType::FLAT);
+	Material boundingSphereMat(boundingSphereColor, specColor, 1.0f, MaterialType::FLAT);
 	//boundingSphereSceneIdx = scene.addObject(&boundingSphereFakeRpc, &sphereMeshModelMatrix, &boundingSphereMat);
 
 
 	//Renderable plane setup
 	RenderablePlane rendPlane1 = RenderablePlane(plane1, 20.0f);
-	RenderablePlane rendPlane2 = RenderablePlane(plane2, 20.0f);
-
-	Material rendPlaneMat(planeColor, glm::vec3(1.0f), 6.0f, MaterialType::BLINN_PHONG);
+	Material rendPlaneMat(planeColor, specColor, 6.0f, MaterialType::BLINN_PHONG);
 	glm::mat4 rendPlaneModelMat(1.0f);
 
 	scene.addObject(&rendPlane1, &rendPlaneModelMat, &rendPlaneMat);
-	scene.addObject(&rendPlane2, &rendPlaneModelMat, &rendPlaneMat);
 
+	//Renderable cloth setup
+	RenderableCloth rendCloth(std::make_shared<Cloth>(cloth));
+	Material clothMaterial(clothColor, specColor, shininess, MaterialType::BLINN_PHONG_DOUBLE_SIDE, true);
+	scene.addObject(&rendCloth, &identity, &clothMaterial);
 	float wallTime = 0.0f;
 
 
@@ -258,9 +255,9 @@ int main(int argc, char* argv[])
 				break;
 			}
 		}
-		//Updating model matrix for static sphere mesh with the model matrix computed by the physics sphere mesh (dynamic)
-		glm::mat4* smModelMat = scene.getModelMatrixOf(sphereMeshSceneIdx);
-		*smModelMat = physSphereMesh->getModelMatrix();
+
+		rendCloth.updateNormals();
+		rendCloth.updateBuffers();
 
 		//GUI setup
 		ImGui_ImplOpenGL3_NewFrame();
@@ -268,11 +265,8 @@ int main(int argc, char* argv[])
 		ImGui::NewFrame();
 		ImGui::Begin("Controls");
 		if (ImGui::Button("Restart physics sim")) {
-			physSphereMesh->reset(physSphereMeshStartingPos);
 		}
-		float smPos[3] = { physSphereMeshStartingPos.x, physSphereMeshStartingPos.y, physSphereMeshStartingPos.z };
-		if (ImGui::SliderFloat3("Sphere mesh starting pos", smPos, -10.0f, 10.0f)) 
-			physSphereMeshStartingPos = glm::vec3(smPos[0], smPos[1], smPos[2]);
+
 		
 		ImGui::End();
 
@@ -375,7 +369,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		Point null;
 		if (intersects(r, sm.boundingSphere, null))
 		{
-			physSphereMesh->addImpulse(glm::vec3(0.0f, 3.0f, 0.0f));
+			//
 		}
 	}
 }

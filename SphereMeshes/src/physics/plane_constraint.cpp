@@ -10,7 +10,7 @@
 
 using glm::vec3;
 
-ParticlePlaneConstraint::ParticlePlaneConstraint(Plane *plane, Particle *particle) : plane(plane), particle(particle)
+ParticlePlaneConstraint::ParticlePlaneConstraint(const Plane *plane, Particle *particle) : plane(plane), particle(particle)
 {
 }
 
@@ -27,7 +27,7 @@ void ParticlePlaneConstraint::enforce()
     }
 }
 
-ClothPlaneConstraint::ClothPlaneConstraint(Plane* plane, Cloth* cloth) : plane(plane), cloth(cloth) {
+ClothPlaneConstraint::ClothPlaneConstraint(const Plane* plane, Cloth* cloth) : plane(plane), cloth(cloth) {
     Particle* particles;
     uint dim = cloth->getParticles(particles);
     for (size_t p = 0; p < dim*dim; p++) {
