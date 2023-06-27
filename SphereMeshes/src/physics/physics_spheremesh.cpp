@@ -123,6 +123,7 @@ glm::mat4 PhysicsSphereMesh::computeModelMatrix()
         rotMatrix += (glm::outerProduct(localSpaceVec, worldSpaceVec) * particles.at(i).getMass());
     }
 
+    //if there are only three particles then we need another constraint using the plane normal
     if (particles.size() == 3) {
         glm::vec3 worldN = glm::cross(particles.at(0).pos - worldSpaceBarycentre, particles.at(1).pos - worldSpaceBarycentre);
         glm::vec3 localN = glm::cross(sphereMesh->spheres.at(0).center, sphereMesh->spheres.at(1).center);
