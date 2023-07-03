@@ -19,7 +19,6 @@
 
 #include <ctime>
 
-
 using glm::vec3;
 using std::array;
 
@@ -27,7 +26,16 @@ typedef unsigned long ulong;
 
 __device__ const float GPU_EPSILON = 0.0001f;
 
-// 2137 MS PER COMPLICATED.SM A 10000000 PUNTI
+struct Points
+{
+    float *posX;
+    float *posY;
+    float *posZ;
+    float *normX;
+    float *normY;
+    float *normZ;
+    int *dimensionality;
+};
 
 float computeTime(cudaEvent_t &e1, cudaEvent_t &e2)
 {
@@ -58,26 +66,27 @@ void checkError(cudaError error)
         }                                                          \
     }
 
-__global__ void checkDimensionality(int *dimensionalities, uint chunkSize)
+__global__ void checkDimensionality(Points points, uint numPoints, int offset)
 {
-    const long tid = blockDim.x * blockIdx.x + threadIdx.x;
-    if (tid >= chunkSize)
+    const long tid = offset + blockDim.x * blockIdx.x + threadIdx.x;
+    if (tid >= numPoints)
         return;
-    if (dimensionalities[tid] == -1)
-        dimensionalities[tid] = -2;
+    if (points.dimensionality[tid] == -1)
+        points.dimensionality[tid] = -2;
 }
 
-__global__ void initGenerators(curandState_t *states, uint chunkSize, uint start) {
+__global__ void initGenerators(curandState_t *states, uint chunkSize, uint start)
+{
     const long tid = threadIdx.x + blockDim.x * blockIdx.x;
     if (tid >= chunkSize)
         return;
     curand_init(tid + start, 0, 0, &states[tid]);
 }
 
-__global__ void generateRandomPointsInsideSphere(vec3 sphereCenter, float sphereRadius, glm::vec3 *pointsPositions, curandState_t *states, uint chunkSize)
+__global__ void generateRandomPointsInsideSphere(vec3 sphereCenter, float sphereRadius, Points points, curandState_t *states, uint numPoints, int offset)
 {
-    const long tid = threadIdx.x + blockDim.x * blockIdx.x;
-    if (tid >= chunkSize)
+    const long tid = offset + threadIdx.x + blockDim.x * blockIdx.x;
+    if (tid >= numPoints)
         return;
 
     curandStateXORWOW_t *state = &states[tid];
@@ -89,21 +98,24 @@ __global__ void generateRandomPointsInsideSphere(vec3 sphereCenter, float sphere
     // curand_uniform return number in (0,1], multiplied by radius return a value in (0, radius] so inside the sphere
     float extent = curand_uniform(state) * sphereRadius;
 
-    pointsPositions[tid] = vec3(sphereCenter + direction * extent);
+    vec3 result(sphereCenter + direction * extent);
+    points.posX[tid] = result.x;
+    points.posY[tid] = result.y;
+    points.posZ[tid] = result.z;
 }
 
-__global__ void pushOutsideSphere(glm::vec3 *positions, glm::vec3 *normals, int *dimensionalities, Sphere s0, uint chunkSize)
+__global__ void pushOutsideSphere(Points points, Sphere s0, uint numPoints, int offset)
 {
-    const long tid = blockDim.x * blockIdx.x + threadIdx.x;
-    if (tid >= chunkSize)
+    const long tid = offset + blockDim.x * blockIdx.x + threadIdx.x;
+    if (tid >= numPoints)
         return;
 
-    int dimensionality = dimensionalities[tid];
+    int dimensionality = points.dimensionality[tid];
 
     if (dimensionality == -2)
         return;
 
-    glm::vec3 pos = positions[tid];
+    glm::vec3 pos(points.posX[tid], points.posY[tid], points.posZ[tid]);
     glm::vec3 CtoPos = pos - s0.center;
     const float CtoPossqrd = glm::dot(CtoPos, CtoPos);
 
@@ -117,15 +129,21 @@ __global__ void pushOutsideSphere(glm::vec3 *positions, glm::vec3 *normals, int 
     }
 
     // if we are here, pos is inside the sphere
-    dimensionalities[tid] = 0;
+    points.dimensionality[tid] = 0;
     CtoPos = glm::normalize(CtoPos);
-    positions[tid] = s0.center + sphereRadius * CtoPos;
-    normals[tid] = CtoPos;
+    vec3 result = s0.center + sphereRadius * CtoPos;
+
+    points.posX[tid] = result.x;
+    points.posY[tid] = result.y;
+    points.posZ[tid] = result.z;
+    points.normX[tid] = CtoPos.x;
+    points.normY[tid] = CtoPos.y;
+    points.normZ[tid] = CtoPos.z;
 }
 
-__device__ void pushOutsideCapsuloid(int tid, glm::vec3 *positions, glm::vec3 *normals, int *dimensionalities, const Sphere &A, const Sphere &B, float factor, glm::vec3 &BminusA)
+__device__ void pushOutsideCapsuloid(int tid, Points points, const Sphere &A, const Sphere &B, float factor, glm::vec3 &BminusA)
 {
-    vec3 pos = positions[tid];
+    glm::vec3 pos(points.posX[tid], points.posY[tid], points.posZ[tid]);
 
     float k = glm::dot(pos - A.center, BminusA) / glm::dot(BminusA, BminusA);
     vec3 fakeC = A.center + k * BminusA;
@@ -146,7 +164,7 @@ __device__ void pushOutsideCapsuloid(int tid, glm::vec3 *positions, glm::vec3 *n
     if (CtoPossqrd > interpRadius * interpRadius - GPU_EPSILON)
     {
         // se il punto aveva dimensionalità -1, non dire nulla perché non sai se è interno a un'altra primitiva, ma solo che è esterno a questa
-            // se il punto aveva dimensionalità != -1, non fare nulla perchè serve mantenerne l'informazione
+        // se il punto aveva dimensionalità != -1, non fare nulla perchè serve mantenerne l'informazione
         return;
     }
 
@@ -155,41 +173,44 @@ __device__ void pushOutsideCapsuloid(int tid, glm::vec3 *positions, glm::vec3 *n
     // if clampedK == k then pos is inside the cylinder, so dimensionality = 1
     // else pos is inside one of the spheres, so dimensionality = 0
     bool dim = k == clampedK;
-    dimensionalities[tid] = (int)dim;
+    points.dimensionality[tid] = (int)dim;
     const vec3 normal = glm::normalize(CtoPos);
 
-    positions[tid] = C + interpRadius * normal;
-    normals[tid] = normal;
+    vec3 result = C + interpRadius * normal;
+
+    points.posX[tid] = result.x;
+    points.posY[tid] = result.y;
+    points.posZ[tid] = result.z;
+    points.normX[tid] = normal.x;
+    points.normY[tid] = normal.y;
+    points.normZ[tid] = normal.z;
 }
 
-__global__ void pushOutsideCapsuloidKernel(glm::vec3 *positions, glm::vec3 *normals, int *dimensionalities, Sphere s0, Sphere s1, float factor, glm::vec3 S0toS1, uint chunkSize)
+__global__ void pushOutsideCapsuloidKernel(Points points, Sphere s0, Sphere s1, float factor, glm::vec3 S0toS1, uint numPoints, int offset)
 {
-    const long tid = blockDim.x * blockIdx.x + threadIdx.x;
-    if (tid >= chunkSize)
+    const long tid = offset + blockDim.x * blockIdx.x + threadIdx.x;
+    if (tid >= numPoints)
         return;
-
-    int dimensionality = dimensionalities[tid];
+    int dimensionality = points.dimensionality[tid];
 
     if (dimensionality == -2)
         return;
 
-    pushOutsideCapsuloid(tid, positions, normals, dimensionalities, s0, s1, factor, S0toS1);
+    pushOutsideCapsuloid(tid, points, s0, s1, factor, S0toS1);
 }
 
-__global__ void pushOutsideSphereTriangle(glm::vec3 *positions, glm::vec3 *normals, int *dimensionalities, Sphere s0, Sphere s1, Sphere s2, glm::mat3 upperProjMatrix, glm::mat3 lowerProjMatrix , glm::vec3 planeN, uint chunkSize)
+__global__ void pushOutsideSphereTriangle(Points points, Sphere s0, Sphere s1, Sphere s2, glm::mat3 upperProjMatrix, glm::mat3 lowerProjMatrix, glm::vec3 planeN, uint pointsNum, int offset)
 {
-    
-    
-    const long tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const long tid = offset + blockIdx.x * blockDim.x + threadIdx.x;
 
-    if (tid >= chunkSize)
+    if (tid >= pointsNum)
         return;
 
-    int dimensionality = dimensionalities[tid];
+    int dimensionality = points.dimensionality[tid];
     if (dimensionality == -2)
         return;
 
-    glm::vec3 pos = positions[tid];
+    glm::vec3 pos(points.posX[tid], points.posY[tid], points.posZ[tid]);
 
     const vec3 q = pos - s0.center;
     float d, a, b, c;
@@ -205,7 +226,7 @@ __global__ void pushOutsideSphereTriangle(glm::vec3 *positions, glm::vec3 *norma
         // PUSH OUTSIDE CAPSULE V0V1
         glm::vec3 s1minuss0 = s1.center - s0.center;
         float factor = (s1.radius - s0.radius) / glm::dot(s1minuss0, s1minuss0);
-        pushOutsideCapsuloid(tid, positions, normals, dimensionalities, s0, s1, factor, s1minuss0);
+        pushOutsideCapsuloid(tid, points, s0, s1, factor, s1minuss0);
         return;
     }
     if (c < 0.0f)
@@ -213,7 +234,7 @@ __global__ void pushOutsideSphereTriangle(glm::vec3 *positions, glm::vec3 *norma
         // PUSH OUTSIDE CAPSULE V1V2
         glm::vec3 s2minuss1 = s2.center - s1.center;
         float factor = (s2.radius - s1.radius) / glm::dot(s2minuss1, s2minuss1);
-        pushOutsideCapsuloid(tid, positions, normals, dimensionalities, s1, s2, factor, s2minuss1);
+        pushOutsideCapsuloid(tid, points, s1, s2, factor, s2minuss1);
         return;
     }
     if (a < 0.0f)
@@ -221,7 +242,7 @@ __global__ void pushOutsideSphereTriangle(glm::vec3 *positions, glm::vec3 *norma
         // PUSH OUTSIDE CAPSULE V0V2
         glm::vec3 s2minuss0 = s2.center - s0.center;
         float factor = (s2.radius - s0.radius) / glm::dot(s2minuss0, s2minuss0);
-        pushOutsideCapsuloid(tid, positions, normals, dimensionalities, s0, s2, factor, s2minuss0);
+        pushOutsideCapsuloid(tid, points, s0, s2, factor, s2minuss0);
         return;
     }
 
@@ -237,10 +258,16 @@ __global__ void pushOutsideSphereTriangle(glm::vec3 *positions, glm::vec3 *norma
             // se il punto aveva dimensionalità != -1, non fare nulla perchè serve mantenerne l'informazione
             return;
         }
-        dimensionalities[tid] = 2;
+        points.dimensionality[tid] = 2;
         glm::vec3 normal = glm::normalize(CtoPos);
-        positions[tid] = C + interpRadius * normal;
-        normals[tid] = normal;
+        vec3 result = C + interpRadius * normal;
+
+        points.posX[tid] = result.x;
+        points.posY[tid] = result.y;
+        points.posZ[tid] = result.z;
+        points.normX[tid] = normal.x;
+        points.normY[tid] = normal.y;
+        points.normZ[tid] = normal.z;
     }
 }
 
@@ -248,65 +275,42 @@ void createSphereMeshGPU(SphereMesh &sphereMesh, uint numberOfPoints, std::vecto
 {
     printf("Starting...\n");
     cudaSetDevice(0);
-    array<cudaEvent_t, 11> events;
 
-    for (cudaEvent_t &event : events)
-    {
-        CHECK(cudaEventCreate(&event));
-    }
-
-    // # 1. Inizializzazione memoria host
-    CHECK(cudaEventRecord(events[0], 0));
+    // Inizializzazione memoria host
     printf("Inizializzazione memoria host...\n");
-    ulong coordinatesBytes = numberOfPoints * sizeof(float) * 3;
-    ulong dimensionalityBytes = numberOfPoints * sizeof(int);
+    ulong pointsBytes = numberOfPoints * (sizeof(float) * 6 + sizeof(int));
 
-    glm::vec3 *hostPositions = (glm::vec3 *)malloc(coordinatesBytes);
-    glm::vec3 *hostNormals = (glm::vec3 *)malloc(coordinatesBytes);
+    Points hostPoints;
 
-    int *tempDimensionalities = (int *)malloc(dimensionalityBytes);
+    CHECK(cudaMallocHost((void **)&hostPoints.posX, sizeof(float) * numberOfPoints));
+    CHECK(cudaMallocHost((void **)&hostPoints.posY, sizeof(float) * numberOfPoints));
+    CHECK(cudaMallocHost((void **)&hostPoints.posZ, sizeof(float) * numberOfPoints));
 
-    cudaMallocHost(&hostPositions, coordinatesBytes);
-    cudaMallocHost(&hostNormals, coordinatesBytes);
-    cudaMallocHost(&tempDimensionalities, dimensionalityBytes);
+    CHECK(cudaMallocHost((void **)&hostPoints.normX, sizeof(float) * numberOfPoints));
+    CHECK(cudaMallocHost((void **)&hostPoints.normY, sizeof(float) * numberOfPoints));
+    CHECK(cudaMallocHost((void **)&hostPoints.normZ, sizeof(float) * numberOfPoints));
+
+    CHECK(cudaMallocHost((void **)&hostPoints.dimensionality, sizeof(int) * numberOfPoints));
+
+
+    // Inizializzazione memoria device
+    printf("Inizializzazione memoria device...\n");
 
     curandState *devStates;
     cudaMalloc((void **)&devStates, numberOfPoints * sizeof(curandState));
 
-    CHECK(cudaEventRecord(events[1], 0));
-    // wait until the stop event completes
-    CHECK(cudaEventSynchronize(events[1]));
-    printf("Allocati %lu bytes in memoria host in %f millisecondi...\n", coordinatesBytes + dimensionalityBytes, computeTime(events[0], events[1]));
+    Points devicePoints;
+    CHECK(cudaMalloc((void **)&devicePoints.posX, sizeof(float) * numberOfPoints));
+    CHECK(cudaMalloc((void **)&devicePoints.posY, sizeof(float) * numberOfPoints));
+    CHECK(cudaMalloc((void **)&devicePoints.posZ, sizeof(float) * numberOfPoints));
 
-    // # 2. Inizializzazione memoria device
-    printf("Inizializzazione memoria device...\n");
+    CHECK(cudaMalloc((void **)&devicePoints.normX, sizeof(float) * numberOfPoints));
+    CHECK(cudaMalloc((void **)&devicePoints.normY, sizeof(float) * numberOfPoints));
+    CHECK(cudaMalloc((void **)&devicePoints.normZ, sizeof(float) * numberOfPoints));
 
-    int *deviceDimensionalities;
-    glm::vec3 *devicePositions, *deviceNormals;
-    Sphere *deviceSpheres;
-    Capsuloid *deviceCapsuloids;
-    SphereTriangle *deviceSphereTriangles;
+    CHECK(cudaMalloc((void **)&devicePoints.dimensionality, sizeof(int) * numberOfPoints));
 
-    CHECK(cudaEventRecord(events[2]));
-
-    CHECK(cudaMalloc((void **)&devicePositions, coordinatesBytes));
-    CHECK(cudaMalloc((void **)&deviceNormals, coordinatesBytes));
-    CHECK(cudaMalloc((void **)&deviceDimensionalities, dimensionalityBytes));
-
-    CHECK(cudaMalloc((void **)&deviceSpheres, sphereMesh.spheres.size() * sizeof(Sphere)));
-    CHECK(cudaMalloc((void **)&deviceCapsuloids, sphereMesh.capsuloids.size() * sizeof(Capsuloid)));
-    CHECK(cudaMalloc((void **)&deviceSphereTriangles, sphereMesh.sphereTriangles.size() * sizeof(SphereTriangle)));
-
-    CHECK(cudaMemcpy(deviceSpheres, sphereMesh.spheres.data(), sphereMesh.spheres.size() * sizeof(Sphere), cudaMemcpyHostToDevice));
-    CHECK(cudaMemcpy(deviceCapsuloids, sphereMesh.capsuloids.data(), sphereMesh.capsuloids.size() * sizeof(Capsuloid), cudaMemcpyHostToDevice));
-    CHECK(cudaMemcpy(deviceSphereTriangles, sphereMesh.sphereTriangles.data(), sphereMesh.sphereTriangles.size() * sizeof(SphereTriangle), cudaMemcpyHostToDevice));
-
-    CHECK(cudaEventRecord(events[3]));
-    CHECK(cudaEventSynchronize(events[3]));
-
-    printf("Allocati %lu bytes in memoria device in %f millisecondi...\n", coordinatesBytes + dimensionalityBytes, computeTime(events[2], events[3]));
-
-    const int numStreams = 2;
+    const int numStreams = 1;
     cudaStream_t streams[numStreams];
     for (size_t i = 0; i < numStreams; i++)
     {
@@ -324,7 +328,8 @@ void createSphereMeshGPU(SphereMesh &sphereMesh, uint numberOfPoints, std::vecto
     int blockSize = 1024;
     int grid((numberOfPoints / blockSize) + 1);
     int block(blockSize);
-    for (int i = 0; i < numStreams; i++) initGenerators<<<subGrid, subBlock, 0, streams[i]>>>(&devStates[chunkSize*i], chunkSize, chunkSize * i);
+    for (int i = 0; i < numStreams; i++)
+        initGenerators<<<subGrid, subBlock, 0, streams[i]>>>(&devStates[chunkSize * i], chunkSize, chunkSize * i);
 
     uint iteration = 0U;
 
@@ -332,11 +337,14 @@ void createSphereMeshGPU(SphereMesh &sphereMesh, uint numberOfPoints, std::vecto
     while (outPoints.size() < numberOfPoints)
     {
         printf("Inizio %ua iterazione: %u/%u punti\n", iteration++, outPoints.size(), numberOfPoints);
-        CHECK(cudaMemset(deviceDimensionalities, -1, numberOfPoints * sizeof(int)));
+        CHECK(cudaMemset(devicePoints.dimensionality, -1, numberOfPoints * sizeof(int)));
+        cudaDeviceSynchronize();
 
-        for (int i = 0; i < numStreams; i++) generateRandomPointsInsideSphere<<<subGrid, subBlock, 0, streams[i]>>>(bsCenter, bsRadius, &devicePositions[chunkSize * i], &devStates[chunkSize*i], chunkSize);
-        checkError(cudaGetLastError());
-
+        for (int i = 0; i < numStreams; i++)
+        {
+            generateRandomPointsInsideSphere<<<subGrid, subBlock, 0, streams[i]>>>(bsCenter, bsRadius, devicePoints, devStates, numberOfPoints,  i * chunkSize);
+            checkError(cudaGetLastError());
+        }
 
         const uint singletonStart = 0;
         const uint capsuloidStart = singletonStart + sphereMesh.singletons.size();
@@ -353,18 +361,21 @@ void createSphereMeshGPU(SphereMesh &sphereMesh, uint numberOfPoints, std::vecto
                 {
                     if (uniqueIdx >= singletonStart && uniqueIdx < capsuloidStart)
                     {
-                        pushOutsideSphere<<<subGrid, subBlock, 0, streams[i]>>>(&devicePositions[chunkSize * i], &deviceNormals[chunkSize * i], &deviceDimensionalities[chunkSize * i], sphereMesh.spheres[sphereMesh.singletons[uniqueIdx - singletonStart]], chunkSize);
+                        pushOutsideSphere<<<subGrid, subBlock, 0, streams[i]>>>(devicePoints, sphereMesh.spheres[sphereMesh.singletons[uniqueIdx - singletonStart]], numberOfPoints, i * chunkSize);
+
                     }
                     else if (uniqueIdx >= capsuloidStart && uniqueIdx < triangleStart)
                     {
                         Capsuloid &caps = sphereMesh.capsuloids.at(uniqueIdx - capsuloidStart);
 
-                        pushOutsideCapsuloidKernel<<<subGrid, subBlock, 0, streams[i]>>>(&devicePositions[chunkSize * i], &deviceNormals[chunkSize * i], &deviceDimensionalities[chunkSize * i], sphereMesh.spheres[caps.s0], sphereMesh.spheres[caps.s1], caps.factor, caps.S0toS1, chunkSize);
+                        pushOutsideCapsuloidKernel<<<subGrid, subBlock, 0, streams[i]>>>(devicePoints, sphereMesh.spheres[caps.s0], sphereMesh.spheres[caps.s1], caps.factor, caps.S0toS1, numberOfPoints,  i * chunkSize);
+
                     }
                     else if (uniqueIdx >= triangleStart)
                     {
                         SphereTriangle &st = sphereMesh.sphereTriangles.at(uniqueIdx - triangleStart);
-                        pushOutsideSphereTriangle<<<subGrid, subBlock, 0, streams[i]>>>(&devicePositions[chunkSize * i], &deviceNormals[chunkSize * i], &deviceDimensionalities[chunkSize * i], sphereMesh.spheres[st.s0], sphereMesh.spheres[st.s1], sphereMesh.spheres[st.s2], st.upperProjMatrix, st.lowerProjMatrix, st.planeN, chunkSize);
+                        pushOutsideSphereTriangle<<<subGrid, subBlock, 0, streams[i]>>>(devicePoints, sphereMesh.spheres[st.s0], sphereMesh.spheres[st.s1], sphereMesh.spheres[st.s2], st.upperProjMatrix, st.lowerProjMatrix, st.planeN, numberOfPoints,  i * chunkSize);
+
                     }
                 }
                 checkError(cudaGetLastError());
@@ -372,69 +383,58 @@ void createSphereMeshGPU(SphereMesh &sphereMesh, uint numberOfPoints, std::vecto
                 {
                     // è il primo tentativo, se un punto è rimasto a -1 allora è esterno, va scartato
                     //  chiamata a kernel che setta i punti a -1 su -2 (verrano ignorati negli altri kernel)
-                    checkDimensionality<<<subGrid, subBlock, 0, streams[i]>>>(&deviceDimensionalities[chunkSize * i], chunkSize);
+                    checkDimensionality<<<subGrid, subBlock, 0, streams[i]>>>(devicePoints, numberOfPoints,  i * chunkSize);
                     checkError(cudaGetLastError());
                 }
             }
         }
 
-        CHECK(cudaDeviceSynchronize());
 
         printf("Copia dati da device a host...\n");
-        CHECK(cudaEventRecord(events[8]));
-        for (size_t i = 0; i < numStreams - 1; i++)
-        {
-            CHECK(cudaMemcpyAsync(&hostPositions[chunkSize * i], &devicePositions[chunkSize * i], chunkSize * sizeof(vec3), cudaMemcpyDeviceToHost, streams[i]));
-            CHECK(cudaMemcpyAsync(&hostNormals[chunkSize * i], &deviceNormals[chunkSize * i], chunkSize * sizeof(vec3), cudaMemcpyDeviceToHost, streams[i]));
-            CHECK(cudaMemcpyAsync(&tempDimensionalities[chunkSize * i], &deviceDimensionalities[chunkSize * i], chunkSize * sizeof(int), cudaMemcpyDeviceToHost, streams[i]));
-        }
-        uint cumChunkSize = chunkSize * (numStreams - 1);
-        uint lastChunk = numberOfPoints - cumChunkSize;
-        CHECK(cudaMemcpyAsync(&hostPositions[cumChunkSize], &devicePositions[cumChunkSize], lastChunk * sizeof(vec3), cudaMemcpyDeviceToHost, streams[numStreams - 1]));
-        CHECK(cudaMemcpyAsync(&hostNormals[cumChunkSize], &deviceNormals[cumChunkSize], lastChunk * sizeof(vec3), cudaMemcpyDeviceToHost, streams[numStreams - 1]));
-        CHECK(cudaMemcpyAsync(&tempDimensionalities[cumChunkSize], &deviceDimensionalities[cumChunkSize], lastChunk * sizeof(int), cudaMemcpyDeviceToHost, streams[numStreams - 1]));
+        long coordinateBytes = sizeof(float) * numberOfPoints;
+        CHECK(cudaMemcpy(hostPoints.posX, devicePoints.posX, coordinateBytes, cudaMemcpyDeviceToHost));
+        CHECK(cudaMemcpy(hostPoints.posY, devicePoints.posY, coordinateBytes, cudaMemcpyDeviceToHost));
+        CHECK(cudaMemcpy(hostPoints.posZ, devicePoints.posZ, coordinateBytes, cudaMemcpyDeviceToHost));
 
-        CHECK(cudaDeviceSynchronize());
-        CHECK(cudaEventRecord(events[9]));
-        CHECK(cudaEventSynchronize(events[9]));
+        CHECK(cudaMemcpy(hostPoints.normX, devicePoints.normX, coordinateBytes, cudaMemcpyDeviceToHost));
+        CHECK(cudaMemcpy(hostPoints.normY, devicePoints.normY, coordinateBytes, cudaMemcpyDeviceToHost));
+        CHECK(cudaMemcpy(hostPoints.normZ, devicePoints.normZ, coordinateBytes, cudaMemcpyDeviceToHost));
 
-        printf("Copia dati da device a host TERMINATA in %f millisecondi\n", computeTime(events[8], events[9]));
-        // # 8. Scarto dei punti che non sono stati spinti sulla superficie della sphere mesh (dimensionality != -1)
+        CHECK(cudaMemcpy(hostPoints.dimensionality, devicePoints.dimensionality, sizeof(int) * numberOfPoints, cudaMemcpyDeviceToHost));
+
+        // # Scarto dei punti che non sono stati spinti sulla superficie della sphere mesh (dimensionality != -1)
         // # ovvero punti esterni alla sphere mesh o interni che non sono stati spinti fuori
-         for (size_t i = 0; i < numberOfPoints; i++)
+        for (size_t i = 0; i < numberOfPoints; i++)
         {
-             if (tempDimensionalities[i] == -2)
+            if (hostPoints.dimensionality[i] == -2)
                 continue;
-            outPoints.emplace_back(hostPositions[i], hostNormals[i], tempDimensionalities[i]);
+            outPoints.emplace_back(vec3(hostPoints.posX[i], hostPoints.posY[i], hostPoints.posZ[i]),
+                                   vec3(hostPoints.normX[i], hostPoints.normY[i], hostPoints.normZ[i]),
+                                   hostPoints.dimensionality[i]);
         }
     }
 
-    // # 7. Eliminazione memoria allocata sul device
-    CHECK(cudaFree(devicePositions));
-    CHECK(cudaFree(deviceNormals));
+    // Eliminazione memoria allocata sul device
+    CHECK(cudaFree(devicePoints.posX));
+    CHECK(cudaFree(devicePoints.posY));
+    CHECK(cudaFree(devicePoints.posZ));
+    CHECK(cudaFree(devicePoints.normX));
+    CHECK(cudaFree(devicePoints.normY));
+    CHECK(cudaFree(devicePoints.normZ));
+    CHECK(cudaFree(devicePoints.dimensionality));
+
     CHECK(cudaFree(devStates));
-    CHECK(cudaFree(deviceDimensionalities));
-    for (size_t i = 0; i < numStreams ; i++)
+    for (size_t i = 0; i < numStreams; i++)
     {
         CHECK(cudaStreamDestroy(streams[i]));
     }
 
-    // # 9. TODO: Controllo di essere arrivato al numero di punti desiderato
-    // # se non ci sono arrivato, riavvio creazione punti con un certo numero da definire (metà? Tenendo conto del numero di punti scartati?)
-    // # per questo punto servirà refactoring profondo del ciclo do/while che andrà inserito in una funzione dedicata (con anche allocazione e distruzione memoria)
-
-    CHECK(cudaEventRecord(events[10], 0));
-    CHECK(cudaEventSynchronize(events[10]));
-
-    printf("L'esecuzione dell'algoritmo (compresa la gestione della memoria) e' durata %f millisecondi\n", computeTime(events[0], events[10]));
-
-    for (auto &event : events)
-    {
-        CHECK(cudaEventDestroy(event));
-    }
-
-    // # 10. Eliminazione memoria allocata su host
-    cudaFreeHost(hostPositions);
-    cudaFreeHost(hostNormals);
-    cudaFreeHost(tempDimensionalities);
+    // Eliminazione memoria allocata su host
+    CHECK(cudaFreeHost(hostPoints.posX));
+    CHECK(cudaFreeHost(hostPoints.posY));
+    CHECK(cudaFreeHost(hostPoints.posZ));
+    CHECK(cudaFreeHost(hostPoints.normX));
+    CHECK(cudaFreeHost(hostPoints.normY));
+    CHECK(cudaFreeHost(hostPoints.normZ));
+    CHECK(cudaFreeHost(hostPoints.dimensionality));
 }
