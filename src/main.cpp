@@ -69,7 +69,9 @@ const float defaultRotationSpeed = 1.0f;
 glm::vec3 lightPos{0.0f, 3.0f, 3.0f};
 glm::vec3 backgroundColor{0.5f, 0.5f, 0.5f};
 glm::vec3 ambientColor{0.1f, 0.0f, 0.0f};
-glm::vec3 diffuseColor{0.5f, 0.0f, 0.0f};
+glm::vec3 diffuseColorCPU{0.5f, 0.0f, 0.0f};
+glm::vec3 diffuseColorGPU{0.0f, 0.5f, 0.0f};
+
 glm::vec3 boundingSphereColor{0.0f, 0.0f, 0.5f};
 
 glm::vec3 specColor{1.0f, 1.0f, 1.0f};
@@ -87,11 +89,10 @@ Camera camera;
 
 std::vector<uint> subroutineIdxs;
 int activeSubroutineCount = 0;
-glm::mat4 modelMatrixCPU = glm::mat4(1.0f);
-glm::mat3 normalMatrixCPU = glm::mat4(1.0f);
+glm::mat4 modelMatrix = glm::mat4(1.0f);
+glm::mat3 normalMatrix = glm::mat4(1.0f);
 
-glm::mat4 modelMatrixGPU = glm::mat4(1.0f);
-glm::mat3 normalMatrixGPU = glm::mat4(1.0f);
+bool renderGPU = true;
 
 int main(int argc, char *argv[])
 {
@@ -138,7 +139,7 @@ int main(int argc, char *argv[])
     uint surplus = points.size() - pointsNumber;
     points.erase(points.end() - (surplus > 0 ? surplus : 0), points.end());
     pcGPU.setPoints(points);
-    
+
     std::shared_ptr<PointCloud> pcGPU_ptr = std::make_shared<PointCloud>(pcGPU);
     RenderablePointCloud rpcGPU = RenderablePointCloud(pcGPU_ptr);
 
@@ -165,7 +166,7 @@ int main(int argc, char *argv[])
     float aspect = (float)SCR_WIDTH / (float)SCR_HEIGHT;
     float oppositeFovY = 90.0f - 45.0f;
     float dist = sm.boundingSphere.radius * glm::tan(oppositeFovY);
-    glm::vec3 viewPos = sm.boundingSphere.center;
+    glm::vec3 viewPos = vec3(0.0f);
     viewPos.z += aspect * dist;
 
     camera = Camera(viewPos, glm::vec3(0.0f, 0.0f, -1.0f), 0.1f, 100.0f, (float)SCR_WIDTH, (float)SCR_HEIGHT, fovY);
@@ -187,8 +188,7 @@ int main(int argc, char *argv[])
     glGetProgramStageiv(shader.Program, GL_FRAGMENT_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &activeSubroutineCount);
     glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, activeSubroutineCount, &subroutineIdxs.at(2));
 
-    modelMatrixCPU = glm::translate(modelMatrixCPU, glm::vec3(-dist*0.5f, 0.0f, 0.0f));
-    modelMatrixGPU = glm::translate(modelMatrixGPU, glm::vec3(dist*0.5f, 0.0f, 0.0f));
+    modelMatrix = glm::translate(modelMatrix, -sm.boundingSphere.center);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -207,15 +207,20 @@ int main(int argc, char *argv[])
         glEnable(GL_DEPTH_TEST);
 
         glClearColor(backgroundColor.x, backgroundColor.y, backgroundColor.z, 1.0f);
-        glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrixCPU));
-        normalMatrixCPU = glm::transpose(glm::inverse(glm::mat3(viewMatrix) * glm::mat3(modelMatrixCPU)));
-        glUniformMatrix3fv(glGetUniformLocation(shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrixCPU));
-        rpcCPU.draw();
+        glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+        normalMatrix = glm::transpose(glm::inverse(glm::mat3(viewMatrix) * glm::mat3(modelMatrix)));
+        glUniformMatrix3fv(glGetUniformLocation(shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
-        glUniformMatrix4fv(glGetUniformLocation(shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrixGPU));
-        normalMatrixGPU = glm::transpose(glm::inverse(glm::mat3(viewMatrix) * glm::mat3(modelMatrixGPU)));
-        glUniformMatrix3fv(glGetUniformLocation(shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrixGPU));
-        rpcGPU.draw();
+        if (renderGPU)
+        {
+            glUniform3fv(glGetUniformLocation(shader.Program, "diffuseColor"), 1, glm::value_ptr(diffuseColorGPU));
+            rpcGPU.draw();
+        }
+        else
+        {
+            glUniform3fv(glGetUniformLocation(shader.Program, "diffuseColor"), 1, glm::value_ptr(diffuseColorCPU));
+            rpcCPU.draw();
+        }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -283,29 +288,33 @@ void apply_key_commands()
 
     if (keys[GLFW_KEY_A])
     {
-        modelMatrixCPU = glm::rotate(modelMatrixCPU, -defaultRotationSpeed * deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
-                modelMatrixGPU = glm::rotate(modelMatrixGPU, -defaultRotationSpeed * deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
+        modelMatrix = glm::rotate(modelMatrix, -defaultRotationSpeed * deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
 
         return;
     }
     if (keys[GLFW_KEY_S])
     {
-        modelMatrixCPU = glm::rotate(modelMatrixCPU, -defaultRotationSpeed * deltaTime, glm::vec3(1.0f, 0.0f, 0.0f));
-                modelMatrixGPU = glm::rotate(modelMatrixGPU, -defaultRotationSpeed * deltaTime, glm::vec3(1.0f, 0.0f, 0.0f));
+        modelMatrix = glm::rotate(modelMatrix, -defaultRotationSpeed * deltaTime, glm::vec3(1.0f, 0.0f, 0.0f));
 
         return;
     }
     if (keys[GLFW_KEY_D])
     {
-        modelMatrixCPU = glm::rotate(modelMatrixCPU, defaultRotationSpeed * deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
-        modelMatrixGPU = glm::rotate(modelMatrixGPU, defaultRotationSpeed * deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
+        modelMatrix = glm::rotate(modelMatrix, defaultRotationSpeed * deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
         return;
     }
     if (keys[GLFW_KEY_W])
     {
-        modelMatrixCPU = glm::rotate(modelMatrixCPU, defaultRotationSpeed * deltaTime, glm::vec3(1.0f, 0.0f, 0.0f));
-        modelMatrixGPU = glm::rotate(modelMatrixGPU, defaultRotationSpeed * deltaTime, glm::vec3(1.0f, 0.0f, 0.0f));
+        modelMatrix = glm::rotate(modelMatrix, defaultRotationSpeed * deltaTime, glm::vec3(1.0f, 0.0f, 0.0f));
         return;
+    }
+    if (keys[GLFW_KEY_G])
+    {
+        renderGPU = true;
+    }
+    else if (keys[GLFW_KEY_C])
+    {
+        printf("Displaying CPU version\n");
     }
 
     if (keys[GLFW_KEY_Z] && keys[GLFW_KEY_I])
