@@ -188,7 +188,14 @@ int main(int argc, char *argv[])
     Material clothMat(diffuseColor, specColor, shininess, MaterialType::BLINN_PHONG);
 
     // Model matrices setup
-    glm::mat4 sphereMeshModelMatrix = glm::mat4(1.0f);
+
+    const int numSphereMeshesInst = 10;
+    glm::mat4 sphereMeshModelMatrices[numSphereMeshesInst];
+
+    for (int i = 0; i < numSphereMeshesInst; i++) {
+        sphereMeshModelMatrices[i] = glm::mat4(1.0f);
+    }
+
 
    /* glm::mat4 clothModelMatrix = glm::mat4(1.0f);
     clothModelMatrix = glm::translate(clothModelMatrix, glm::vec3(-1.0f, 1.0f, -1.0f));
@@ -202,9 +209,14 @@ int main(int argc, char *argv[])
 
     // Scene setup
     scene = Scene(&camera, &light);
-    sphereMeshSceneIdx = scene.addObject(&rpc, &sphereMeshModelMatrix, &sphereMeshmat);
-    boundingSphereSceneIdx = scene.addObject(&boundingSphereFakeRpc, &sphereMeshModelMatrix, &boundingSphereMat);
-    scene.disableObject(boundingSphereSceneIdx);
+    int sphereMeshSceneIds[numSphereMeshesInst];
+    for (int i = 0; i < numSphereMeshesInst; i++) {
+        sphereMeshSceneIds[i] = scene.addObject(&rpc, &sphereMeshModelMatrices[i], &sphereMeshmat);
+    }
+
+
+    /*boundingSphereSceneIdx = scene.addObject(&boundingSphereFakeRpc, &sphereMeshModelMatrix, &boundingSphereMat);
+    scene.disableObject(boundingSphereSceneIdx);*/
     
     //scene.addObject(&renderableCloth, &clothModelMatrix, &clothMat);
 
@@ -223,8 +235,12 @@ int main(int argc, char *argv[])
 
     // physics
     //engine.addObject(&cloth);
-    PhysicsSphereMesh physSphereMesh(std::make_shared<SphereMesh>(sm), glm::vec3(0.0f, 15.0f, 0.0f));
-    engine.addObject(&physSphereMesh);
+    SphereMesh sm1 = sm;
+    PhysicsSphereMesh** physSphereMeshes = (PhysicsSphereMesh**)malloc(numSphereMeshesInst * sizeof(PhysicsSphereMesh));
+    for (int i = 0; i < numSphereMeshesInst; i++) {
+        physSphereMeshes[i] = new PhysicsSphereMesh(std::make_shared<SphereMesh>(sm), glm::vec3(-5.0f + (float)i, 15.0f, 0.0f -(float)i));
+        engine.addObject(physSphereMeshes[i]);
+    }
 
     float wallTime = glfwGetTime();
     engine.start();
@@ -232,10 +248,16 @@ int main(int argc, char *argv[])
     Plane plane1(glm::vec3(-6.0f, 0.0f, 0.0f), glm::normalize(glm::vec3(0.2f, 1.0f, 0.0f)));
     Plane plane2(glm::vec3(1.0f, 0.0f, 0.0f), glm::normalize(glm::vec3(-0.5f, 1.0f, 0.0f)));
 
-    PhysSphereMeshPlaneConstraint planeConstr1 = PhysSphereMeshPlaneConstraint(&plane1, &physSphereMesh);
-    physSphereMesh.addConstraint(&planeConstr1);
-    PhysSphereMeshPlaneConstraint planeConstr2 = PhysSphereMeshPlaneConstraint(&plane2, &physSphereMesh);
-    physSphereMesh.addConstraint(&planeConstr2);
+    for (int i = 0; i < numSphereMeshesInst; i++) {
+        auto* physSphereMesh = physSphereMeshes[i];
+        PhysSphereMeshPlaneConstraint* planeConstr1 = new PhysSphereMeshPlaneConstraint(&plane1, physSphereMesh);
+        physSphereMesh->addConstraint(planeConstr1);
+        PhysSphereMeshPlaneConstraint* planeConstr2 = new PhysSphereMeshPlaneConstraint(&plane2, physSphereMesh);
+        physSphereMesh->addConstraint(planeConstr2);
+    }
+
+
+
 
     //Renderable plane
     RenderablePlane rendPlane1 = RenderablePlane(plane1, 20.0f);
@@ -347,8 +369,11 @@ int main(int argc, char *argv[])
         auto duration = duration_cast<microseconds>(physStepStop - physStepStart);
         durations.push_back(duration.count());
 
-        glm::mat4* smModelMat = scene.getModelMatrixOf(sphereMeshSceneIdx);
-        *smModelMat = physSphereMesh.getModelMatrix();
+        for (int i = 0; i < numSphereMeshesInst; i++) {
+            glm::mat4* smModelMat = scene.getModelMatrixOf(sphereMeshSceneIds[i]);
+            auto* physSphereMesh = physSphereMeshes[i];
+            *smModelMat = physSphereMesh->getModelMatrix();
+        }
 
         //renderableCloth.updateBuffers();
         //renderableCloth.updateNormals();
