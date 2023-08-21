@@ -47,6 +47,9 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
 
+#include <chrono>
+using namespace std::chrono;
+
 #define OPENGL_VERSION_MAJOR 4
 #define OPENGL_VERSION_MINOR 1
 
@@ -266,6 +269,7 @@ int main(int argc, char *argv[])
     //cloth.addConstraint(&collisionConstraint);
 
     uint printCount = 0U;
+    std::vector<int> durations;
 
     while (!glfwWindowShouldClose(window))
     {
@@ -317,6 +321,10 @@ int main(int argc, char *argv[])
 
         const uint maxIter = 5U;
         uint iter = 0U;
+        // Use auto keyword to avoid typing long
+        // type definitions to get the timepoint
+        // at this instant use function now()
+        auto physStepStart = high_resolution_clock::now();
         while (!engine.isPaused() && wallTime > engine.getVirtualTime())
         {
             // phys simulation
@@ -335,6 +343,9 @@ int main(int argc, char *argv[])
                 break;
             }
         }
+        auto physStepStop = high_resolution_clock::now();
+        auto duration = duration_cast<microseconds>(physStepStop - physStepStart);
+        durations.push_back(duration.count());
 
         glm::mat4* smModelMat = scene.getModelMatrixOf(sphereMeshSceneIdx);
         *smModelMat = physSphereMesh.getModelMatrix();
@@ -411,6 +422,19 @@ int main(int argc, char *argv[])
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
     }
+
+    cout << "Exited" << endl;
+    int count = 0;
+    int sum = 0;
+
+    for (auto& dur : durations) {
+        if (dur != 0) {
+            count++;
+            sum += dur;
+        }
+    }
+
+    printf("Average timestep execution time on %d samples is %d microseconds\n", count, sum / count);
 
     // optional: de-allocate all resources once they've outlived their purpose:
     // ------------------------------------------------------------------------
