@@ -137,7 +137,7 @@ glm::mat4 PhysicsSphereMesh::computeModelMatrix()
 
     // orthonormalization of matrix
     //più la ripeti più diventa precisa
-    const int orthoNormIter = 5;
+    const int orthoNormIter = 10;
     float det = glm::determinant(rotMatrix);
 
     for (int i = 0; i < orthoNormIter; i++) {
